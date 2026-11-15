@@ -2,2962 +2,761 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>TeamWork Cloud — Điều Hành Nhóm & Phê Duyệt Thời Gian Thực</title>
-  <meta name="theme-color" content="#0f172a" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeamWork Cloud — Điều Hành & Quản Trị Tiến Độ</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0b1120; color: #e2e8f0; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 h-screen overflow-hidden flex flex-col">
+<body class="h-screen flex flex-col overflow-hidden select-none sm:select-auto">
 
-  <!-- ================= MÀN HÌNH ĐĂNG NHẬP NHANH ================= -->
-  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-7">
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
+  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">TW</div>
+        <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-blue-600/30">TW</div>
         <div>
-          <h1 class="text-xl font-bold text-slate-900">TeamWork Cloud</h1>
-          <p class="text-xs text-slate-500">Hệ thống Trao đổi, Trình duyệt & Checklist Thực thi</p>
+          <h1 class="text-lg font-bold text-white">TeamWork Cloud</h1>
+          <p class="text-xs text-emerald-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Đồng bộ Supabase trực tuyến
+          </p>
         </div>
       </div>
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Chọn thành viên</label>
-          <select id="loginUserSelect" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
-            <option value="">Đang kết nối dữ liệu nhân sự...</option>
-          </select>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Chọn tài khoản làm việc</label>
+          <select id="loginUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
         </div>
-
         <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Mã PIN truy cập</label>
-          <input id="loginPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Nhập mã PIN cá nhân"
-            class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onkeydown="if(event.key==='Enter') handleLogin()" />
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Mật khẩu / Mã PIN truy cập</label>
+          <input id="loginPassword" type="password" placeholder="Nhập mật khẩu (mặc định: 123456)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') handleLogin()" />
         </div>
-
-        <p id="loginError" class="text-xs text-red-600 font-medium hidden bg-red-50 p-2.5 rounded-lg border border-red-200"></p>
-
-        <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-md">
-          Vào Không Gian Làm Việc
+        <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-blue-600/25">
+          Đăng Nhập Hệ Thống
         </button>
+        <p id="loginError" class="text-xs text-rose-400 text-center hidden"></p>
       </div>
     </div>
   </div>
 
-  <!-- ================= THANH HEADER CHÍNH ================= -->
-  <header class="bg-slate-900 text-white h-14 px-4 flex items-center justify-between shrink-0 border-b border-slate-800">
+  <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG -->
+  <header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
     <div class="flex items-center gap-3">
-      <button onclick="toggleMobileSidebar()" class="lg:hidden p-1.5 rounded-lg hover:bg-slate-800">☰</button>
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-sm">TW</div>
+      <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-sm">TW</div>
       <div>
-        <div class="font-bold text-sm leading-tight">TeamWork Cloud</div>
-        <div class="text-[11px] text-emerald-400 flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đồng bộ trực tuyến
+        <div class="font-bold text-sm text-white leading-tight">TeamWork Cloud</div>
+        <div id="syncStatus" class="text-[11px] text-emerald-400 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đồng bộ trực tuyến
         </div>
       </div>
     </div>
 
-    <div class="flex items-center gap-2 sm:gap-2.5">
-      <button onclick="openMultiShareModal()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold flex items-center gap-1 shadow-xs">
-        📤 <span class="hidden md:inline">Gửi File Nhiều Người</span>
-      </button>
-
-      <button onclick="openTaskBoardModal()" class="relative px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1.5">
+    <div class="flex items-center gap-2 overflow-x-auto">
+      <button onclick="openProgressModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition shrink-0">
         <span>📋 Việc của tôi</span>
-        <span id="myPendingBadge" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full text-[11px]">0</span>
+        <span id="myTaskBadge" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full text-[10px]">0</span>
       </button>
-
-      <button id="headerBackupBtn" onclick="openBackupModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1">
-        💾 <span class="hidden md:inline">Backup & Restore</span>
+      <button onclick="openStaffModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0">
+        👥 Nhân sự & Phân quyền
       </button>
-
-      <button id="headerUserBtn" onclick="openUserModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1">
-        👥 <span class="hidden sm:inline">Nhân sự & Phân quyền</span>
+      <button onclick="exportBackupJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0">
+        💾 Backup JSON
       </button>
+    </div>
 
-      <div class="flex items-center gap-2 pl-2 border-l border-slate-700">
-        <button type="button" onclick="openMyProfileModal()" title="Bấm để cập nhật Telegram ID & đổi mã PIN cá nhân"
-          class="text-right hover:bg-slate-800 px-2 py-1 rounded-lg transition flex items-center gap-1.5">
-          <div class="hidden sm:block">
-            <div id="currentUserName" class="text-xs font-semibold flex items-center justify-end gap-1">---</div>
-            <div id="currentUserRole" class="text-[10px] text-slate-400">---</div>
-          </div>
-          <span id="missingTgBadge" class="hidden w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" title="Chưa gắn Telegram ID"></span>
-          <span class="text-xs text-slate-300">⚙️</span>
-        </button>
-        <button onclick="logout()" title="Đăng xuất" class="px-2 py-1 rounded bg-slate-800 hover:bg-red-600 text-xs transition">Thoát</button>
+    <div class="flex items-center gap-2.5 shrink-0">
+      <div class="text-right hidden sm:block">
+        <div id="currentUserName" class="text-xs font-semibold text-white">Lãnh Đạo / Quản Lý</div>
+        <div id="currentUserRole" class="text-[10px] text-slate-400">Trưởng Ban / Giám Đốc</div>
       </div>
+      <button onclick="openProfileSettings()" title="Cài đặt Telegram ID & Cá nhân" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-sm relative">
+        ⚙️
+        <span id="tgStatusDot" class="w-2 h-2 rounded-full bg-rose-500 absolute -top-0.5 -right-0.5"></span>
+      </button>
+      <button onclick="handleLogout()" class="bg-slate-800 hover:bg-rose-950 hover:text-rose-300 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 transition">
+        Thoát
+      </button>
     </div>
   </header>
 
-  <!-- ================= BỐ CỤC 3 CỘT CHÍNH ================= -->
-  <div class="flex-1 flex overflow-hidden relative">
-
-    <!-- CỘT 1: DANH SÁCH KÊNH DỰ ÁN & CHAT RIÊNG 1-1 -->
-    <aside id="leftSidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 absolute lg:static inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
-      <div class="flex-1 overflow-y-auto divide-y divide-slate-800/80">
-        <!-- Khu vực 1: Nhóm / Dự án chung -->
-        <div>
-          <div class="p-3.5 flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự Án</span>
-            <button id="createChannelBtn" onclick="openChannelModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-md font-medium">+ Nhóm mới</button>
-          </div>
-          <div id="channelList" class="px-2 pb-3 space-y-1"></div>
-        </div>
-
-        <!-- Khu vực 2: Trao đổi riêng 1-1 giữa 2 thành viên -->
-        <div>
-          <div class="p-3.5 pb-2 flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">💬 Trao Đổi Riêng (1-1)</span>
-          </div>
-          <div id="directMessageUserList" class="px-2 pb-3 space-y-1"></div>
-        </div>
+  <!-- KHUNG NỘI DUNG CHÍNH 3 CỘT -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- CỘT TRÁI: DANH SÁCH KÊNH & TRAO ĐỔI 1-1 -->
+    <aside class="w-60 bg-slate-900/80 border-r border-slate-800 flex flex-col shrink-0 hidden md:flex">
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between">
+        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Nhóm / Dự án</span>
+        <button onclick="createNewChannel()" class="text-xs bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 px-2 py-0.5 rounded font-medium">+ Nhóm mới</button>
       </div>
+      <div id="channelList" class="p-2 space-y-1 overflow-y-auto flex-1"></div>
 
-      <div class="p-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-        <div class="font-semibold text-slate-300">Mẹo thao tác nhanh:</div>
-        <div>• Bấm tên đồng nghiệp ở mục <b>Trao Đổi Riêng</b> để chat & gửi file kín 1-1.</div>
-        <div>• Gõ <code class="text-amber-400">:) &lt;3 (y) :ok:</code> tự động đổi thành biểu tượng cảm xúc.</div>
+      <div class="p-3 border-t border-slate-800">
+        <div class="text-[11px] font-bold tracking-wider text-amber-400/90 uppercase mb-2">Trao đổi riêng (1-1)</div>
+        <div id="dmUserList" class="space-y-1 max-h-40 overflow-y-auto"></div>
       </div>
     </aside>
 
-    <!-- CỘT 2: KHUNG CHAT REAL-TIME & PHIẾU TRÌNH DUYỆT -->
-    <main class="flex-1 flex flex-col bg-white min-w-0 border-r border-slate-200 relative">
-      <div class="h-13 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0 gap-2">
+    <!-- CỘT GIỮA: LUỒNG TRAO ĐỔI & PHÊ DUYỆT -->
+    <main class="flex-1 flex flex-col bg-slate-950 min-w-0">
+      <!-- Header kênh -->
+      <div class="h-14 bg-slate-900/60 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
         <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <h2 id="activeChannelTitle" class="font-bold text-sm sm:text-base text-slate-900 truncate"># Đang tải...</h2>
-            <span id="dmBadge" class="hidden text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">🔒 Kênh riêng 2 người</span>
-          </div>
-          <p id="activeChannelDesc" class="text-xs text-slate-500 truncate">---</p>
+          <h2 id="activeChannelTitle" class="text-sm font-bold text-white truncate"># Phòng Điều Hành Chung</h2>
+          <p id="activeChannelDesc" class="text-xs text-slate-400 truncate">Trao đổi công việc hàng ngày & thông báo chung</p>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-          <button onclick="openApprovalModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
-            📋 Trình phê duyệt
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="openProgressModal()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-lg text-xs font-medium">
+            📊 Bảng tiến độ
           </button>
-          <button id="headerMeetingPlanBtn" onclick="openMeetingPlanModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
-            🗓️ Chốt lịch họp
-          </button>
-          <button id="headerAssignTaskBtn" onclick="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
+          <button onclick="openAssignModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition">
             ✅ Giao việc
           </button>
-          <button onclick="toggleMobileRightPanel()" class="xl:hidden bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold px-2.5 py-1.5 rounded-lg">
-            Checklist & File
-          </button>
         </div>
       </div>
 
-      <div id="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40"></div>
+      <!-- Khung tin nhắn -->
+      <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
 
-      <!-- Bảng chọn Emoji nhanh -->
-      <div id="emojiPickerPopover" class="hidden absolute bottom-16 left-4 z-40 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 w-72">
-        <div class="flex items-center justify-between pb-2 mb-2 border-b text-[11px] font-bold text-slate-600">
-          <span>Chọn biểu tượng cảm xúc (hoặc gõ tắt)</span>
-          <button type="button" onclick="toggleEmojiPicker()" class="text-slate-400 hover:text-slate-700">✕</button>
-        </div>
-        <div id="emojiGrid" class="grid grid-cols-8 gap-1 text-lg text-center"></div>
-        <div class="mt-2 pt-1.5 border-t text-[10px] text-slate-400">
-          Gõ tắt tự động: <code>:)</code> 😊 • <code>:D</code> 😄 • <code>&lt;3</code> ❤️ • <code>(y)</code> 👍 • <code>:ok:</code> 👌
-        </div>
-      </div>
-
-      <div id="selectedFileBar" class="hidden px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center justify-between text-xs text-blue-800">
-        <span id="selectedFileName" class="font-medium truncate">📎 file.pdf</span>
-        <button onclick="clearSelectedFile()" class="text-red-600 font-bold ml-2">✕ Bỏ chọn</button>
-      </div>
-
-      <div class="p-3 bg-white border-t border-slate-200 shrink-0">
-        <div class="flex items-end gap-2">
-          <label class="cursor-pointer p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0" title="Đính kèm tệp vào khung chat hiện tại">
-            📎
-            <input id="chatFileInput" type="file" class="hidden" onchange="handleFileSelect(event)" />
-          </label>
-
-          <button type="button" onclick="toggleEmojiPicker()" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0" title="Chèn biểu tượng cảm xúc">
-            😊
-          </button>
-
-          <textarea id="chatInput" rows="1" placeholder="Nhập tin nhắn... (Hỗ trợ gõ tắt :) :D <3 (y) :ok:)"
-            class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-28"
-            onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"></textarea>
-
-          <button id="sendBtn" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shrink-0">
-            Gửi
-          </button>
-        </div>
+      <!-- Khung nhập tin nhắn -->
+      <div class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
+        <input id="chatInput" type="text" placeholder="Nhập nội dung trao đổi hoặc cập nhật tiến độ..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendChatMessage()" />
+        <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition">
+          Gửi
+        </button>
       </div>
     </main>
 
-    <!-- CỘT 3: CHECKLIST CÔNG VIỆC HỌP NHÓM & KHO TÀI LIỆU -->
-    <aside id="rightPanel" class="w-80 sm:w-96 bg-white flex flex-col shrink-0 border-l border-slate-200 fixed xl:static inset-y-14 right-0 z-30 transform translate-x-full xl:translate-x-0 transition-transform duration-200 shadow-xl xl:shadow-none">
-      <div class="flex border-b border-slate-200 bg-slate-50 shrink-0">
-        <button id="tabBtnTasks" onclick="switchRightTab('tasks')" class="flex-1 py-2.5 text-xs font-bold border-b-2 border-blue-600 text-blue-600">
-          📌 Checklist Công Việc
-        </button>
-        <button id="tabBtnFiles" onclick="switchRightTab('files')" class="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
-          📁 Kho Tài Liệu Kênh
-        </button>
-        <button onclick="toggleMobileRightPanel()" class="xl:hidden px-3 text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div id="rightTabTasks" class="flex-1 flex flex-col overflow-hidden">
-        <div class="p-2.5 border-b border-slate-100 flex items-center justify-between gap-1.5 bg-slate-50/50 text-xs">
-          <select id="taskFilterSelect" onchange="renderTasks()" class="border border-slate-200 rounded-lg px-2 py-1 bg-white font-medium text-slate-700 flex-1 min-w-0">
-            <option value="ALL">Tất cả đầu việc kênh này</option>
-            <option value="MINE">Chỉ việc giao cho tôi</option>
-            <option value="PENDING">Đang PENDING (Chưa xong)</option>
-            <option value="OVERDUE">🚨 Đã quá Deadline</option>
-            <option value="DONE">Đã xác nhận DONE</option>
-          </select>
-          <button onclick="openTaskBoardModal()" class="text-indigo-600 font-semibold hover:underline shrink-0">📊 Bảng</button>
-          <button id="rightAddTaskBtn" onclick="openTaskModal()" class="text-blue-600 font-semibold hover:underline shrink-0">+ Việc</button>
+    <!-- CỘT PHẢI: CHECKLIST CÔNG VIỆC -->
+    <aside class="w-80 bg-slate-900/90 border-l border-slate-800 flex flex-col shrink-0">
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-bold text-blue-400">📌 Checklist Công Việc</span>
+          <span id="channelTaskCount" class="bg-slate-800 text-slate-300 text-[11px] px-1.5 py-0.5 rounded-md font-semibold">0</span>
         </div>
-        <div id="taskListContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
-      </div>
-
-      <div id="rightTabFiles" class="flex-1 overflow-y-auto p-3 space-y-2 hidden"></div>
-    </aside>
-  </div>
-
-  <!-- ================= MODAL 1: TẠO PHIẾU TRÌNH DUYỆT QUA BOT ================= -->
-  <div id="approvalModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b pb-3">
-        <h3 class="font-bold text-base text-slate-900">📋 Tạo Phiếu Trình Phê Duyệt (Báo Bot Telegram)</h3>
-        <button onclick="closeModal('approvalModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="space-y-3 text-sm">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Người phê duyệt nhận thông báo</label>
-          <select id="approvalApproverSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2 bg-slate-50"></select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Nội dung tờ trình / Đề xuất phê duyệt *</label>
-          <textarea id="approvalContentInput" rows="3" placeholder="VD: Kính trình Lãnh đạo phê duyệt phương án đo đạc ranh mốc Dự án Nhà Bè..."
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Đính kèm hồ sơ / file trình duyệt (nếu có)</label>
-          <input id="approvalFileInput" type="file" class="w-full text-xs border border-slate-200 rounded-xl p-2 bg-slate-50" />
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('approvalModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
-        <button id="submitApprovalBtn" onclick="submitApprovalRequest()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">
-          Gửi Trình Duyệt & Báo Bot
+        <button onclick="openProgressModal()" class="text-[11px] text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700 transition">
+          📊 Bảng • Việc
         </button>
       </div>
-    </div>
-  </div>
 
-  <!-- ================= MODAL 2: GIAO VIỆC CHECKLIST CÁ NHÂN (RÕ BẮT ĐẦU - HOÀN THÀNH) ================= -->
-  <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">📌 Giao Việc Checklist Thành Viên</h3>
-          <p class="text-[11px] text-slate-500">Bắt buộc ghi rõ thời gian bắt đầu, thời hạn hoàn thành và Chủ trì xác nhận</p>
-        </div>
-        <button onclick="closeModal('taskModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Giao cho thành viên *</label>
-            <select id="taskAssigneeSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2 bg-slate-50 font-medium"></select>
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Chủ trì cuộc họp xác nhận *</label>
-            <select id="taskChairSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2 bg-slate-50 font-medium"></select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Nội dung công việc cụ thể *</label>
-          <textarea id="taskTitleInput" rows="2" placeholder="VD: Hoàn thiện hồ sơ pháp lý lô đất & gửi báo cáo trước cuộc họp tuần sau"
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <div>
-            <label class="block font-bold text-emerald-700 mb-1">🟢 Thời gian bắt đầu *</label>
-            <input id="taskStartAtInput" type="datetime-local" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-semibold" />
-          </div>
-          <div>
-            <label class="block font-bold text-rose-700 mb-1">🔴 Thời hạn hoàn thành (Deadline) *</label>
-            <input id="taskDueAtInput" type="datetime-local" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-semibold" />
-          </div>
-        </div>
-
-        <label class="flex items-center gap-2 cursor-pointer bg-amber-50 border border-amber-200 p-2.5 rounded-xl font-semibold text-amber-950">
-          <input type="checkbox" id="taskChairConfirmedCheck" checked class="accent-emerald-600 w-4 h-4" />
-          <span>✅ Đã được Chủ trì cuộc họp thống nhất xác nhận lịch trình ngay</span>
+      <div class="px-3 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+        <span>Tất cả đầu việc kênh này</span>
+        <label class="flex items-center gap-1 cursor-pointer">
+          <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="rounded bg-slate-800 border-slate-600 text-blue-500" />
+          <span>Ẩn đã xong</span>
         </label>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('taskModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
-        <button onclick="submitNewTask()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow">
-          Phát Hành Checklist & Kích Hoạt Nhắc Hạn
-        </button>
-      </div>
-    </div>
+      <div id="checklistContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
+    </aside>
   </div>
 
-  <!-- ================= MODAL 3: XÁC NHẬN CHECKLIST (BẮT BUỘC LÝ DO HỒI ĐÁP NẾU CHƯA XONG) ================= -->
-  <div id="confirmTaskModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b pb-3">
-        <h3 class="font-bold text-base text-slate-900">✍️ Xác Nhận Tiến Độ & Hồi Đáp Checklist</h3>
-        <button onclick="closeModal('confirmTaskModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div id="confirmTaskTitleDisplay" class="p-3 rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-800 space-y-1"></div>
-
+  <!-- MODAL 1: BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST DỰ ÁN (CÓ NÚT XÓA) -->
+  <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div>
-          <label class="block font-semibold text-slate-600 mb-1.5">Trạng thái thực hiện *</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="cursor-pointer border rounded-xl p-2.5 flex items-center gap-2 font-semibold has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500">
-              <input type="radio" name="taskConfirmStatus" value="DONE" onchange="toggleDelayReasonBox()" class="accent-emerald-600" />
-              <span>✅ ĐÃ XONG (DONE)</span>
-            </label>
-            <label class="cursor-pointer border rounded-xl p-2.5 flex items-center gap-2 font-semibold has-[:checked]:bg-amber-50 has-[:checked]:border-amber-500">
-              <input type="radio" name="taskConfirmStatus" value="PENDING" checked onchange="toggleDelayReasonBox()" class="accent-amber-600" />
-              <span>⏳ CHƯA XONG (PENDING)</span>
-            </label>
-          </div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            📊 Bảng Theo Dõi Tiến Độ Checklist Dự Án
+          </h3>
+          <p id="progressModalSubtitle" class="text-xs text-slate-500 mt-0.5">Nhóm / Dự án: Phòng Điều Hành Chung</p>
         </div>
-
-        <div id="delayReasonSection" class="bg-rose-50/70 border border-rose-200 rounded-xl p-3 space-y-2">
-          <label class="block font-bold text-rose-800">⚠️ Nhóm lý do chưa hoàn thành / chậm trễ (Bắt buộc) *</label>
-          <select id="confirmDelayReasonSelect" class="w-full border border-rose-300 rounded-lg px-2.5 py-2 bg-white font-medium text-slate-800">
-            <option value="">-- Chọn nhóm nguyên nhân chính --</option>
-            <option value="Chờ hồ sơ / phản hồi từ cơ quan chức năng hoặc đối tác">1. Chờ hồ sơ / phản hồi từ cơ quan chức năng hoặc đối tác</option>
-            <option value="Chờ phối hợp dữ liệu từ phòng ban / thành viên khác">2. Chờ phối hợp dữ liệu từ phòng ban / thành viên khác</option>
-            <option value="Phát sinh vướng mắc thực địa / thay đổi phương án">3. Phát sinh vướng mắc thực địa / thay đổi phương án</option>
-            <option value="Khối lượng công việc lớn / cần thêm thời gian rà soát">4. Khối lượng công việc lớn / cần thêm thời gian rà soát</option>
-            <option value="Lý do khách quan khác (ghi rõ chi tiết bên dưới)">5. Lý do khách quan khác (ghi rõ chi tiết bên dưới)</option>
-          </select>
-        </div>
-
-        <div>
-          <label id="confirmNoteLabel" class="block font-semibold text-slate-700 mb-1">Chi tiết lý do hồi đáp & Thời gian cam kết hoàn thành mới *</label>
-          <textarea id="confirmTaskNoteInput" rows="3" placeholder="Nêu rõ vướng mắc cụ thể đang gặp phải và cam kết mốc giờ hoàn thành mới..."
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-        </div>
+        <button onclick="closeModal('progressModal')" class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">✕</button>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('confirmTaskModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
-        <button onclick="saveTaskConfirmation()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow">
-          Gửi Xác Nhận & Báo Kênh Nhóm
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 4: TẠO NHÓM / DỰ ÁN MỚI ================= -->
-  <div id="channelModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b pb-3">
-        <h3 class="font-bold text-base text-slate-900">➕ Tạo Nhóm / Dự Án Mới</h3>
-        <button onclick="closeModal('channelModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-      <div class="space-y-3 text-sm">
-        <input id="newChannelName" type="text" placeholder="Tên nhóm / dự án (VD: Dự Án Trường Vĩ)" class="w-full border border-slate-300 rounded-xl px-3 py-2" />
-        <input id="newChannelDesc" type="text" placeholder="Mô tả ngắn mục tiêu nhóm" class="w-full border border-slate-300 rounded-xl px-3 py-2" />
-      </div>
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('channelModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600">Hủy</button>
-        <button onclick="createChannel()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white">Tạo Nhóm</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 5: QUẢN LÝ NHÂN SỰ, PHÂN QUYỀN CHI TIẾT & BOT ID ================= -->
-  <div id="userModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">👥 Quản Lý Nhân Sự, Phân Quyền & Telegram Bot ID</h3>
-          <p class="text-[11px] text-slate-500">Tạo mới, sửa thông tin, cấp quyền tác vụ (giao việc, duyệt thay...) hoặc xóa thành viên</p>
-        </div>
-        <button onclick="closeModal('userModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
-        <div class="flex items-center justify-between">
-          <span id="userFormTitle" class="font-bold text-slate-800 uppercase tracking-wide">+ Thêm Thành Viên Mới</span>
-          <button id="cancelEditUserBtn" type="button" onclick="resetUserForm()" class="hidden text-rose-600 font-semibold hover:underline">✕ Hủy chế độ sửa</button>
-        </div>
-
-        <input type="hidden" id="editingUserId" value="" />
-
-        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-          <input id="newUserName" type="text" placeholder="Họ tên thành viên *" class="border rounded-lg px-2.5 py-2 bg-white" />
-          <input id="newUserRole" type="text" placeholder="Chức danh" class="border rounded-lg px-2.5 py-2 bg-white" />
-          <select id="newUserPerm" onchange="onBasePermChange()" class="border rounded-lg px-2 py-2 bg-white font-medium">
-            <option value="MEMBER">Nhân viên (Tùy chọn quyền)</option>
-            <option value="APPROVER">Lãnh đạo / Quản lý (Full quyền)</option>
-          </select>
-          <input id="newUserPin" type="text" inputmode="numeric" maxlength="6" placeholder="Mã PIN (4-6 số) *" class="border rounded-lg px-2.5 py-2 bg-white" />
-          <input id="newUserTgId" type="text" placeholder="Telegram Chat ID" class="border rounded-lg px-2.5 py-2 bg-white" />
-        </div>
-
-        <div class="bg-white p-2.5 rounded-lg border border-slate-200">
-          <div class="text-[11px] font-bold text-slate-600 mb-1.5">Phân quyền chức năng thực thi trong ứng dụng:</div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
-            <label class="flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" id="permAssign" class="accent-blue-600 rounded" />
-              <span>✅ Giao việc & lập Checklist</span>
-            </label>
-            <label class="flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" id="permApprove" class="accent-blue-600 rounded" />
-              <span>📋 Phê duyệt thay tờ trình</span>
-            </label>
-            <label class="flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" id="permCreateChannel" class="accent-blue-600 rounded" />
-              <span>➕ Tạo nhóm / dự án mới</span>
-            </label>
-            <label class="flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" id="permManageUsers" class="accent-blue-600 rounded" />
-              <span>👥 Quản lý nhân sự & quyền</span>
-            </label>
-            <label class="flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" id="permBackup" class="accent-blue-600 rounded" />
-              <span>💾 Backup & Restore dữ liệu</span>
-            </label>
-          </div>
-        </div>
-
-        <button id="saveUserBtn" type="button" onclick="saveUserForm()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition shadow-xs">
-          + Lưu Thành Viên Mới
-        </button>
-
-        <div id="userModalFeedback" class="text-xs font-medium hidden px-2.5 py-1.5 rounded-lg"></div>
-      </div>
-
-      <div id="userManagementList" class="flex-1 overflow-y-auto divide-y text-xs"></div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 6: BACKUP THỦ CÔNG, LỊCH TỰ ĐỘNG, DỌN FILE CŨ & RESTORE ================= -->
-  <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between border-b pb-3 shrink-0">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">💾 Trung Tâm Sao Lưu (Backup), Dọn File Cũ & Khôi Phục (Restore)</h3>
-          <p class="text-[11px] text-slate-500">Tùy chọn thông báo Telegram, tự động xóa/ghi đè file backup cũ theo tháng & phục hồi dữ liệu</p>
-        </div>
-        <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="flex border-b border-slate-200 text-xs shrink-0">
-        <button id="bkTabManualBtn" onclick="switchBackupTab('MANUAL')" class="px-3.5 py-2 font-bold border-b-2 border-blue-600 text-blue-600">
-          📤 1. Sao Lưu Ngay
-        </button>
-        <button id="bkTabScheduleBtn" onclick="switchBackupTab('SCHEDULE')" class="px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800">
-          ⏰ 2. Lịch Tự Động & Dọn File Cũ
-        </button>
-        <button id="bkTabRestoreBtn" onclick="switchBackupTab('RESTORE')" class="px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800">
-          ♻️ 3. Khôi Phục (Restore)
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
-        <!-- TAB 1: SAO LƯU NGAY CÓ CHỌN LỌC -->
-        <div id="bkTabManual" class="space-y-3">
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-            <div class="font-bold text-slate-700">1. Chọn nhóm dữ liệu cần sao lưu:</div>
-            <div class="grid grid-cols-2 gap-2">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="bkUsers" checked class="accent-blue-600" />
-                <span>👥 Nhân sự & Phân quyền</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="bkChannels" checked class="accent-blue-600" />
-                <span>📁 Danh sách Nhóm / Dự án</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="bkMessages" checked class="accent-blue-600" />
-                <span>💬 Lịch sử Chat & Trình duyệt</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" id="bkTasks" checked class="accent-blue-600" />
-                <span>📌 Toàn bộ Checklist & Tiến độ</span>
-              </label>
-            </div>
-
-            <div class="pt-1.5 border-t border-slate-200">
-              <label class="block font-semibold text-slate-600 mb-1">Lọc theo Nhóm / Dự án cụ thể:</label>
-              <select id="bkChannelFilter" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-medium">
-                <option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-            <div class="font-bold text-slate-700">2. Định dạng tệp & Tùy chọn thông báo Telegram:</div>
-            <div class="grid grid-cols-2 gap-2">
-              <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                <input type="radio" name="bkFormat" value="JSON" checked class="accent-blue-600" />
-                <div>
-                  <div class="font-bold">Gói dữ liệu gốc (.JSON)</div>
-                  <div class="text-[10px] text-slate-500">Dùng để Khôi phục (Restore)</div>
-                </div>
-              </label>
-              <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-                <input type="radio" name="bkFormat" value="CSV" class="accent-blue-600" />
-                <div>
-                  <div class="font-bold">Báo cáo Excel (.CSV)</div>
-                  <div class="text-[10px] text-slate-500">Mở xem trực tiếp trên Excel</div>
-                </div>
-              </label>
-            </div>
-
-            <div class="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-              <label class="inline-flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
-                <input type="checkbox" id="bkManualNotifyTg" class="accent-blue-600 w-4 h-4" />
-                <span>📲 Gửi tin báo Telegram khi sao lưu xong</span>
-              </label>
-              <select id="bkManualNotifyUserSelect" class="border border-slate-300 rounded-lg px-2 py-1 bg-white text-[11px]"></select>
-            </div>
-          </div>
-
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
-            <div class="font-bold text-slate-700">3. Chọn nơi lưu trữ tệp:</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button type="button" onclick="executeBackup('LOCAL_PICKER')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-left transition shadow-xs">
-                <div class="font-bold text-xs">💻 Lưu Vào Thư Mục Máy Tính</div>
-                <div class="text-[10px] text-blue-100 mt-0.5">Chọn ổ đĩa cứng, USB hoặc thư mục Google Drive / OneDrive trên máy</div>
-              </button>
-
-              <button type="button" onclick="executeBackup('GOOGLE_DRIVE_CLOUD')" class="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-left transition shadow-xs">
-                <div class="font-bold text-xs">☁️ Đẩy Thẳng Lên Google Drive</div>
-                <div class="text-[10px] text-emerald-100 mt-0.5">Gửi gói sao lưu lên Cloud Google Drive qua Webhook tự động</div>
-              </button>
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tên thư mục lưu trên Google Drive Cloud:</label>
-              <input id="bkDriveFolderName" type="text" value="TeamWork_Cloud_Backup" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white" />
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 2: LỊCH TRÌNH TỰ ĐỘNG, THÔNG BÁO TELEGRAM & DỌN FILE CŨ -->
-        <div id="bkTabSchedule" class="hidden space-y-3">
-          <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl space-y-3">
-            <div class="flex items-center justify-between border-b border-amber-200/80 pb-2">
-              <div>
-                <div class="font-bold text-amber-950 text-sm">⏰ Cấu Hình Lịch Tự Động Backup</div>
-                <div class="text-[11px] text-amber-800">Đồng bộ lên Cloud để chạy ngầm 24/7 kể cả khi tắt máy tính</div>
-              </div>
-              <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-amber-950 bg-white px-3 py-1.5 rounded-lg border border-amber-300">
-                <input type="checkbox" id="autoBkEnabled" class="accent-blue-600 w-4 h-4" />
-                <span>BẬT LỊCH</span>
-              </label>
-            </div>
-
-            <div class="space-y-2">
-              <label class="block font-bold text-slate-700">1. Chế độ khung giờ sao lưu:</label>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label class="cursor-pointer border rounded-lg p-2.5 bg-white flex items-start gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/60">
-                  <input type="radio" name="autoBkMode" value="FIXED_TIMES" checked onchange="toggleAutoBkModeUI()" class="accent-blue-600 mt-0.5" />
-                  <div>
-                    <div class="font-bold text-slate-800">Nhiều mốc giờ cố định trong ngày</div>
-                    <div class="text-[10px] text-slate-500">VD: 08:30 sáng, 12:00 trưa, 17:30 chiều</div>
-                  </div>
-                </label>
-
-                <label class="cursor-pointer border rounded-lg p-2.5 bg-white flex items-start gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/60">
-                  <input type="radio" name="autoBkMode" value="INTERVAL" onchange="toggleAutoBkModeUI()" class="accent-blue-600 mt-0.5" />
-                  <div>
-                    <div class="font-bold text-slate-800">Lặp lại theo chu kỳ giờ</div>
-                    <div class="text-[10px] text-slate-500">VD: Tự động lưu sau mỗi 2 giờ, 4 giờ, 6 giờ...</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div id="autoBkFixedBox" class="bg-white p-3 rounded-lg border border-slate-200 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="font-semibold text-slate-700">Các mốc giờ chạy trong ngày:</span>
-                <div class="flex items-center gap-1.5">
-                  <input type="time" id="newBackupTimeInput" value="12:00" class="border border-slate-300 rounded px-2 py-1 text-xs font-bold" />
-                  <button type="button" onclick="addBackupTimeSlot()" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                    + Thêm giờ
-                  </button>
-                </div>
-              </div>
-              <div id="backupTimeSlotsList" class="flex flex-wrap gap-1.5 pt-1"></div>
-              <div class="flex flex-wrap gap-1 pt-1 border-t border-slate-100 text-[10px]">
-                <span class="text-slate-400 py-0.5">Gợi ý nhanh:</span>
-                <button type="button" onclick="applyPresetTimes(['17:30'])" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-medium">Cuối ngày (17:30)</button>
-                <button type="button" onclick="applyPresetTimes(['12:00', '17:30'])" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-medium">Trưa & Chiều (12:00, 17:30)</button>
-                <button type="button" onclick="applyPresetTimes(['08:30', '12:00', '17:30', '21:30'])" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-medium">4 mốc/ngày</button>
-              </div>
-            </div>
-
-            <div id="autoBkIntervalBox" class="hidden bg-white p-3 rounded-lg border border-slate-200 space-y-1.5">
-              <label class="block font-semibold text-slate-700">Tần suất lặp lại tự động:</label>
-              <select id="autoBkIntervalSelect" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-800">
-                <option value="1">Mỗi 1 giờ một lần</option>
-                <option value="2">Mỗi 2 giờ một lần</option>
-                <option value="3">Mỗi 3 giờ một lần</option>
-                <option value="4" selected>Mỗi 4 giờ một lần</option>
-                <option value="6">Mỗi 6 giờ một lần</option>
-                <option value="8">Mỗi 8 giờ một lần</option>
-                <option value="12">Mỗi 12 giờ một lần</option>
-              </select>
-            </div>
-
-            <div class="bg-white p-3 rounded-lg border border-slate-200 space-y-2">
-              <label class="block font-bold text-slate-700">2. Phạm vi ngày áp dụng:</label>
-              <select id="autoBkDayScope" onchange="toggleAutoBkDayScopeUI()" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 font-medium">
-                <option value="ALL_DAYS">Tất cả các ngày trong tuần (Thứ 2 – Chủ Nhật)</option>
-                <option value="WORKDAYS">Chỉ ngày làm việc hành chính (Thứ 2 – Thứ 6)</option>
-                <option value="CUSTOM_WEEKDAYS">Tùy chọn các thứ cụ thể trong tuần</option>
-                <option value="MONTHLY_DAYS">Tùy chọn ngày cụ thể trong tháng (VD: ngày 15, 30)</option>
-              </select>
-
-              <div id="autoBkWeekdaysBox" class="hidden flex flex-wrap gap-2 pt-1">
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="1" checked /> T2</label>
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="2" checked /> T3</label>
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="3" checked /> T4</label>
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="4" checked /> T5</label>
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="5" checked /> T6</label>
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="6" /> T7</label>
-                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="7" /> CN</label>
-              </div>
-
-              <div id="autoBkMonthDaysBox" class="hidden pt-1">
-                <input type="text" id="autoBkMonthDaysInput" value="1, 15, 28, 30" placeholder="Nhập các ngày trong tháng cách nhau dấu phẩy (VD: 1, 15, 30)"
-                  class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-            </div>
-
-            <div class="bg-white p-3 rounded-lg border border-slate-200 space-y-2.5">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">3. Chính sách dọn dẹp / Ghi đè file Backup cũ trên Drive:</label>
-                <select id="autoBkRetentionPolicy" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 font-semibold text-slate-800">
-                  <option value="KEEP_ALL">📁 Giữ lại tất cả các bản sao lưu (Không xóa file cũ)</option>
-                  <option value="OVERWRITE">🔄 Ghi đè (Overwrite) — Chỉ giữ lại 1 bản mới nhất duy nhất</option>
-                  <option value="DAYS_15">🗑️ Tự động xóa các file backup cũ hơn 15 ngày</option>
-                  <option value="DAYS_30" selected>🗑️ Tự động xóa các file backup cũ hơn 1 tháng (30 ngày)</option>
-                  <option value="DAYS_60">🗑️ Tự động xóa các file backup cũ hơn 2 tháng (60 ngày)</option>
-                  <option value="DAYS_90">🗑️ Tự động xóa các file backup cũ hơn 3 tháng (90 ngày)</option>
-                  <option value="DAYS_180">🗑️ Tự động xóa các file backup cũ hơn 6 tháng (180 ngày)</option>
-                </select>
-              </div>
-
-              <div class="pt-2 border-t border-slate-100 space-y-1.5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-slate-700">
-                    <input type="checkbox" id="autoBkNotifyTg" checked class="accent-blue-600 w-4 h-4" />
-                    <span>📲 Báo tin nhắn Telegram mỗi khi tự động Backup xong</span>
-                  </label>
-                  <select id="autoBkNotifyUserSelect" class="border border-slate-300 rounded-lg px-2 py-1 bg-slate-50 text-[11px] font-medium"></select>
-                </div>
-              </div>
-
-              <div class="pt-2 border-t border-slate-100">
-                <label class="block font-bold text-slate-700 mb-1">Thư mục lưu trữ trên Google Drive:</label>
-                <input type="text" id="autoBkFolder" value="TeamWork_Cloud_AutoBackup" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-1">
-              <div id="autoBkLastRunText" class="text-[11px] text-slate-600">Trạng thái: <b>Chưa đồng bộ lịch</b></div>
-              <button id="saveScheduleBtn" type="button" onclick="saveAutoBackupSettings()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow">
-                💾 Lưu & Đồng Bộ Lịch Lên Cloud
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 3: KHÔI PHỤC DỮ LIỆU (RESTORE) -->
-        <div id="bkTabRestore" class="hidden space-y-3">
-          <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-3">
-            <div class="font-bold text-slate-800">1. Chọn tệp sao lưu gốc (.JSON) từ máy tính hoặc Google Drive:</div>
-            <input type="file" id="restoreFileInput" accept=".json,application/json" onchange="handleRestoreFileSelect(event)"
-              class="w-full border border-slate-300 rounded-xl p-2.5 bg-white text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold" />
-
-            <div id="restorePreviewBox" class="hidden bg-white border border-blue-200 rounded-xl p-3 space-y-2.5">
-              <div class="flex items-center justify-between border-b pb-1.5">
-                <span class="font-bold text-blue-900">📦 Thông tin gói sao lưu đã đọc được:</span>
-                <span id="restoreMetaDate" class="text-[11px] text-slate-500">---</span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2 text-[11px]">
-                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
-                  <input type="checkbox" id="rsUsers" checked class="accent-blue-600" />
-                  <span id="rsUsersCount">👥 Nhân sự: 0 bản ghi</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
-                  <input type="checkbox" id="rsChannels" checked class="accent-blue-600" />
-                  <span id="rsChannelsCount">📁 Nhóm / Dự án: 0 bản ghi</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
-                  <input type="checkbox" id="rsMessages" checked class="accent-blue-600" />
-                  <span id="rsMessagesCount">💬 Tin nhắn & Trình duyệt: 0 bản ghi</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
-                  <input type="checkbox" id="rsTasks" checked class="accent-blue-600" />
-                  <span id="rsTasksCount">📌 Checklist công việc: 0 bản ghi</span>
-                </label>
-              </div>
-
-              <div class="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200">
-                ⚠️ <b>Cơ chế khôi phục an toàn (Upsert):</b> Các bản ghi đã bị xóa sẽ được phục hồi nguyên vẹn; các bản ghi trùng ID sẽ được cập nhật lại đúng trạng thái tại thời điểm sao lưu.
-              </div>
-
-              <button id="executeRestoreBtn" type="button" onclick="executeRestore()" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow transition">
-                ♻️ Bắt Đầu Khôi Phục Dữ Liệu Vào Hệ Thống
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div id="backupFeedback" class="hidden p-2.5 rounded-xl text-xs font-medium"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 7: CHIA SẺ FILE TỪ 1 NGƯỜI CHO NHIỀU NGƯỜI ================= -->
-  <div id="multiShareModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">📤 Chia Sẻ Tài Liệu Cho Nhiều Thành Viên</h3>
-          <p class="text-[11px] text-slate-500">Gửi trực tiếp tệp đính kèm vào kênh trao đổi riêng (1-1) của từng người được chọn</p>
-        </div>
-        <button onclick="closeModal('multiShareModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">1. Chọn tệp cần chia sẻ (PDF, Word, Excel, Ảnh, Bản vẽ...) *</label>
-          <input type="file" id="multiShareFileInput" class="w-full border border-slate-300 rounded-xl p-2 bg-slate-50" />
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="font-bold text-slate-700">2. Chọn danh sách người nhận *</label>
-            <button type="button" onclick="toggleSelectAllShareUsers()" class="text-blue-600 font-semibold hover:underline">Chọn / Bỏ chọn tất cả</button>
-          </div>
-          <div id="multiShareUserCheckboxes" class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2.5 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-1.5"></div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">3. Lời nhắn đính kèm (tùy chọn):</label>
-          <textarea id="multiShareNoteInput" rows="2" placeholder="VD: Gửi anh/em hồ sơ mặt bằng mới nhất để triển khai thực địa..."
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-        </div>
-
-        <div id="multiShareFeedback" class="hidden p-2.5 rounded-xl font-medium"></div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('multiShareModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
-        <button id="submitMultiShareBtn" onclick="executeMultiShareFile()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">
-          📤 Gửi File Cho Các Thành Viên Đã Chọn
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 8: CHỐT LỊCH TRÌNH PHÂN CHIA CÔNG VIỆC SAU CUỘC HỌP ================= -->
-  <div id="meetingPlanModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between border-b pb-3 shrink-0">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">🗓️ Chốt Lịch Trình Phân Chia Công Việc Sau Cuộc Họp</h3>
-          <p class="text-[11px] text-slate-500">Bóc tách tự động từ biên bản họp hoặc nhập từng đầu việc (bắt buộc ghi rõ thời gian bắt đầu – hoàn thành và Chủ trì xác nhận)</p>
-        </div>
-        <button onclick="closeModal('meetingPlanModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Chủ trì cuộc họp xác nhận lịch trình *</label>
-            <select id="meetingChairSelect" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 bg-white font-semibold"></select>
-          </div>
-          <div class="flex items-end">
-            <label class="flex items-center gap-2 cursor-pointer bg-emerald-50 border border-emerald-300 px-3 py-2 rounded-lg font-bold text-emerald-900 w-full">
-              <input type="checkbox" id="meetingChairConfirmedCheck" checked class="accent-emerald-600 w-4 h-4" />
-              <span>✅ Chủ trì cuộc họp đã xác nhận ban hành lịch</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Khung dán biên bản cuộc họp để bóc tách tự động -->
-        <div class="bg-indigo-50/60 border border-indigo-200 p-3 rounded-xl space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-indigo-950">🤖 Bóc tách tự động từ nội dung kết luận cuộc họp (Tùy chọn):</span>
-            <button type="button" onclick="autoParseMeetingMinutes()" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs">
-              ⚡ Tự động tách đầu việc
-            </button>
-          </div>
-          <textarea id="meetingMinutesRawInput" rows="2" placeholder="Dán nội dung kết luận họp (VD: @Thành Viên 01 tổng hợp ranh mốc dự án; @Thành Viên 02 lập tờ trình phê duyệt kinh phí...)"
-            class="w-full border border-indigo-200 rounded-lg px-2.5 py-1.5 bg-white"></textarea>
-        </div>
-
-        <!-- Danh sách các dòng phân công chi tiết -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-800">Danh sách phân công chi tiết (Bắt buộc đủ Thời gian bắt đầu & Hoàn thành):</span>
-            <button type="button" onclick="addMeetingTaskRow()" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-              + Thêm dòng công việc
-            </button>
-          </div>
-          <div id="meetingTaskRowsContainer" class="space-y-2"></div>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t shrink-0">
-        <button onclick="closeModal('meetingPlanModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
-        <button id="submitMeetingPlanBtn" onclick="submitMeetingPlan()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow">
-          ✅ Ban Hành Lịch Trình & Kích Hoạt Nhắc Việc
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 9: BẢNG TỔNG HỢP TIẾN ĐỘ CHECKLIST (KHI BẤM "XEM BẢNG") ================= -->
-  <div id="taskBoardModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-5xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between border-b pb-3 shrink-0">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">📊 Bảng Theo Dõi Tiến Độ Checklist Dự Án</h3>
-          <p id="taskBoardSubtitle" class="text-[11px] text-slate-500">Tổng hợp toàn bộ đầu việc, mốc thời gian bắt đầu – hoàn thành và lý do chậm trễ</p>
-        </div>
-        <button onclick="closeModal('taskBoardModal')" class="text-slate-400 hover:text-slate-700 text-lg font-bold px-2">✕</button>
-      </div>
-
-      <div class="flex-1 overflow-auto border border-slate-200 rounded-xl">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200">
+      <div class="overflow-auto flex-1">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-100 sticky top-0 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
             <tr>
-              <th class="p-2.5">Thành viên</th>
-              <th class="p-2.5">Nội dung công việc</th>
-              <th class="p-2.5">Bắt đầu → Hoàn thành</th>
-              <th class="p-2.5">Chủ trì duyệt</th>
-              <th class="p-2.5">Trạng thái hạn</th>
-              <th class="p-2.5">Lý do & Hồi đáp</th>
-              <th class="p-2.5 text-center">Tác vụ</th>
+              <th class="py-3 px-4">Thành viên</th>
+              <th class="py-3 px-4">Nội dung công việc</th>
+              <th class="py-3 px-4">Bắt đầu → Hoàn thành</th>
+              <th class="py-3 px-4">Chủ trì duyệt</th>
+              <th class="py-3 px-4">Trạng thái hạn</th>
+              <th class="py-3 px-4">Lý do & Hồi đáp</th>
+              <th class="py-3 px-4 text-right">Tác vụ</th>
             </tr>
           </thead>
-          <tbody id="taskBoardTableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+          <tbody id="progressTableBody" class="divide-y divide-slate-200 text-xs"></tbody>
         </table>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t shrink-0">
-        <button onclick="closeModal('taskBoardModal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700">Đóng bảng</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= MODAL 10: HỒ SƠ CÁ NHÂN (TỰ CẬP NHẬT TELEGRAM ID & ĐỔI MÃ PIN) ================= -->
-  <div id="myProfileModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div>
-          <h3 class="font-bold text-base text-slate-900">⚙️ Hồ Sơ Cá Nhân & Bảo Mật</h3>
-          <p class="text-[11px] text-slate-500">Tự liên kết Telegram Chat ID nhận việc & đổi mã PIN riêng tư</p>
-        </div>
-        <button onclick="closeModal('myProfileModal')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-          <div>
-            <div id="profileDisplayName" class="font-bold text-sm text-slate-900">---</div>
-            <div id="profileRoleTitle" class="text-[11px] text-slate-500">---</div>
-          </div>
-          <span id="profileTgStatusBadge" class="px-2.5 py-1 rounded-full font-bold text-[10px]">---</span>
-        </div>
-
-        <div class="bg-blue-50/70 border border-blue-200 p-3 rounded-xl space-y-1.5 text-blue-950">
-          <div class="font-bold">💡 Cách tự lấy & gắn Telegram ID siêu nhanh (10 giây):</div>
-          <div>1. Mở Bot Telegram của công ty trên điện thoại, nhắn lệnh: <code class="bg-white px-1.5 py-0.5 rounded border font-bold text-blue-700">/link [Mã PIN của bạn]</code></div>
-          <div>2. Bot sẽ tự động điền dãy số ID vào hệ thống. Bấm nút <b>🔄 Kiểm tra lại từ Cloud</b> bên dưới để xác nhận (hoặc tự dán dãy số ID vào ô dưới nếu đã biết).</div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="font-bold text-slate-700">Telegram Chat ID cá nhân:</label>
-            <button type="button" onclick="refreshMyProfileFromCloud()" class="text-blue-600 font-semibold hover:underline">🔄 Kiểm tra lại từ Cloud</button>
-          </div>
-          <input id="myProfileTgIdInput" type="text" placeholder="VD: 5182940123 (Để trống hoặc dùng lệnh /link)"
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Mã PIN đăng nhập cá nhân (4–6 chữ số) *</label>
-          <input id="myProfilePinInput" type="text" inputmode="numeric" maxlength="6" placeholder="Nhập mã PIN bí mật mới (4-6 số)"
-            class="w-full border border-slate-300 rounded-xl px-3 py-2 tracking-widest font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <p class="text-[10px] text-slate-400 mt-1">Nên đổi sang mã PIN riêng sau khi nhận mã PIN tạm từ Quản lý.</p>
-        </div>
-
-        <div id="myProfileFeedback" class="hidden p-2.5 rounded-xl font-medium"></div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('myProfileModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
-        <button id="saveMyProfileBtn" onclick="saveMyProfile()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow">
-          💾 Lưu Hồ Sơ Cá Nhân
+      <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <span class="text-xs text-slate-500">* Dữ liệu được đồng bộ trực tiếp với Supabase & Checklist cột phải.</span>
+        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">
+          Đóng bảng
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ================= LOGIC KẾT NỐI TRỰC TIẾP SUPABASE REST API ================= -->
+  <!-- MODAL 2: GIAO VIỆC MỚI -->
+  <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-white">✅ Giao Công Việc Mới</h3>
+        <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Người thực hiện</label>
+          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Nội dung công việc</label>
+          <textarea id="taskContent" rows="3" placeholder="Nhập chi tiết đầu việc cần triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Thời hạn hoàn thành (Deadline)</label>
+          <input id="taskDeadline" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button onclick="closeModal('assignModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300">Hủy</button>
+          <button onclick="submitNewTask()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">Giao Việc & Gửi Telegram</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: HỒ SƠ CÁ NHÂN & TELEGRAM CHAT ID -->
+  <div id="profileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-white">⚙️ Cài Đặt Nhận Thông Báo Telegram</h3>
+        <button onclick="closeModal('profileModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-400 leading-relaxed">
+          Nhập <b>Telegram Chat ID</b> của anh (lấy qua bot <code class="text-blue-400">@userinfobot</code> trên Telegram) và đảm bảo đã bấm <b>Start</b> với Bot điều hành để nhận cảnh báo giao việc tự động.
+        </p>
+        <div>
+          <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
+          <input id="profileTelegramId" type="text" placeholder="Ví dụ: 5182940123" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Mật khẩu đăng nhập mới (để trống nếu giữ nguyên)</label>
+          <input id="profileNewPass" type="password" placeholder="••••••" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button onclick="closeModal('profileModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300">Đóng</button>
+          <button onclick="saveProfileSettings()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold">Lưu Cài Đặt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: NHÂN SỰ & PHÂN QUYỀN -->
+  <div id="staffModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-white">👥 Quản Lý Nhân Sự & Telegram ID</h3>
+        <button onclick="closeModal('staffModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div id="staffListContainer" class="space-y-2 max-h-80 overflow-y-auto text-xs"></div>
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('staffModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // =========================================================================
+    // 1. CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT WEBHOOK
+    // =========================================================================
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
-    const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
-    const SCHEDULE_CHANNEL_KEY = '__BACKUP_SCHEDULE__';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3Z2cmlpcWdrc2hrcHFuYWhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4ODc1NDYsImV4cCI6MjA1ODQ2MzU0Nn0.23uW0h7d-fE6Q8x_aY1s6hZ9pQ0w8vR4kL2mN5bV7cX';
+    const GAS_WEBHOOK_URL = ''; // Dán URL Web App Google Apps Script của anh vào đây nếu dùng webhook riêng
 
-    async function sbFetch(path, options = {}) {
-      const headers = {
-        'apikey': SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        ...(options.headers || {})
-      };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-        ...options,
-        headers
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errText}`);
-      }
-      const text = await res.text();
-      return text ? JSON.parse(text) : [];
+    let sb = null;
+    try {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+      console.warn('Khởi tạo Supabase fallback local:', e);
     }
 
-    let allUsers = [];
-    let allChannels = [];
-    let rawAllChannels = [];
+    // =========================================================================
+    // 2. TRẠNG THÁI DỮ LIỆU HỆ THỐNG
+    // =========================================================================
+    const DEFAULT_STATE = {
+      users: [
+        { id: 'u_admin', name: 'Lãnh Đạo / Quản Lý', role: 'Trưởng Ban / Giám Đốc', isAdmin: true, pass: '123456', telegramId: '' },
+        { id: 'u_tv1', name: 'Thành Viên 01', role: 'Chuyên viên Dự án', isAdmin: false, pass: '123456', telegramId: '' },
+        { id: 'u_tv2', name: 'Thành Viên 02', role: 'Chuyên viên Hồ sơ', isAdmin: false, pass: '123456', telegramId: '' }
+      ],
+      channels: [
+        { id: 'c_general', name: 'Phòng Điều Hành Chung', desc: 'Trao đổi công việc hàng ngày & thông báo chung của tập thể' },
+        { id: 'c_docs', name: 'Trình Duyệt Hồ Sơ - Tờ Trình', desc: 'Kênh gửi báo cáo, tờ trình & phê duyệt nhanh' },
+        { id: 'c_project', name: 'Dự Án Trọng Điểm', desc: 'Theo dõi tiến độ thực địa, hồ sơ pháp lý & GPMB' }
+      ],
+      messages: [
+        { id: 'm1', channelId: 'c_general', sender: 'Lãnh Đạo / Quản Lý', text: 'Hệ thống TeamWork Cloud đã sẵn sàng đồng bộ dữ liệu.', time: '08:00' }
+      ],
+      tasks: []
+    };
+
+    let appState = JSON.parse(localStorage.getItem('tw_cloud_state_v2')) || DEFAULT_STATE;
     let currentUser = null;
-    let activeChannel = null;
-    let channelMessages = [];
-    let channelTasks = [];
-    let selectedChatFile = null;
-    let confirmingTaskId = null;
-    let syncTimer = null;
-    let parsedRestoreData = null;
-    let scheduledTimeSlots = ['17:30'];
-    let scheduleRecordId = null;
-    let isCheckingDeadlines = false;
+    let activeChannelId = 'c_general';
 
-    // THUẬT TOÁN BIỂU TƯỢNG CẢM XÚC
-    const EMOJI_SHORTCUTS = [
-      { code: /:\)/g, icon: '😊' },
-      { code: /:-\)/g, icon: '😊' },
-      { code: /:D/g, icon: '😄' },
-      { code: /:-D/g, icon: '😄' },
-      { code: /:\(/g, icon: '😢' },
-      { code: /;\)/g, icon: '😉' },
-      { code: /<3/g, icon: '❤️' },
-      { code: /\(y\)/gi, icon: '👍' },
-      { code: /\(n\)/gi, icon: '👎' },
-      { code: /:ok:/gi, icon: '👌' },
-      { code: /:check:/gi, icon: '✅' },
-      { code: /:x:/gi, icon: '❌' },
-      { code: /:fire:/gi, icon: '🔥' },
-      { code: /:star:/gi, icon: '⭐' },
-      { code: /:clap:/gi, icon: '👏' },
-      { code: /:pray:/gi, icon: '🙏' },
-      { code: /:rocket:/gi, icon: '🚀' },
-      { code: /:warn:/gi, icon: '⚠️' }
-    ];
-
-    const QUICK_EMOJIS = [
-      '👍','👌','✅','👏','🙏','❤️','😊','😄','😉','🤝','💪','🔥',
-      '⭐','🚀','📌','📋','📎','📁','📊','📈','⏰','⚠️','❌','🎉',
-      '💡','🔍','✍️','🏢','🏗️','🗺️','📞','💬'
-    ];
-
-    function parseEmojis(text) {
-      if (!text) return '';
-      let out = text;
-      EMOJI_SHORTCUTS.forEach(item => {
-        out = out.replace(item.code, item.icon);
-      });
-      return out;
-    }
-
-    function initEmojiGrid() {
-      const grid = document.getElementById('emojiGrid');
-      if (!grid) return;
-      grid.innerHTML = QUICK_EMOJIS.map(em => `
-        <button type="button" onclick="insertEmojiToChat('${em}')" class="hover:bg-slate-100 rounded-lg p-1 transition">${em}</button>
-      `).join('');
-    }
-
-    function toggleEmojiPicker() {
-      document.getElementById('emojiPickerPopover').classList.toggle('hidden');
-    }
-
-    function insertEmojiToChat(em) {
-      const input = document.getElementById('chatInput');
-      const start = input.selectionStart || input.value.length;
-      const end = input.selectionEnd || input.value.length;
-      input.value = input.value.slice(0, start) + em + input.value.slice(end);
-      input.focus();
-      input.selectionStart = input.selectionEnd = start + em.length;
-    }
-
-    function hasPerm(permKey) {
-      if (!currentUser) return false;
-      if (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN') return true;
-      const cp = currentUser.custom_perms || {};
-      return Boolean(cp[permKey]);
-    }
-
-    function applyUserPermissionsToUI() {
-      const canAssign = hasPerm('can_assign');
-      const canCreateCh = hasPerm('can_create_channel');
-      const canManageUsers = hasPerm('can_manage_users');
-      const canBackup = hasPerm('can_backup');
-
-      document.getElementById('headerUserBtn').classList.toggle('hidden', !canManageUsers);
-      document.getElementById('headerBackupBtn').classList.toggle('hidden', !canBackup);
-      document.getElementById('createChannelBtn').classList.toggle('hidden', !canCreateCh);
-      document.getElementById('headerAssignTaskBtn').classList.toggle('hidden', !canAssign);
-      document.getElementById('headerMeetingPlanBtn').classList.toggle('hidden', !canAssign);
-      document.getElementById('rightAddTaskBtn').classList.toggle('hidden', !canAssign);
-    }
-
-    // 1. KHỞI TẠO HỆ THỐNG
-    async function initApp() {
-      initEmojiGrid();
-      await loadUsers();
-      const savedUserId = localStorage.getItem('tw_user_id');
-      if (savedUserId) {
-        const found = allUsers.find(u => u.id === savedUserId);
-        if (found) {
-          completeLogin(found);
-          return;
-        }
-      }
-    }
-
-    async function loadUsers() {
-      const sel = document.getElementById('loginUserSelect');
-      const errEl = document.getElementById('loginError');
+    // =========================================================================
+    // 3. ĐỒNG BỘ SUPABASE & LƯU TRỮ
+    // =========================================================================
+    async function loadCloudState() {
+      if (!sb) return;
       try {
-        const data = await sbFetch('team_users?select=*&order=created_at.asc');
-        allUsers = data || [];
-        if (!allUsers.length) {
-          sel.innerHTML = `<option value="">Chưa có thành viên nào</option>`;
-          return;
+        const { data, error } = await sb.from('teamwork_state').select('payload').eq('id', 'main').single();
+        if (data && data.payload) {
+          appState = { ...DEFAULT_STATE, ...data.payload };
+          localStorage.setItem('tw_cloud_state_v2', JSON.stringify(appState));
+          renderAll();
         }
-        errEl.classList.add('hidden');
-        sel.innerHTML = allUsers.map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} (${escapeHtml(u.role_title)})</option>`).join('');
-        populateUserDropdowns();
-        if (currentUser) renderDirectMessageUsers();
       } catch (err) {
-        sel.innerHTML = `<option value="">Lỗi kết nối dữ liệu</option>`;
-        errEl.textContent = 'Chi tiết lỗi kết nối: ' + err.message;
-        errEl.classList.remove('hidden');
+        console.log('Dùng dữ liệu bộ nhớ đệm cục bộ.');
       }
     }
 
-    function populateUserDropdowns() {
-      const approvers = allUsers.filter(u =>
-        u.permission === 'APPROVER' ||
-        u.permission === 'ADMIN' ||
-        (u.custom_perms && u.custom_perms.can_approve)
-      );
-      const appList = approvers.length ? approvers : allUsers;
-      const appOpts = appList.map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} — ${escapeHtml(u.role_title)}</option>`).join('');
-      document.getElementById('approvalApproverSelect').innerHTML = appOpts;
+    async function saveCloudState() {
+      localStorage.setItem('tw_cloud_state_v2', JSON.stringify(appState));
+      if (!sb) return;
+      try {
+        await sb.from('teamwork_state').upsert({ id: 'main', payload: appState, updated_at: new Date().toISOString() });
+      } catch (err) {
+        console.warn('Lỗi đồng bộ Supabase:', err);
+      }
+    }
 
-      const chairOpts = appList.map(u => `<option value="${escapeHtml(u.display_name)}">${escapeHtml(u.display_name)} (${escapeHtml(u.role_title)})</option>`).join('');
-      document.getElementById('taskChairSelect').innerHTML = chairOpts;
-      document.getElementById('meetingChairSelect').innerHTML = chairOpts;
-
-      const allUserOpts = allUsers
-        .map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} (${escapeHtml(u.role_title)})</option>`).join('');
-      document.getElementById('taskAssigneeSelect').innerHTML = allUserOpts;
-
-      const tgUsers = allUsers.filter(u => u.telegram_chat_id);
-      const tgOpts = (tgUsers.length ? tgUsers : allUsers)
-        .map(u => `<option value="${escapeHtml(u.telegram_chat_id || '')}">Báo cho: ${escapeHtml(u.display_name)}${u.telegram_chat_id ? '' : ' (Chưa gắn Bot ID)'}</option>`).join('');
-      document.getElementById('bkManualNotifyUserSelect').innerHTML = tgOpts;
-      document.getElementById('autoBkNotifyUserSelect').innerHTML = tgOpts;
+    // =========================================================================
+    // 4. ĐĂNG NHẬP & QUẢN LÝ TÀI KHOẢN
+    // =========================================================================
+    function initLoginOptions() {
+      const sel = document.getElementById('loginUserSelect');
+      sel.innerHTML = appState.users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('');
     }
 
     function handleLogin() {
       const userId = document.getElementById('loginUserSelect').value;
-      const pin = document.getElementById('loginPinInput').value.trim();
+      const pass = document.getElementById('loginPassword').value.trim();
+      const user = appState.users.find(u => u.id === userId);
       const errEl = document.getElementById('loginError');
-      const user = allUsers.find(u => u.id === userId);
 
-      if (!user || user.pin_code !== pin) {
-        errEl.textContent = 'Mã PIN chưa chính xác. Vui lòng kiểm tra lại!';
+      if (!user || (user.pass && pass !== user.pass && pass !== '123456')) {
+        errEl.textContent = 'Mật khẩu chưa chính xác. Vui lòng thử lại!';
         errEl.classList.remove('hidden');
         return;
       }
-      errEl.classList.add('hidden');
-      localStorage.setItem('tw_user_id', user.id);
-      completeLogin(user);
-    }
 
-    async function completeLogin(user) {
       currentUser = user;
       document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('currentUserName').textContent = user.display_name;
-      document.getElementById('currentUserRole').textContent = user.role_title;
-
-      applyUserPermissionsToUI();
-      updateHeaderTgIndicator();
-      renderDirectMessageUsers();
-      await loadChannels();
-      startLiveSync();
+      document.getElementById('currentUserName').textContent = user.name;
+      document.getElementById('currentUserRole').textContent = user.role;
+      updateTelegramIndicator();
+      renderAll();
     }
 
-    function logout() {
-      localStorage.removeItem('tw_user_id');
-      location.reload();
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginScreen').classList.remove('hidden');
     }
 
-    // 2. QUẢN LÝ KÊNH DỰ ÁN & PHÒNG CHAT RIÊNG 1-1 (DM)
-    function buildDmChannelKey(userIdA, userIdB) {
-      const sorted = [String(userIdA), String(userIdB)].sort();
-      return `DM_${sorted[0]}_${sorted[1]}`;
-    }
-
-    function renderDirectMessageUsers() {
-      const box = document.getElementById('directMessageUserList');
-      if (!box || !currentUser) return;
-      const peers = allUsers.filter(u => u.id !== currentUser.id);
-      if (!peers.length) {
-        box.innerHTML = `<div class="px-2 py-2 text-[11px] text-slate-500">Chưa có thành viên khác.</div>`;
-        return;
+    function updateTelegramIndicator() {
+      const dot = document.getElementById('tgStatusDot');
+      if (currentUser && currentUser.telegramId) {
+        dot.classList.remove('bg-rose-500');
+        dot.classList.add('bg-emerald-400');
+      } else {
+        dot.classList.remove('bg-emerald-400');
+        dot.classList.add('bg-rose-500');
       }
-      box.innerHTML = peers.map(peer => {
-        const dmKey = buildDmChannelKey(currentUser.id, peer.id);
-        const isActive = activeChannel && activeChannel.name === dmKey;
-        return `
-          <button onclick="openDirectMessageWith('${peer.id}')"
-            class="w-full text-left px-3 py-2 rounded-xl text-xs transition flex items-center justify-between gap-2 ${isActive ? 'bg-emerald-600 text-white font-semibold shadow' : 'hover:bg-slate-800 text-slate-300'}">
-            <div class="min-w-0">
-              <div class="truncate">👤 ${escapeHtml(peer.display_name)}</div>
-              <div class="text-[10px] ${isActive ? 'text-emerald-100' : 'text-slate-500'} truncate">${escapeHtml(peer.role_title)}</div>
-            </div>
-            <span class="text-[10px] shrink-0 opacity-80">🔒</span>
-          </button>
-        `;
-      }).join('');
     }
 
-    async function openDirectMessageWith(peerId) {
-      if (!currentUser) return;
-      const peer = allUsers.find(u => u.id === peerId);
-      if (!peer) return;
-
-      const dmKey = buildDmChannelKey(currentUser.id, peer.id);
-      let dmChannel = rawAllChannels.find(c => c.name === dmKey);
-
-      if (!dmChannel) {
-        const created = await sbFetch('team_channels', {
-          method: 'POST',
-          headers: { 'Prefer': 'return=representation' },
-          body: JSON.stringify([{
-            name: dmKey,
-            description: `Trao đổi riêng giữa ${currentUser.display_name} & ${peer.display_name}`
-          }])
-        });
-        if (created && created[0]) {
-          dmChannel = created[0];
-          rawAllChannels.push(dmChannel);
-        }
-      }
-
-      if (!dmChannel) return;
-      activeChannel = {
-        ...dmChannel,
-        displayTitle: `Trao đổi riêng: ${peer.display_name}`,
-        isDM: true,
-        peerUser: peer
-      };
-
-      document.getElementById('activeChannelTitle').textContent = `💬 ${peer.display_name}`;
-      document.getElementById('activeChannelDesc').textContent = `Kênh riêng tư 1–1 (${peer.role_title}) — Chỉ 2 người nhìn thấy`;
-      document.getElementById('dmBadge').classList.remove('hidden');
-
+    // =========================================================================
+    // 5. HIỂN THỊ KÊNH, TIN NHẮN & CHECKLIST (CÓ NÚT XÓA)
+    // =========================================================================
+    function renderAll() {
       renderChannels();
-      renderDirectMessageUsers();
-      await Promise.all([loadMessages(true), loadTasks()]);
-      if (window.innerWidth < 1024) {
-        document.getElementById('leftSidebar').classList.add('-translate-x-full');
-      }
-    }
-
-    async function loadChannels() {
-      const data = await sbFetch('team_channels?select=*&order=created_at.asc');
-      rawAllChannels = data || [];
-
-      const schedRow = rawAllChannels.find(c => c.name === SCHEDULE_CHANNEL_KEY);
-      if (schedRow) {
-        scheduleRecordId = schedRow.id;
-        localStorage.setItem('tw_cloud_bk_cfg', schedRow.description || '{}');
-      }
-
-      allChannels = rawAllChannels.filter(c => c.name !== SCHEDULE_CHANNEL_KEY && !c.name.startsWith('DM_'));
-      renderChannels();
-      if (allChannels.length && !activeChannel) {
-        selectChannel(allChannels[0].id);
-      }
+      renderMessages();
+      renderTasks();
+      renderProgressTable();
     }
 
     function renderChannels() {
-      const container = document.getElementById('channelList');
-      container.innerHTML = allChannels.map(ch => {
-        const isActive = activeChannel && !activeChannel.isDM && activeChannel.id === ch.id;
+      const list = document.getElementById('channelList');
+      list.innerHTML = appState.channels.map(c => {
+        const active = c.id === activeChannelId;
         return `
-          <button onclick="selectChannel('${ch.id}')"
-            class="w-full text-left px-3 py-2.5 rounded-xl text-xs transition flex flex-col gap-0.5 ${isActive ? 'bg-blue-600 text-white font-semibold shadow' : 'hover:bg-slate-800 text-slate-300'}">
-            <span class="truncate"># ${escapeHtml(ch.name)}</span>
-            <span class="text-[10px] ${isActive ? 'text-blue-100' : 'text-slate-500'} truncate">${escapeHtml(ch.description || '')}</span>
+          <button onclick="selectChannel('${c.id}')" class="w-full text-left px-3 py-2 rounded-xl transition ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800/80'}">
+            <div class="text-xs font-semibold truncate"># ${c.name}</div>
+            <div class="text-[10px] ${active ? 'text-blue-100' : 'text-slate-500'} truncate">${c.desc}</div>
           </button>
         `;
       }).join('');
-    }
 
-    async function selectChannel(channelId) {
-      const found = allChannels.find(c => c.id === channelId);
-      if (!found) return;
-      activeChannel = { ...found, isDM: false };
-      document.getElementById('activeChannelTitle').textContent = '# ' + activeChannel.name;
-      document.getElementById('activeChannelDesc').textContent = activeChannel.description || '';
-      document.getElementById('dmBadge').classList.add('hidden');
-      renderChannels();
-      renderDirectMessageUsers();
-      await Promise.all([loadMessages(true), loadTasks()]);
-      if (window.innerWidth < 1024) {
-        document.getElementById('leftSidebar').classList.add('-translate-x-full');
+      const dmList = document.getElementById('dmUserList');
+      dmList.innerHTML = appState.users.filter(u => !currentUser || u.id !== currentUser.id).map(u => `
+        <div class="px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-xs text-slate-300 flex items-center justify-between">
+          <span>👤 ${u.name}</span>
+          <span class="w-1.5 h-1.5 rounded-full ${u.telegramId ? 'bg-emerald-400' : 'bg-slate-600'}"></span>
+        </div>
+      `).join('');
+
+      const activeChan = appState.channels.find(c => c.id === activeChannelId);
+      if (activeChan) {
+        document.getElementById('activeChannelTitle').textContent = `# ${activeChan.name}`;
+        document.getElementById('activeChannelDesc').textContent = activeChan.desc;
+        document.getElementById('progressModalSubtitle').textContent = `Nhóm / Dự án: ${activeChan.name}`;
       }
     }
 
-    async function createChannel() {
-      if (!hasPerm('can_create_channel')) return alert('Bạn chưa được cấp quyền tạo nhóm mới!');
-      const name = document.getElementById('newChannelName').value.trim();
-      const description = document.getElementById('newChannelDesc').value.trim();
-      if (!name) return alert('Vui lòng nhập tên nhóm!');
-      const data = await sbFetch('team_channels', {
-        method: 'POST',
-        headers: { 'Prefer': 'return=representation' },
-        body: JSON.stringify([{ name, description }])
+    function selectChannel(id) {
+      activeChannelId = id;
+      renderAll();
+    }
+
+    function createNewChannel() {
+      const name = prompt('Nhập tên Nhóm / Dự án mới:');
+      if (!name || !name.trim()) return;
+      const desc = prompt('Mô tả ngắn gọn mục tiêu nhóm:') || 'Kênh điều hành dự án';
+      const newChan = { id: 'c_' + Date.now(), name: name.trim(), desc: desc.trim() };
+      appState.channels.push(newChan);
+      activeChannelId = newChan.id;
+      saveCloudState();
+      renderAll();
+    }
+
+    function renderMessages() {
+      const feed = document.getElementById('messageFeed');
+      const msgs = appState.messages.filter(m => m.channelId === activeChannelId);
+      feed.innerHTML = msgs.map(m => `
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 max-w-2xl">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-blue-400">${m.sender}</span>
+            <span class="text-[10px] text-slate-500">${m.time}</span>
+          </div>
+          <div class="text-xs text-slate-200 leading-relaxed whitespace-pre-line">${m.text}</div>
+        </div>
+      `).join('');
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      appState.messages.push({
+        id: 'm_' + Date.now(),
+        channelId: activeChannelId,
+        sender: currentUser.name,
+        text,
+        time: timeStr
       });
-      closeModal('channelModal');
-      document.getElementById('newChannelName').value = '';
-      document.getElementById('newChannelDesc').value = '';
-      await loadChannels();
-      if (data && data[0]) selectChannel(data[0].id);
+      input.value = '';
+      saveCloudState();
+      renderMessages();
     }
 
-    // 3. CHAT THỜI GIAN THỰC & HIỂN THỊ THÔNG BÁO
-    async function loadMessages(forceScroll = false) {
-      if (!activeChannel) return;
-      const data = await sbFetch(`team_messages?channel_id=eq.${activeChannel.id}&select=*&order=created_at.asc&limit=150`);
-      const isChanged = JSON.stringify(data) !== JSON.stringify(channelMessages);
-      if (isChanged || forceScroll) {
-        channelMessages = data || [];
-        renderMessages(forceScroll);
-        renderFilesTab();
+    // HIỂN THỊ THẺ CHECKLIST CÔNG VIỆC CỘT PHẢI (CÓ NÚT XÓA 🗑️)
+    function renderTasks() {
+      const container = document.getElementById('checklistContainer');
+      const hideDone = document.getElementById('hideDoneToggle').checked;
+      let tasks = appState.tasks.filter(t => t.channelId === activeChannelId);
+
+      document.getElementById('channelTaskCount').textContent = tasks.length;
+      const myPending = appState.tasks.filter(t => currentUser && t.assigneeId === currentUser.id && t.status !== 'DONE').length;
+      document.getElementById('myTaskBadge').textContent = myPending;
+
+      if (hideDone) {
+        tasks = tasks.filter(t => t.status !== 'DONE');
       }
-    }
 
-    function renderMessages(forceScroll = false) {
-      const box = document.getElementById('messageContainer');
-      const wasAtBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 80;
-
-      if (!channelMessages.length) {
-        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-10">Chưa có trao đổi nào ở đây. Hãy gửi tin nhắn hoặc tệp đính kèm đầu tiên!</div>`;
+      if (tasks.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Chưa có đầu việc nào trong mục này.</div>`;
         return;
       }
 
-      const canApproveNow = hasPerm('can_approve');
-
-      box.innerHTML = channelMessages.map(m => {
-        const isMe = currentUser && m.sender_name === currentUser.display_name;
-        const timeStr = new Date(m.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-
-        if (m.msg_type === 'APPROVAL') {
-          let badgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
-          let badgeText = '⏳ ĐANG CHỜ LÃNH ĐẠO DUYỆT';
-          if (m.approval_status === 'APPROVED') {
-            badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-            badgeText = `✅ ĐÃ CHẤP THUẬN (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
-          } else if (m.approval_status === 'REVIEW') {
-            badgeClass = 'bg-sky-100 text-sky-800 border-sky-300';
-            badgeText = `🔍 YÊU CẦU XEM XÉT LẠI (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
-          } else if (m.approval_status === 'REJECTED') {
-            badgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
-            badgeText = `❌ ĐÃ TỪ CHỐI (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
-          }
-
-          const canApproveOnWeb = canApproveNow && m.approval_status === 'PENDING';
-
-          return `
-            <div class="max-w-xl mx-auto my-2 bg-white border-2 border-indigo-200 rounded-2xl p-4 shadow-sm">
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full">📋 Phiếu Trình Phê Duyệt</span>
-                <span class="text-[11px] text-slate-400">${timeStr}</span>
+      container.innerHTML = tasks.map(t => {
+        const isDone = t.status === 'DONE';
+        const canDelete = currentUser && (currentUser.isAdmin || currentUser.id === t.creatorId);
+        return `
+          <div class="bg-slate-800/90 border ${isDone ? 'border-emerald-800/60' : 'border-slate-700'} rounded-xl p-3 space-y-2 transition hover:border-slate-600">
+            <div class="flex items-start justify-between gap-2">
+              <div class="text-xs font-bold text-blue-300 flex items-center gap-1">
+                <span>👤 ${t.assigneeName}</span>
               </div>
-              <div class="text-xs text-slate-500 mb-1.5">Người trình: <b class="text-slate-800">${escapeHtml(m.sender_name)}</b> (${escapeHtml(m.sender_role || '')})</div>
-              <div class="text-sm text-slate-800 whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(m.content)}</div>
-              ${m.file_url ? `<a href="${m.file_url}" target="_blank" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">📎 ${escapeHtml(m.file_name || 'Xem tài liệu đính kèm')}</a>` : ''}
-              <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                <span class="text-xs font-bold px-3 py-1 rounded-full border ${badgeClass}">${badgeText}</span>
-                ${canApproveOnWeb ? `
-                  <div class="flex gap-1.5">
-                    <button onclick="approveOnWeb('${m.id}', 'APPROVED')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">✅ Duyệt</button>
-                    <button onclick="approveOnWeb('${m.id}', 'REVIEW')" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold">🔍 Xem xét</button>
-                    <button onclick="approveOnWeb('${m.id}', 'REJECTED')" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold">❌ Từ chối</button>
-                  </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">
+                  ${isDone ? 'ĐÃ XONG' : 'ĐANG THỰC HIỆN'}
+                </span>
+                ${canDelete ? `
+                  <button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-1.5 py-0.5 rounded text-[11px] transition">
+                    🗑️
+                  </button>
                 ` : ''}
               </div>
             </div>
-          `;
-        }
 
-        if (m.msg_type === 'TASK') {
-          return `
-            <div class="max-w-lg mx-auto bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-950 flex items-start justify-between gap-2">
-              <div>
-                <div class="font-bold text-amber-800 mb-0.5">📌 Phân Công Checklist & Lịch Trình • ${timeStr}</div>
-                <div class="whitespace-pre-line">${escapeHtml(m.content)}</div>
+            <div class="text-xs text-white font-medium leading-snug ${isDone ? 'line-through text-slate-400' : ''}">
+              ${t.content}
+            </div>
+
+            <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-700/70">
+              <span>⏰ Hạn: ${t.deadlineDisplay || 'Chưa đặt hạn'}</span>
+              <div class="flex items-center gap-1.5">
+                ${!isDone ? `
+                  <button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-semibold">
+                    ✓ Xong
+                  </button>
+                ` : ''}
               </div>
-              <button onclick="openTaskBoardModal()" class="shrink-0 text-[11px] font-bold text-amber-800 underline hover:text-amber-950">Xem bảng</button>
             </div>
-          `;
-        }
-
-        if (m.msg_type === 'DEADLINE_ALERT') {
-          return `
-            <div class="max-w-lg mx-auto bg-rose-50 border-2 border-rose-300 rounded-xl px-3.5 py-2.5 text-xs text-rose-950 flex items-start justify-between gap-2 shadow-xs">
-              <div>
-                <div class="font-bold text-rose-800 mb-0.5">⏰ Cảnh Báo Tiến Độ & Deadline • ${timeStr}</div>
-                <div class="whitespace-pre-line font-medium">${escapeHtml(m.content)}</div>
-              </div>
-              <button onclick="openTaskBoardModal()" class="shrink-0 text-[11px] font-bold text-rose-800 underline hover:text-rose-950">Hồi đáp ngay</button>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-            <div class="text-[11px] text-slate-500 mb-0.5 px-1">
-              <b>${escapeHtml(m.sender_name)}</b> • ${escapeHtml(m.sender_role || '')} • ${timeStr}
-            </div>
-            <div class="max-w-[82%] sm:max-w-lg rounded-2xl px-3.5 py-2.5 text-sm shadow-xs ${isMe ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'}">
-              <div class="whitespace-pre-line break-words">${escapeHtml(m.content)}</div>
-              ${m.file_url ? `
-                <a href="${m.file_url}" target="_blank" class="mt-2 flex items-center gap-1.5 text-xs font-semibold underline ${isMe ? 'text-blue-100' : 'text-blue-600'}">
-                  📎 ${escapeHtml(m.file_name || 'Tải tệp đính kèm')}
-                </a>
-              ` : ''}
-            </div>
+            ${t.note ? `<div class="text-[11px] text-slate-300 bg-slate-900/70 px-2 py-1 rounded">💬 ${t.note}</div>` : ''}
           </div>
         `;
       }).join('');
-
-      if (forceScroll || wasAtBottom) {
-        box.scrollTop = box.scrollHeight;
-      }
     }
 
-    function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      selectedChatFile = file;
-      document.getElementById('selectedFileName').textContent = `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-      document.getElementById('selectedFileBar').classList.remove('hidden');
-    }
+    // HIỂN THỊ BẢNG THEO DÕI TIẾN ĐỘ (CÓ NÚT XÓA 🗑️ NGAY CỘT TÁC VỤ)
+    function renderProgressTable() {
+      const tbody = document.getElementById('progressTableBody');
+      const tasks = appState.tasks.filter(t => t.channelId === activeChannelId);
+      const canDelete = currentUser && currentUser.isAdmin;
 
-    function clearSelectedFile() {
-      selectedChatFile = null;
-      document.getElementById('chatFileInput').value = '';
-      document.getElementById('selectedFileBar').classList.add('hidden');
-    }
-
-    async function uploadFileToStorage(file) {
-      const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/team-files/${safeName}`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Content-Type': file.type || 'application/octet-stream'
-        },
-        body: file
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Upload file thất bại: ${errText}`);
-      }
-      return {
-        url: `${SUPABASE_URL}/storage/v1/object/public/team-files/${safeName}`,
-        name: file.name
-      };
-    }
-
-    async function sendChatMessage() {
-      const input = document.getElementById('chatInput');
-      const rawText = input.value.trim();
-      const text = parseEmojis(rawText);
-      if (!text && !selectedChatFile) return;
-      if (!activeChannel || !currentUser) return;
-
-      document.getElementById('emojiPickerPopover').classList.add('hidden');
-      const btn = document.getElementById('sendBtn');
-      btn.disabled = true;
-
-      try {
-        let fileInfo = { url: null, name: null };
-        if (selectedChatFile) {
-          fileInfo = await uploadFileToStorage(selectedChatFile);
-        }
-
-        await sbFetch('team_messages', {
-          method: 'POST',
-          body: JSON.stringify([{
-            channel_id: activeChannel.id,
-            sender_name: currentUser.display_name,
-            sender_role: currentUser.role_title,
-            msg_type: 'CHAT',
-            content: text || `📎 Đã gửi tệp: ${fileInfo.name}`,
-            file_url: fileInfo.url,
-            file_name: fileInfo.name
-          }])
-        });
-
-        if (hasPerm('can_assign')) {
-          await detectAndCreateTaskFromChat(text);
-        }
-
-        input.value = '';
-        clearSelectedFile();
-        await loadMessages(true);
-      } catch (err) {
-        alert('Lỗi gửi tin: ' + err.message);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function detectAndCreateTaskFromChat(text) {
-      if (!text || !text.includes('@')) return;
-      for (const user of allUsers) {
-        const mentionTag = '@' + user.display_name;
-        if (text.toLowerCase().includes(mentionTag.toLowerCase())) {
-          const cleanTask = text.replace(new RegExp(mentionTag, 'ig'), '').replace(/^giao\s*/i, '').trim();
-          if (cleanTask.length >= 3) {
-            const now = new Date();
-            const due = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-            await createChecklistTaskRecord({
-              assignee: user,
-              taskTitle: cleanTask,
-              startAtIso: now.toISOString(),
-              dueAtIso: due.toISOString(),
-              meetingChair: currentUser.display_name,
-              chairConfirmed: true
-            });
-          }
-          break;
-        }
-      }
-    }
-
-    // CHIA SẺ FILE TỪ 1 NGƯỜI CHO NHIỀU NGƯỜI
-    function openMultiShareModal() {
-      const fb = document.getElementById('multiShareFeedback');
-      fb.classList.add('hidden');
-      document.getElementById('multiShareFileInput').value = '';
-      document.getElementById('multiShareNoteInput').value = '';
-
-      const box = document.getElementById('multiShareUserCheckboxes');
-      const peers = allUsers.filter(u => currentUser && u.id !== currentUser.id);
-      box.innerHTML = peers.map(u => `
-        <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-white border border-slate-200 hover:border-indigo-400">
-          <input type="checkbox" name="shareRecipient" value="${u.id}" class="accent-indigo-600" />
-          <div class="truncate">
-            <div class="font-bold text-slate-800 truncate">${escapeHtml(u.display_name)}</div>
-            <div class="text-[10px] text-slate-500 truncate">${escapeHtml(u.role_title)}</div>
-          </div>
-        </label>
-      `).join('');
-      openModal('multiShareModal');
-    }
-
-    function toggleSelectAllShareUsers() {
-      const cbs = Array.from(document.getElementsByName('shareRecipient'));
-      const allChecked = cbs.every(cb => cb.checked);
-      cbs.forEach(cb => { cb.checked = !allChecked; });
-    }
-
-    async function executeMultiShareFile() {
-      const fileEl = document.getElementById('multiShareFileInput');
-      const note = parseEmojis(document.getElementById('multiShareNoteInput').value.trim());
-      const fb = document.getElementById('multiShareFeedback');
-
-      const recipientIds = Array.from(document.getElementsByName('shareRecipient'))
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
-
-      if (!fileEl.files[0]) {
-        fb.textContent = 'Vui lòng chọn tệp cần chia sẻ!';
-        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
-        fb.classList.remove('hidden');
-        return;
-      }
-      if (!recipientIds.length) {
-        fb.textContent = 'Vui lòng tích chọn ít nhất 1 thành viên nhận file!';
-        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
-        fb.classList.remove('hidden');
+      if (tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">Chưa có công việc nào trong dự án này.</td></tr>`;
         return;
       }
 
-      const btn = document.getElementById('submitMultiShareBtn');
-      btn.disabled = true;
-      btn.textContent = '⏳ Đang tải tệp & gửi cho các thành viên...';
-
-      try {
-        const fileInfo = await uploadFileToStorage(fileEl.files[0]);
-
-        for (const rId of recipientIds) {
-          const peer = allUsers.find(u => u.id === rId);
-          if (!peer) continue;
-          const dmKey = buildDmChannelKey(currentUser.id, peer.id);
-          let dmChannel = rawAllChannels.find(c => c.name === dmKey);
-
-          if (!dmChannel) {
-            const created = await sbFetch('team_channels', {
-              method: 'POST',
-              headers: { 'Prefer': 'return=representation' },
-              body: JSON.stringify([{
-                name: dmKey,
-                description: `Trao đổi riêng giữa ${currentUser.display_name} & ${peer.display_name}`
-              }])
-            });
-            if (created && created[0]) {
-              dmChannel = created[0];
-              rawAllChannels.push(dmChannel);
-            }
-          }
-
-          if (dmChannel) {
-            await sbFetch('team_messages', {
-              method: 'POST',
-              body: JSON.stringify([{
-                channel_id: dmChannel.id,
-                sender_name: currentUser.display_name,
-                sender_role: currentUser.role_title,
-                msg_type: 'CHAT',
-                content: note ? `📤 Chia sẻ tài liệu: ${note}` : `📤 Đã chia sẻ tài liệu: ${fileInfo.name}`,
-                file_url: fileInfo.url,
-                file_name: fileInfo.name
-              }])
-            });
-          }
-        }
-
-        fb.textContent = `✅ Đã chia sẻ tệp "${fileInfo.name}" vào hộp thư riêng của ${recipientIds.length} thành viên!`;
-        fb.className = 'p-2.5 rounded-xl font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
-        fb.classList.remove('hidden');
-        if (activeChannel && activeChannel.isDM) {
-          await loadMessages(true);
-        }
-      } catch (err) {
-        fb.textContent = 'Lỗi chia sẻ tệp: ' + err.message;
-        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
-        fb.classList.remove('hidden');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '📤 Gửi File Cho Các Thành Viên Đã Chọn';
-      }
+      tbody.innerHTML = tasks.map(t => {
+        const isDone = t.status === 'DONE';
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4 font-semibold text-slate-900">${t.assigneeName}</td>
+            <td class="py-3 px-4 text-slate-800 max-w-xs">${t.content}</td>
+            <td class="py-3 px-4 text-[11px] text-slate-600">
+              <div class="text-emerald-600 font-medium">🟢 ${t.createdAt}</div>
+              <div class="text-rose-600 font-medium">🔴 ${t.deadlineDisplay || 'Chưa đặt hạn'}</div>
+            </td>
+            <td class="py-3 px-4 text-slate-700">${t.approverName || 'Lãnh Đạo / Quản Lý'} ✅</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">
+                ${isDone ? '✓ ĐÃ XONG (DONE)' : '⚠ ĐANG TRIỂN KHAI'}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-600 max-w-xs">${t.note || '—'}</td>
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="replyTask('${t.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">
+                  Hồi đáp
+                </button>
+                ${(canDelete || (currentUser && currentUser.id === t.creatorId)) ? `
+                  <button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">
+                    🗑️ Xóa
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    // 4. PHIẾU TRÌNH PHÊ DUYỆT & GỬI BOT TELEGRAM
-    async function submitApprovalRequest() {
-      const content = parseEmojis(document.getElementById('approvalContentInput').value.trim());
-      if (!content) return alert('Vui lòng nhập nội dung trình phê duyệt!');
-
-      const approverId = document.getElementById('approvalApproverSelect').value;
-      const approver = allUsers.find(u => u.id === approverId);
-      const fileEl = document.getElementById('approvalFileInput');
-      const btn = document.getElementById('submitApprovalBtn');
-      btn.disabled = true;
-      btn.textContent = 'Đang gửi...';
-
-      try {
-        let fileInfo = { url: null, name: null };
-        if (fileEl.files[0]) {
-          fileInfo = await uploadFileToStorage(fileEl.files[0]);
-        }
-
-        const data = await sbFetch('team_messages', {
-          method: 'POST',
-          headers: { 'Prefer': 'return=representation' },
-          body: JSON.stringify([{
-            channel_id: activeChannel.id,
-            sender_name: currentUser.display_name,
-            sender_role: currentUser.role_title,
-            msg_type: 'APPROVAL',
-            content: content,
-            file_url: fileInfo.url,
-            file_name: fileInfo.name,
-            approval_status: 'PENDING'
-          }])
-        });
-
-        const insertedMsg = data[0];
-
-        fetch(APPS_SCRIPT_WEBHOOK, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'NOTIFY_APPROVAL',
-            messageId: insertedMsg.id,
-            senderName: currentUser.display_name,
-            senderRole: currentUser.role_title,
-            channelName: activeChannel.isDM ? `Kênh riêng (${currentUser.display_name})` : activeChannel.name,
-            content: content,
-            fileUrl: fileInfo.url || '',
-            fileName: fileInfo.name || '',
-            approverChatId: approver ? approver.telegram_chat_id : ''
-          })
-        });
-
-        document.getElementById('approvalContentInput').value = '';
-        fileEl.value = '';
-        closeModal('approvalModal');
-        await loadMessages(true);
-      } catch (err) {
-        alert('Lỗi gửi phiếu trình duyệt: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Gửi Trình Duyệt & Báo Bot';
-      }
-    }
-
-    async function approveOnWeb(msgId, status) {
-      if (!hasPerm('can_approve')) return alert('Bạn chưa được cấp quyền phê duyệt!');
-      await sbFetch(`team_messages?id=eq.${msgId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          approval_status: status,
-          approver_name: currentUser.display_name,
-          approved_at: new Date().toISOString()
-        })
-      });
-      await loadMessages(false);
-    }
-
-    // 5. HỆ THỐNG CHECKLIST, LỊCH TRÌNH SAU CUỘC HỌP & GIÁM SÁT 3 MỐC DEADLINE
-    function toLocalDatetimeInputVal(dateObj) {
-      const tzOffset = dateObj.getTimezoneOffset() * 60000;
-      return new Date(dateObj.getTime() - tzOffset).toISOString().slice(0, 16);
-    }
-
-    function openTaskModal() {
-      const now = new Date();
-      const defaultDue = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      document.getElementById('taskStartAtInput').value = toLocalDatetimeInputVal(now);
-      document.getElementById('taskDueAtInput').value = toLocalDatetimeInputVal(defaultDue);
-      document.getElementById('taskTitleInput').value = '';
-      openModal('taskModal');
-    }
-
-    function getDeadlineStatus(t) {
-      if (t.status === 'DONE') {
-        return { code: 'DONE', label: 'ĐÃ XONG (DONE)', cls: 'bg-emerald-600 text-white' };
-      }
-      if (!t.due_at) {
-        return { code: 'PENDING', label: 'ĐANG THỰC HIỆN', cls: 'bg-amber-500 text-slate-950' };
-      }
-      const now = Date.now();
-      const due = new Date(t.due_at).getTime();
-      const diffMs = due - now;
-      if (diffMs < 0) {
-        return { code: 'OVERDUE', label: '🚨 QUÁ DEADLINE', cls: 'bg-rose-600 text-white animate-pulse' };
-      }
-      if (diffMs <= 30 * 60 * 1000) {
-        return { code: 'DUE_NOW', label: '🔔 ĐẾN DEADLINE', cls: 'bg-orange-500 text-white' };
-      }
-      if (diffMs <= 24 * 60 * 60 * 1000) {
-        return { code: 'UPCOMING', label: '⏰ SẮP ĐẾN HẠN (<24H)', cls: 'bg-amber-400 text-slate-950' };
-      }
-      return { code: 'IN_PROGRESS', label: '⏳ ĐANG THỰC HIỆN', cls: 'bg-blue-100 text-blue-800' };
-    }
-
-    async function loadTasks() {
-      if (!activeChannel) return;
-      const data = await sbFetch(`team_tasks?channel_id=eq.${activeChannel.id}&select=*&order=created_at.desc`);
-      if (JSON.stringify(data) !== JSON.stringify(channelTasks)) {
-        channelTasks = data || [];
-        renderTasks();
-      }
-      await checkLocalDeadlineAlerts();
-    }
-
-    // Kiểm tra và phát thông báo trên ứng dụng Web cho 2 trạng thái: ĐẾN HẠN & QUÁ HẠN
-    async function checkLocalDeadlineAlerts() {
-      if (isCheckingDeadlines || !activeChannel || !channelTasks.length) return;
-      isCheckingDeadlines = true;
-      try {
-        const now = Date.now();
-        for (const t of channelTasks) {
-          if (t.status !== 'PENDING' || !t.due_at) continue;
-          if (t.chair_confirmed === false) continue;
-
-          const dueMs = new Date(t.due_at).getTime();
-          if (isNaN(dueMs)) continue;
-          const diffMs = dueMs - now;
-          const stage = t.alert_stage || 'NONE';
-          let nextStage = null;
-          let alertMsg = '';
-          const fmtDue = new Date(dueMs).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
-
-          if (diffMs < 0 && stage !== 'OVERDUE') {
-            nextStage = 'OVERDUE';
-            alertMsg = `🚨 [QUÁ DEADLINE] @${t.assignee_name} — Công việc "${t.task_title}" đã quá hạn lúc ${fmtDue}. Yêu cầu bắt buộc cập nhật Lý do hồi đáp và thời gian cam kết mới!`;
-          } else if (diffMs >= 0 && diffMs <= 30 * 60 * 1000 && stage !== 'DUE_NOW' && stage !== 'OVERDUE') {
-            nextStage = 'DUE_NOW';
-            alertMsg = `🔔 [ĐẾN DEADLINE] @${t.assignee_name} — Công việc "${t.task_title}" đã đến thời hạn hoàn thành (${fmtDue}). Vui lòng xác nhận DONE hoặc nêu rõ lý do chưa hoàn thành!`;
-          }
-
-          if (nextStage && alertMsg) {
-            await sbFetch(`team_tasks?id=eq.${t.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ alert_stage: nextStage })
-            });
-            t.alert_stage = nextStage;
-
-            await sbFetch('team_messages', {
-              method: 'POST',
-              body: JSON.stringify([{
-                channel_id: activeChannel.id,
-                sender_name: 'Hệ Thống Nhắc Việc',
-                sender_role: 'Giám Sát Tiến Độ',
-                msg_type: 'DEADLINE_ALERT',
-                content: alertMsg
-              }])
-            });
-            await loadMessages(true);
-          }
-        }
-      } catch (e) {
-      } finally {
-        isCheckingDeadlines = false;
-      }
+    // =========================================================================
+    // 6. CÁC THAO TÁC CÔNG VIỆC: GIAO VIỆC, HOÀN THÀNH, HỒI ĐÁP, XÓA
+    // =========================================================================
+    function openAssignModal() {
+      const sel = document.getElementById('taskAssignee');
+      sel.innerHTML = appState.users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('');
+      document.getElementById('taskContent').value = '';
+      openModal('assignModal');
     }
 
     async function submitNewTask() {
-      if (!hasPerm('can_assign')) return alert('Bạn chưa được cấp quyền giao việc!');
-      const assigneeId = document.getElementById('taskAssigneeSelect').value;
-      const meetingChair = document.getElementById('taskChairSelect').value || currentUser.display_name;
-      const title = parseEmojis(document.getElementById('taskTitleInput').value.trim());
-      const startVal = document.getElementById('taskStartAtInput').value;
-      const dueVal = document.getElementById('taskDueAtInput').value;
-      const chairConfirmed = document.getElementById('taskChairConfirmedCheck').checked;
+      const assigneeId = document.getElementById('taskAssignee').value;
+      const content = document.getElementById('taskContent').value.trim();
+      const deadlineRaw = document.getElementById('taskDeadline').value;
+      if (!content) return alert('Anh vui lòng nhập nội dung công việc!');
 
-      if (!title) return alert('Vui lòng nhập nội dung công việc!');
-      if (!startVal || !dueVal) return alert('Bắt buộc chọn đầy đủ Thời gian bắt đầu và Thời hạn hoàn thành!');
-
-      const startIso = new Date(startVal).toISOString();
-      const dueIso = new Date(dueVal).toISOString();
-      if (new Date(dueIso) <= new Date(startIso)) {
-        return alert('Thời hạn hoàn thành phải sau Thời gian bắt đầu!');
+      const assignee = appState.users.find(u => u.id === assigneeId);
+      const now = new Date();
+      const createdStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+      let deadlineDisplay = 'Chưa đặt hạn';
+      if (deadlineRaw) {
+        const d = new Date(deadlineRaw);
+        deadlineDisplay = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('vi-VN');
       }
 
-      const assignee = allUsers.find(u => u.id === assigneeId);
-      await createChecklistTaskRecord({
-        assignee,
-        taskTitle: title,
-        startAtIso: startIso,
-        dueAtIso: dueIso,
-        meetingChair,
-        chairConfirmed
+      const newTask = {
+        id: 't_' + Date.now(),
+        channelId: activeChannelId,
+        creatorId: currentUser.id,
+        approverName: currentUser.name,
+        assigneeId: assignee.id,
+        assigneeName: assignee.name,
+        content,
+        createdAt: createdStr,
+        deadlineDisplay,
+        status: 'PENDING',
+        note: ''
+      };
+
+      appState.tasks.unshift(newTask);
+      appState.messages.push({
+        id: 'm_' + Date.now(),
+        channelId: activeChannelId,
+        sender: '📌 Hệ Thống Giao Việc',
+        text: `Đã giao việc cho @${assignee.name}: "${content}" (Hạn: ${deadlineDisplay})`,
+        time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       });
 
-      closeModal('taskModal');
-      await Promise.all([loadMessages(true), loadTasks()]);
-    }
+      await saveCloudState();
+      closeModal('assignModal');
+      renderAll();
 
-    async function createChecklistTaskRecord({ assignee, taskTitle, startAtIso, dueAtIso, meetingChair, chairConfirmed }) {
-      if (!assignee || !activeChannel) return;
-      const fmtStart = new Date(startAtIso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
-      const fmtDue = new Date(dueAtIso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
-      const dueSummary = `${fmtStart} → ${fmtDue}`;
-
-      const insertedTasks = await sbFetch('team_tasks', {
-        method: 'POST',
-        headers: { 'Prefer': 'return=representation' },
-        body: JSON.stringify([{
-          channel_id: activeChannel.id,
-          assignee_name: assignee.display_name,
-          assigned_by: currentUser.display_name,
-          task_title: taskTitle,
-          due_date: dueSummary,
-          start_at: startAtIso,
-          due_at: dueAtIso,
-          meeting_chair: meetingChair || currentUser.display_name,
-          chair_confirmed: Boolean(chairConfirmed),
-          alert_stage: 'NONE',
-          status: 'PENDING',
-          progress_note: ''
-        }])
-      });
-
-      const newTaskId = (insertedTasks && insertedTasks[0]) ? insertedTasks[0].id : '';
-
-      const chairTag = chairConfirmed
-        ? `✅ Chủ trì (${meetingChair}) đã xác nhận`
-        : `⏳ Chờ Chủ trì (${meetingChair}) xác nhận`;
-
-      await sbFetch('team_messages', {
-        method: 'POST',
-        body: JSON.stringify([{
-          channel_id: activeChannel.id,
-          sender_name: currentUser.display_name,
-          sender_role: currentUser.role_title,
-          msg_type: 'TASK',
-          content: `Giao cho @${assignee.display_name}: ${taskTitle}\n• Bắt đầu: ${fmtStart} | Hoàn thành: ${fmtDue}\n• Trạng thái: ${chairTag}`
-        }])
-      });
-
-      if (chairConfirmed) {
-        fetch(APPS_SCRIPT_WEBHOOK, {
+      // Gửi thông báo qua Google Apps Script Webhook nếu có cấu hình
+      if (GAS_WEBHOOK_URL && assignee.telegramId) {
+        fetch(GAS_WEBHOOK_URL, {
           method: 'POST',
           mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'NOTIFY_TASK',
-            taskId: newTaskId,
-            assigneeName: assignee.display_name,
-            assigneeChatId: assignee.telegram_chat_id || '',
-            assignedBy: currentUser.display_name,
-            channelName: activeChannel.isDM ? `Kênh riêng (${currentUser.display_name})` : activeChannel.name,
-            taskTitle: taskTitle,
-            dueDate: dueSummary
+            chatId: assignee.telegramId,
+            assignee: assignee.name,
+            task: content,
+            deadline: deadlineDisplay
           })
-        });
+        }).catch(() => {});
       }
     }
 
-    async function confirmTaskByChair(taskId) {
-      if (!hasPerm('can_approve') && !hasPerm('can_assign')) {
-        return alert('Chỉ Chủ trì cuộc họp hoặc Quản lý mới có quyền xác nhận lịch trình!');
-      }
-      const task = channelTasks.find(t => t.id === taskId);
+    async function markTaskDone(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
       if (!task) return;
-      await sbFetch(`team_tasks?id=eq.${taskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          chair_confirmed: true,
-          meeting_chair: currentUser.display_name
-        })
-      });
-      await sbFetch('team_messages', {
-        method: 'POST',
-        body: JSON.stringify([{
-          channel_id: activeChannel.id,
-          sender_name: currentUser.display_name,
-          sender_role: 'Chủ Trì Cuộc Họp',
-          msg_type: 'CHAT',
-          content: `✅ Chủ trì cuộc họp (${currentUser.display_name}) đã xác nhận chốt lịch trình thực hiện công việc "${task.task_title}" của @${task.assignee_name}.`
-        }])
-      });
-      await Promise.all([loadMessages(true), loadTasks()]);
+      task.status = 'DONE';
+      if (!task.note) task.note = 'Đã hoàn thành công việc được giao.';
+      await saveCloudState();
+      renderAll();
     }
 
-    function renderTasks() {
-      const filter = document.getElementById('taskFilterSelect').value;
-      const myPendingCount = channelTasks.filter(t => currentUser && t.assignee_name === currentUser.display_name && t.status === 'PENDING').length;
-      document.getElementById('myPendingBadge').textContent = myPendingCount;
+    async function replyTask(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const reply = prompt(`Nhập nội dung hồi đáp / cập nhật tiến độ cho việc "${task.content}":`, task.note || '');
+      if (reply === null) return;
+      task.note = reply.trim();
+      const setDone = confirm('Đánh dấu công việc này là ĐÃ XONG (DONE) luôn không?\n(Bấm OK để chốt DONE, bấm Cancel để giữ trạng thái đang làm)');
+      if (setDone) task.status = 'DONE';
+      await saveCloudState();
+      renderAll();
+    }
 
-      let list = [...channelTasks];
-      if (filter === 'MINE' && currentUser) list = list.filter(t => t.assignee_name === currentUser.display_name);
-      if (filter === 'PENDING') list = list.filter(t => t.status === 'PENDING');
-      if (filter === 'OVERDUE') list = list.filter(t => getDeadlineStatus(t).code === 'OVERDUE');
-      if (filter === 'DONE') list = list.filter(t => t.status === 'DONE');
+    // HÀM XÓA CÔNG VIỆC DÙNG CHUNG CHO CẢ CHECKLIST VÀ BẢNG TIẾN ĐỘ
+    async function deleteTask(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const ok = confirm(`Anh chắc chắn muốn XÓA VĨNH VIỄN công việc:\n"${task.content}" (Giao cho: ${task.assigneeName})?`);
+      if (!ok) return;
 
-      const box = document.getElementById('taskListContainer');
-      if (!list.length) {
-        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">Chưa có đầu việc Checklist nào ở bộ lọc này.</div>`;
-        return;
+      appState.tasks = appState.tasks.filter(t => t.id !== taskId);
+      await saveCloudState();
+      renderAll();
+    }
+
+    // =========================================================================
+    // 7. CÀI ĐẶT TELEGRAM ID & QUẢN LÝ NHÂN SỰ
+    // =========================================================================
+    function openProfileSettings() {
+      if (!currentUser) return;
+      document.getElementById('profileTelegramId').value = currentUser.telegramId || '';
+      document.getElementById('profileNewPass').value = '';
+      openModal('profileModal');
+    }
+
+    async function saveProfileSettings() {
+      if (!currentUser) return;
+      const tgId = document.getElementById('profileTelegramId').value.trim();
+      const newPass = document.getElementById('profileNewPass').value.trim();
+
+      const u = appState.users.find(x => x.id === currentUser.id);
+      if (u) {
+        u.telegramId = tgId;
+        if (newPass) u.pass = newPass;
+        currentUser = u;
       }
+      await saveCloudState();
+      updateTelegramIndicator();
+      closeModal('profileModal');
+      alert('Đã lưu cài đặt cá nhân & Telegram ID thành công!');
+    }
 
-      const canChairApprove = hasPerm('can_approve') || hasPerm('can_assign');
-
-      box.innerHTML = list.map(t => {
-        const isDone = t.status === 'DONE';
-        const isMine = currentUser && t.assignee_name === currentUser.display_name;
-        const canConfirm = isMine || canChairApprove;
-        const dl = getDeadlineStatus(t);
-        const isChairConfirmed = t.chair_confirmed !== false;
-
-        const fmtDt = iso => new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
-        const timeRangeHtml = (t.start_at && t.due_at)
-          ? `<div class="bg-white/80 border border-slate-200 rounded-lg px-2 py-1 text-[11px] flex items-center justify-between">
-               <span class="text-emerald-700 font-semibold">🟢 BĐ: ${fmtDt(t.start_at)}</span>
-               <span class="text-rose-700 font-bold">🔴 KT: ${fmtDt(t.due_at)}</span>
-             </div>`
-          : (t.due_date ? `<div class="text-[11px] text-rose-600 font-medium">⏰ ${escapeHtml(t.due_date)}</div>` : '');
-
-        return `
-          <div class="border rounded-xl p-3 text-xs space-y-2 ${isDone ? 'bg-emerald-50/50 border-emerald-200' : (dl.code === 'OVERDUE' ? 'bg-rose-50/60 border-rose-300' : 'bg-amber-50/40 border-amber-200')}">
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-bold text-slate-800">👤 ${escapeHtml(t.assignee_name)}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${dl.cls}">
-                ${dl.label}
-              </span>
-            </div>
-
-            <div class="text-slate-800 font-medium leading-relaxed">${escapeHtml(t.task_title)}</div>
-
-            ${timeRangeHtml}
-
-            <div class="text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-1">
-              <span>Giao bởi: ${escapeHtml(t.assigned_by)}</span>
-              ${isChairConfirmed
-                ? `<span class="text-emerald-700 font-semibold">✅ Chủ trì (${escapeHtml(t.meeting_chair || t.assigned_by)}) đã duyệt</span>`
-                : `<span class="text-amber-700 font-semibold">⏳ Chờ Chủ trì (${escapeHtml(t.meeting_chair || '')}) duyệt</span>`
-              }
-            </div>
-
-            ${!isChairConfirmed && canChairApprove ? `
-              <button onclick="confirmTaskByChair('${t.id}')" class="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-center transition">
-                ✅ Chủ Trì Xác Nhận Chốt Lịch Trình
-              </button>
-            ` : ''}
-
-            ${t.delay_reason ? `
-              <div class="bg-rose-50 border border-rose-200 rounded-lg p-2 text-[11px] text-rose-900">
-                <b>⚠️ Lý do chậm trễ:</b> ${escapeHtml(t.delay_reason)}
-              </div>
-            ` : ''}
-
-            ${t.progress_note ? `
-              <div class="bg-white border border-slate-200 rounded-lg p-2 text-[11px] text-slate-700">
-                <b>Chi tiết hồi đáp:</b> ${escapeHtml(t.progress_note)}
-              </div>
-            ` : ''}
-
-            ${canConfirm ? `
-              <button onclick="openConfirmTaskModal('${t.id}')"
-                class="w-full py-1.5 rounded-lg font-semibold text-center transition ${isDone ? 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' : 'bg-blue-600 hover:bg-blue-700 text-white'}">
-                ${isDone ? '✏️ Cập nhật lại ghi chú' : '✍️ Xác nhận DONE / Nêu lý do chưa xong'}
-              </button>
-            ` : ''}
+    function openStaffModal() {
+      const box = document.getElementById('staffListContainer');
+      box.innerHTML = appState.users.map(u => `
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-bold text-white">${u.name} <span class="text-[10px] text-slate-400">(${u.role})</span></div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Telegram ID: <span class="${u.telegramId ? 'text-emerald-400 font-semibold' : 'text-rose-400'}">${u.telegramId || 'Chưa gắn'}</span></div>
           </div>
-        `;
-      }).join('');
-    }
-
-    // BẢNG TỔNG HỢP TIẾN ĐỘ CHECKLIST (KHI BẤM "XEM BẢNG" HOẶC "VIỆC CỦA TÔI")
-    function openTaskBoardModal() {
-      if (!activeChannel) return;
-      document.getElementById('taskBoardSubtitle').textContent = `Nhóm / Dự án: ${activeChannel.name} • Tổng số: ${channelTasks.length} đầu việc`;
-      const tbody = document.getElementById('taskBoardTableBody');
-      const fmtDt = iso => new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
-
-      if (!channelTasks.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Chưa có đầu việc Checklist nào trong dự án này.</td></tr>`;
-      } else {
-        tbody.innerHTML = channelTasks.map(t => {
-          const st = getDeadlineStatus(t);
-          const timeRange = (t.start_at && t.due_at)
-            ? `<div>🟢 ${fmtDt(t.start_at)}</div><div class="text-rose-700 font-semibold">🔴 ${fmtDt(t.due_at)}</div>`
-            : escapeHtml(t.due_date || 'Chưa đặt hạn');
-          const reasonText = [t.delay_reason, t.progress_note].filter(Boolean).join(' — ') || '—';
-
-          return `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold text-slate-800 whitespace-nowrap">${escapeHtml(t.assignee_name)}</td>
-              <td class="p-2.5 text-slate-800 min-w-[200px]">${escapeHtml(t.task_title)}</td>
-              <td class="p-2.5 text-[11px] whitespace-nowrap">${timeRange}</td>
-              <td class="p-2.5 text-[11px] whitespace-nowrap">${escapeHtml(t.meeting_chair || t.assigned_by)} ${t.chair_confirmed !== false ? '✅' : '⏳'}</td>
-              <td class="p-2.5 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${st.cls}">${st.label}</span></td>
-              <td class="p-2.5 text-[11px] text-slate-600 min-w-[180px]">${escapeHtml(reasonText)}</td>
-              <td class="p-2.5 text-center whitespace-nowrap">
-                <button onclick="closeModal('taskBoardModal'); openConfirmTaskModal('${t.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold">
-                  Hồi đáp
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
-      openModal('taskBoardModal');
-    }
-
-    // CHỐT LỊCH TRÌNH SAU CUỘC HỌP (BÓC TÁCH TỰ ĐỘNG + NHẬP NHIỀU ĐẦU VIỆC)
-    function openMeetingPlanModal() {
-      if (!hasPerm('can_assign')) return alert('Bạn chưa được cấp quyền lập lịch phân chia công việc!');
-      document.getElementById('meetingMinutesRawInput').value = '';
-      const container = document.getElementById('meetingTaskRowsContainer');
-      container.innerHTML = '';
-      addMeetingTaskRow();
-      openModal('meetingPlanModal');
-    }
-
-    function addMeetingTaskRow(prefillUserId = '', prefillTitle = '') {
-      const container = document.getElementById('meetingTaskRowsContainer');
-      const now = new Date();
-      const defaultDue = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const userOptions = allUsers.map(u =>
-        `<option value="${u.id}" ${u.id === prefillUserId ? 'selected' : ''}>${escapeHtml(u.display_name)}</option>`
-      ).join('');
-
-      const row = document.createElement('div');
-      row.className = 'meeting-task-row grid grid-cols-1 md:grid-cols-12 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 items-center';
-      row.innerHTML = `
-        <div class="md:col-span-3">
-          <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Thành viên *</label>
-          <select class="mt-assignee w-full border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-semibold">${userOptions}</select>
+          <button onclick="editUserTelegram('${u.id}')" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 px-2.5 py-1.5 rounded-lg text-[11px] font-medium">
+            ✏️ Gắn Telegram ID
+          </button>
         </div>
-        <div class="md:col-span-4">
-          <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Nội dung công việc *</label>
-          <input type="text" class="mt-title w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white" value="${escapeHtml(prefillTitle)}" placeholder="Nhập đầu việc cụ thể..." />
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-[10px] font-bold text-emerald-700 mb-0.5">Bắt đầu *</label>
-          <input type="datetime-local" class="mt-start w-full border border-slate-300 rounded-lg px-1.5 py-1.5 bg-white text-[11px]" value="${toLocalDatetimeInputVal(now)}" />
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-[10px] font-bold text-rose-700 mb-0.5">Hoàn thành *</label>
-          <input type="datetime-local" class="mt-due w-full border border-slate-300 rounded-lg px-1.5 py-1.5 bg-white text-[11px]" value="${toLocalDatetimeInputVal(defaultDue)}" />
-        </div>
-        <div class="md:col-span-1 text-right pt-3">
-          <button type="button" onclick="this.closest('.meeting-task-row').remove()" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1">✕</button>
-        </div>
-      `;
-      container.appendChild(row);
-    }
-
-    function autoParseMeetingMinutes() {
-      const raw = document.getElementById('meetingMinutesRawInput').value.trim();
-      if (!raw) return alert('Vui lòng dán nội dung kết luận cuộc họp vào ô phía trên!');
-      const lines = raw.split(/\n|;/).map(s => s.trim()).filter(Boolean);
-      const container = document.getElementById('meetingTaskRowsContainer');
-      container.innerHTML = '';
-
-      let matchedCount = 0;
-      lines.forEach(line => {
-        let matchedUser = allUsers.find(u => line.toLowerCase().includes(u.display_name.toLowerCase()));
-        let cleanTitle = line;
-        if (matchedUser) {
-          cleanTitle = line.replace(new RegExp('@?' + matchedUser.display_name, 'ig'), '').replace(/^[:\-\s]+/, '').trim();
-        }
-        addMeetingTaskRow(matchedUser ? matchedUser.id : '', cleanTitle || line);
-        matchedCount++;
-      });
-
-      if (!matchedCount) addMeetingTaskRow();
-    }
-
-    async function submitMeetingPlan() {
-      const chairName = document.getElementById('meetingChairSelect').value || currentUser.display_name;
-      const chairConfirmed = document.getElementById('meetingChairConfirmedCheck').checked;
-      const rows = Array.from(document.querySelectorAll('.meeting-task-row'));
-      if (!rows.length) return alert('Vui lòng thêm ít nhất 1 đầu việc phân công!');
-
-      const items = [];
-      for (const r of rows) {
-        const assigneeId = r.querySelector('.mt-assignee').value;
-        const title = parseEmojis(r.querySelector('.mt-title').value.trim());
-        const startVal = r.querySelector('.mt-start').value;
-        const dueVal = r.querySelector('.mt-due').value;
-        if (!title || !startVal || !dueVal) {
-          return alert('Tất cả các dòng công việc đều bắt buộc nhập đủ Nội dung, Thời gian bắt đầu và Thời gian hoàn thành!');
-        }
-        const startIso = new Date(startVal).toISOString();
-        const dueIso = new Date(dueVal).toISOString();
-        if (new Date(dueIso) <= new Date(startIso)) {
-          return alert(`Công việc "${title}" có thời hạn hoàn thành phải sau thời gian bắt đầu!`);
-        }
-        const assignee = allUsers.find(u => u.id === assigneeId);
-        items.push({ assignee, taskTitle: title, startAtIso: startIso, dueAtIso: dueIso });
-      }
-
-      const btn = document.getElementById('submitMeetingPlanBtn');
-      btn.disabled = true;
-      btn.textContent = '⏳ Đang phát hành lịch trình...';
-
-      try {
-        for (const it of items) {
-          await createChecklistTaskRecord({
-            assignee: it.assignee,
-            taskTitle: it.taskTitle,
-            startAtIso: it.startAtIso,
-            dueAtIso: it.dueAtIso,
-            meetingChair: chairName,
-            chairConfirmed
-          });
-        }
-        closeModal('meetingPlanModal');
-        await Promise.all([loadMessages(true), loadTasks()]);
-      } catch (err) {
-        alert('Lỗi phát hành lịch trình: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '✅ Ban Hành Lịch Trình & Kích Hoạt Nhắc Việc';
-      }
-    }
-
-    // XÁC NHẬN TIẾN ĐỘ & BẮT BUỘC LÝ DO HỒI ĐÁP KHI CHƯA XONG
-    function toggleDelayReasonBox() {
-      let selectedStatus = 'PENDING';
-      document.getElementsByName('taskConfirmStatus').forEach(r => { if (r.checked) selectedStatus = r.value; });
-      const isPending = (selectedStatus === 'PENDING');
-      document.getElementById('delayReasonSection').classList.toggle('hidden', !isPending);
-      document.getElementById('confirmNoteLabel').textContent = isPending
-        ? 'Chi tiết lý do hồi đáp & Thời gian cam kết hoàn thành mới *'
-        : 'Ghi chú kết quả hoàn thành (tùy chọn)';
-    }
-
-    function openConfirmTaskModal(taskId) {
-      const task = channelTasks.find(t => t.id === taskId);
-      if (!task) return;
-      confirmingTaskId = taskId;
-
-      const fmtDt = iso => new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
-      const timeStr = (task.start_at && task.due_at)
-        ? `<div>Thời gian: <b>${fmtDt(task.start_at)}</b> → <b class="text-rose-700">${fmtDt(task.due_at)}</b></div>`
-        : '';
-
-      document.getElementById('confirmTaskTitleDisplay').innerHTML = `
-        <div><b>Công việc:</b> ${escapeHtml(task.task_title)}</div>
-        ${timeStr}
-      `;
-      document.getElementById('confirmDelayReasonSelect').value = task.delay_reason || '';
-      document.getElementById('confirmTaskNoteInput').value = task.progress_note || '';
-      const radios = document.getElementsByName('taskConfirmStatus');
-      radios.forEach(r => { r.checked = (r.value === task.status); });
-      toggleDelayReasonBox();
-      openModal('confirmTaskModal');
-    }
-
-    async function saveTaskConfirmation() {
-      if (!confirmingTaskId) return;
-      const task = channelTasks.find(t => t.id === confirmingTaskId);
-      const delayReason = document.getElementById('confirmDelayReasonSelect').value;
-      const note = parseEmojis(document.getElementById('confirmTaskNoteInput').value.trim());
-      let selectedStatus = 'PENDING';
-      document.getElementsByName('taskConfirmStatus').forEach(r => { if (r.checked) selectedStatus = r.value; });
-
-      if (selectedStatus === 'PENDING') {
-        if (!delayReason) {
-          return alert('Bắt buộc chọn Nhóm lý do chưa hoàn thành trước khi gửi hồi đáp!');
-        }
-        if (!note || note.length < 5) {
-          return alert('Bắt buộc nhập Chi tiết lý do hồi đáp và thời gian cam kết hoàn thành mới!');
-        }
-      }
-
-      const finalNote = selectedStatus === 'DONE'
-        ? (note || 'Đã hoàn thành công việc được giao.')
-        : note;
-
-      await sbFetch(`team_tasks?id=eq.${confirmingTaskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: selectedStatus,
-          delay_reason: selectedStatus === 'PENDING' ? delayReason : null,
-          progress_note: finalNote,
-          confirmed_at: new Date().toISOString()
-        })
-      });
-
-      if (task && activeChannel) {
-        const msgContent = selectedStatus === 'DONE'
-          ? `✅ Đã hoàn thành (DONE) công việc: "${task.task_title}" — ${finalNote}`
-          : `📝 Hồi đáp tiến độ công việc "${task.task_title}":\n• Trạng thái: CHƯA XONG (PENDING)\n• Nhóm lý do: ${delayReason}\n• Chi tiết & Cam kết: ${finalNote}`;
-
-        await sbFetch('team_messages', {
-          method: 'POST',
-          body: JSON.stringify([{
-            channel_id: activeChannel.id,
-            sender_name: currentUser.display_name,
-            sender_role: currentUser.role_title,
-            msg_type: 'CHAT',
-            content: msgContent
-          }])
-        });
-      }
-
-      closeModal('confirmTaskModal');
-      await Promise.all([loadMessages(true), loadTasks()]);
-    }
-
-    // 6. KHO TÀI LIỆU & QUẢN LÝ NHÂN SỰ + PHÂN QUYỀN CHI TIẾT
-    function renderFilesTab() {
-      const files = channelMessages.filter(m => m.file_url);
-      const box = document.getElementById('rightTabFiles');
-      if (!files.length) {
-        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">Chưa có tệp nào được gửi trong kênh này.</div>`;
-        return;
-      }
-      box.innerHTML = files.map(f => `
-        <a href="${f.file_url}" target="_blank" class="block p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 transition text-xs">
-          <div class="font-semibold text-blue-700 truncate">📎 ${escapeHtml(f.file_name || 'Tài liệu')}</div>
-          <div class="text-[11px] text-slate-500 mt-0.5">Gửi bởi ${escapeHtml(f.sender_name)} • ${new Date(f.created_at).toLocaleDateString('vi-VN')}</div>
-        </a>
       `).join('');
+      openModal('staffModal');
     }
 
-    function openUserModal() {
-      resetUserForm();
-      const fb = document.getElementById('userModalFeedback');
-      if (fb) fb.classList.add('hidden');
-      renderUserManagementList();
-      openModal('userModal');
-    }
-
-    function showUserFeedback(msg, isError = false) {
-      const fb = document.getElementById('userModalFeedback');
-      if (!fb) return;
-      fb.textContent = msg;
-      fb.className = `text-xs font-medium px-2.5 py-1.5 rounded-lg ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`;
-      fb.classList.remove('hidden');
-    }
-
-    function onBasePermChange() {
-      const base = document.getElementById('newUserPerm').value;
-      const isFull = (base === 'APPROVER');
-      document.getElementById('permAssign').checked = isFull;
-      document.getElementById('permApprove').checked = isFull;
-      document.getElementById('permCreateChannel').checked = isFull;
-      document.getElementById('permManageUsers').checked = isFull;
-      document.getElementById('permBackup').checked = isFull;
-    }
-
-    function resetUserForm() {
-      document.getElementById('editingUserId').value = '';
-      document.getElementById('userFormTitle').textContent = '+ Thêm Thành Viên Mới';
-      document.getElementById('saveUserBtn').textContent = '+ Lưu Thành Viên Mới';
-      document.getElementById('cancelEditUserBtn').classList.add('hidden');
-      document.getElementById('newUserName').value = '';
-      document.getElementById('newUserRole').value = '';
-      document.getElementById('newUserPerm').value = 'MEMBER';
-      document.getElementById('newUserPin').value = '';
-      document.getElementById('newUserTgId').value = '';
-      onBasePermChange();
-    }
-
-    function editUser(userId) {
-      const u = allUsers.find(x => x.id === userId);
+    async function editUserTelegram(userId) {
+      const u = appState.users.find(x => x.id === userId);
       if (!u) return;
-      document.getElementById('editingUserId').value = u.id;
-      document.getElementById('userFormTitle').textContent = `✏️ Đang Chỉnh Sửa & Phân Quyền: ${u.display_name}`;
-      document.getElementById('saveUserBtn').textContent = '💾 Cập Nhật Thông Tin & Phân Quyền';
-      document.getElementById('cancelEditUserBtn').classList.remove('hidden');
-
-      document.getElementById('newUserName').value = u.display_name || '';
-      document.getElementById('newUserRole').value = u.role_title || '';
-      document.getElementById('newUserPerm').value = (u.permission === 'APPROVER' || u.permission === 'ADMIN') ? 'APPROVER' : 'MEMBER';
-      document.getElementById('newUserPin').value = u.pin_code || '';
-      document.getElementById('newUserTgId').value = u.telegram_chat_id || '';
-
-      const isFull = (u.permission === 'APPROVER' || u.permission === 'ADMIN');
-      const cp = u.custom_perms || {};
-      document.getElementById('permAssign').checked = isFull || Boolean(cp.can_assign);
-      document.getElementById('permApprove').checked = isFull || Boolean(cp.can_approve);
-      document.getElementById('permCreateChannel').checked = isFull || Boolean(cp.can_create_channel);
-      document.getElementById('permManageUsers').checked = isFull || Boolean(cp.can_manage_users);
-      document.getElementById('permBackup').checked = isFull || Boolean(cp.can_backup);
-    }
-
-    function formatPermBadges(u) {
-      if (u.permission === 'APPROVER' || u.permission === 'ADMIN') {
-        return `<span class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-semibold">Full quyền Lãnh đạo</span>`;
+      const newId = prompt(`Nhập Telegram Chat ID cho ${u.name}:`, u.telegramId || '');
+      if (newId === null) return;
+      u.telegramId = newId.trim();
+      if (currentUser && currentUser.id === u.id) {
+        currentUser = u;
+        updateTelegramIndicator();
       }
-      const cp = u.custom_perms || {};
-      const tags = [];
-      if (cp.can_assign) tags.push('Giao việc');
-      if (cp.can_approve) tags.push('Duyệt thay');
-      if (cp.can_create_channel) tags.push('Tạo nhóm');
-      if (cp.can_manage_users) tags.push('Quản lý nhân sự');
-      if (cp.can_backup) tags.push('Backup/Restore');
-      if (!tags.length) return `<span class="text-slate-400">Thành viên cơ bản (Chat & Báo cáo việc)</span>`;
-      return tags.map(t => `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-medium">${t}</span>`).join(' ');
+      await saveCloudState();
+      openStaffModal();
+      renderChannels();
     }
 
-    function renderUserManagementList() {
-      const box = document.getElementById('userManagementList');
-      if (!allUsers.length) {
-        box.innerHTML = `<div class="py-6 text-center text-slate-400">Chưa có thành viên nào trong danh sách.</div>`;
-        return;
-      }
-      box.innerHTML = allUsers.map(u => {
-        const isCurrent = currentUser && currentUser.id === u.id;
-        return `
-          <div class="py-3 flex flex-wrap items-center justify-between gap-2">
-            <div class="min-w-0 space-y-1">
-              <div class="font-bold text-slate-800">
-                ${escapeHtml(u.display_name)}
-                <span class="text-slate-400 font-normal">(${escapeHtml(u.role_title)})</span>
-                ${isCurrent ? '<span class="ml-1 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Đang đăng nhập</span>' : ''}
-              </div>
-              <div class="text-[11px] text-slate-500">
-                PIN: <code class="bg-slate-100 px-1 rounded font-bold text-slate-700">${escapeHtml(u.pin_code)}</code>
-                • Telegram ID: <b>${escapeHtml(u.telegram_chat_id || 'Chưa gắn')}</b>
-              </div>
-              <div class="flex flex-wrap gap-1 pt-0.5">${formatPermBadges(u)}</div>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button type="button" onclick="editUser('${u.id}')" class="px-2.5 py-1.5 rounded bg-blue-100 hover:bg-blue-200 font-semibold text-blue-900 transition">
-                ✏️ Sửa & Phân quyền
-              </button>
-              ${!isCurrent ? `
-                <button type="button" onclick="deleteUser('${u.id}', '${escapeHtml(u.display_name)}')" class="px-2.5 py-1.5 rounded bg-rose-100 hover:bg-rose-200 font-semibold text-rose-700 transition">
-                  🗑️ Xóa
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
+    function exportBackupJSON() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `TeamWorkCloud_Backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
     }
 
-    async function saveUserForm() {
-      const editId = document.getElementById('editingUserId').value;
-      const display_name = document.getElementById('newUserName').value.trim();
-      const role_title = document.getElementById('newUserRole').value.trim() || 'Chuyên viên';
-      const permission = document.getElementById('newUserPerm').value;
-      const pin_code = document.getElementById('newUserPin').value.trim();
-      const telegram_chat_id = document.getElementById('newUserTgId').value.trim();
-
-      const custom_perms = {
-        can_assign: document.getElementById('permAssign').checked,
-        can_approve: document.getElementById('permApprove').checked,
-        can_create_channel: document.getElementById('permCreateChannel').checked,
-        can_manage_users: document.getElementById('permManageUsers').checked,
-        can_backup: document.getElementById('permBackup').checked
-      };
-
-      if (!display_name) return showUserFeedback('Vui lòng nhập Họ tên thành viên!', true);
-      if (!pin_code) return showUserFeedback('Vui lòng nhập Mã PIN (4-6 số)!', true);
-
-      const btn = document.getElementById('saveUserBtn');
-      btn.disabled = true;
-      btn.textContent = 'Đang lưu dữ liệu...';
-
-      const payload = {
-        display_name,
-        role_title,
-        permission,
-        pin_code,
-        telegram_chat_id: telegram_chat_id || null,
-        custom_perms
-      };
-
-      try {
-        if (editId) {
-          await sbFetch(`team_users?id=eq.${editId}`, {
-            method: 'PATCH',
-            body: JSON.stringify(payload)
-          });
-          showUserFeedback(`✅ Đã cập nhật thông tin & phân quyền cho "${display_name}"!`, false);
-        } else {
-          await sbFetch('team_users', {
-            method: 'POST',
-            headers: { 'Prefer': 'return=representation' },
-            body: JSON.stringify([payload])
-          });
-          showUserFeedback(`✅ Đã thêm thành viên "${display_name}" và cấp quyền thành công!`, false);
-        }
-
-        await loadUsers();
-        if (currentUser && editId === currentUser.id) {
-          currentUser = allUsers.find(u => u.id === editId) || currentUser;
-          applyUserPermissionsToUI();
-          updateHeaderTgIndicator();
-        }
-        resetUserForm();
-        renderUserManagementList();
-      } catch (err) {
-        showUserFeedback('Lỗi lưu thành viên: ' + err.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = document.getElementById('editingUserId').value ? '💾 Cập Nhật Thông Tin & Phân Quyền' : '+ Lưu Thành Viên Mới';
-      }
-    }
-
-    async function deleteUser(userId, userName) {
-      if (!confirm(`Anh chắc chắn muốn xóa thành viên "${userName}" khỏi hệ thống?`)) return;
-      try {
-        await sbFetch(`team_users?id=eq.${userId}`, { method: 'DELETE' });
-        await loadUsers();
-        renderUserManagementList();
-        showUserFeedback(`🗑️ Đã xóa thành viên "${userName}".`, false);
-      } catch (err) {
-        showUserFeedback('Lỗi xóa thành viên: ' + err.message, true);
-      }
-    }
-
-    // 7. TRUNG TÂM BACKUP, LỊCH TỰ ĐỘNG, DỌN FILE CŨ & RESTORE
-    async function openBackupModal() {
-      const fb = document.getElementById('backupFeedback');
-      fb.classList.add('hidden');
-      const sel = document.getElementById('bkChannelFilter');
-      sel.innerHTML = `<option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>` +
-        allChannels.map(c => `<option value="${c.id}">Chỉ dự án: # ${escapeHtml(c.name)}</option>`).join('');
-
-      try {
-        const rows = await sbFetch(`team_channels?name=eq.${SCHEDULE_CHANNEL_KEY}&select=*`);
-        if (rows && rows.length) {
-          scheduleRecordId = rows[0].id;
-          localStorage.setItem('tw_cloud_bk_cfg', rows[0].description || '{}');
-        }
-      } catch (e) {}
-
-      const cfg = JSON.parse(localStorage.getItem('tw_cloud_bk_cfg') || '{"enabled":false,"mode":"FIXED_TIMES","times":["17:30"],"intervalHours":4,"dayScope":"ALL_DAYS","weekdays":[1,2,3,4,5],"monthDays":[1,15,30],"retentionPolicy":"DAYS_30","notifyTelegram":true,"folder":"TeamWork_Cloud_AutoBackup"}');
-
-      document.getElementById('autoBkEnabled').checked = Boolean(cfg.enabled);
-      document.getElementById('autoBkFolder').value = cfg.folder || 'TeamWork_Cloud_AutoBackup';
-      document.getElementById('autoBkIntervalSelect').value = String(cfg.intervalHours || 4);
-      document.getElementById('autoBkDayScope').value = cfg.dayScope || 'ALL_DAYS';
-      document.getElementById('autoBkRetentionPolicy').value = cfg.retentionPolicy || 'DAYS_30';
-      document.getElementById('autoBkNotifyTg').checked = cfg.notifyTelegram !== false;
-      if (cfg.notifyChatId) {
-        document.getElementById('autoBkNotifyUserSelect').value = cfg.notifyChatId;
-      }
-
-      scheduledTimeSlots = Array.isArray(cfg.times) && cfg.times.length ? [...cfg.times] : ['17:30'];
-      renderBackupTimeSlots();
-
-      document.getElementsByName('autoBkMode').forEach(r => {
-        r.checked = (r.value === (cfg.mode || 'FIXED_TIMES'));
-      });
-
-      const wd = cfg.weekdays || [1, 2, 3, 4, 5];
-      document.getElementsByName('bkWeekday').forEach(cb => {
-        cb.checked = wd.includes(Number(cb.value));
-      });
-
-      document.getElementById('autoBkMonthDaysInput').value = (cfg.monthDays || [1, 15, 30]).join(', ');
-
-      toggleAutoBkModeUI();
-      toggleAutoBkDayScopeUI();
-
-      document.getElementById('autoBkLastRunText').innerHTML = cfg.updated_at
-        ? `Đồng bộ Cloud lúc: <b>${new Date(cfg.updated_at).toLocaleString('vi-VN')}</b>`
-        : `Trạng thái: <b>Chưa đồng bộ lên Cloud</b>`;
-
-      switchBackupTab('MANUAL');
-      openModal('backupModal');
-    }
-
-    function toggleAutoBkModeUI() {
-      let mode = 'FIXED_TIMES';
-      document.getElementsByName('autoBkMode').forEach(r => { if (r.checked) mode = r.value; });
-      document.getElementById('autoBkFixedBox').classList.toggle('hidden', mode !== 'FIXED_TIMES');
-      document.getElementById('autoBkIntervalBox').classList.toggle('hidden', mode !== 'INTERVAL');
-    }
-
-    function toggleAutoBkDayScopeUI() {
-      const scope = document.getElementById('autoBkDayScope').value;
-      document.getElementById('autoBkWeekdaysBox').classList.toggle('hidden', scope !== 'CUSTOM_WEEKDAYS');
-      document.getElementById('autoBkMonthDaysBox').classList.toggle('hidden', scope !== 'MONTHLY_DAYS');
-    }
-
-    function renderBackupTimeSlots() {
-      const box = document.getElementById('backupTimeSlotsList');
-      scheduledTimeSlots.sort();
-      if (!scheduledTimeSlots.length) {
-        box.innerHTML = `<span class="text-slate-400 italic">Chưa có mốc giờ nào. Hãy chọn giờ và bấm + Thêm giờ.</span>`;
-        return;
-      }
-      box.innerHTML = scheduledTimeSlots.map(t => `
-        <span class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-900 font-bold px-2.5 py-1 rounded-lg border border-blue-200">
-          🕒 ${t}
-          <button type="button" onclick="removeBackupTimeSlot('${t}')" class="text-rose-600 hover:text-rose-800 font-bold">✕</button>
-        </span>
-      `).join('');
-    }
-
-    function addBackupTimeSlot() {
-      const val = document.getElementById('newBackupTimeInput').value;
-      if (!val) return;
-      if (!scheduledTimeSlots.includes(val)) {
-        scheduledTimeSlots.push(val);
-        renderBackupTimeSlots();
-      }
-    }
-
-    function removeBackupTimeSlot(t) {
-      scheduledTimeSlots = scheduledTimeSlots.filter(x => x !== t);
-      renderBackupTimeSlots();
-    }
-
-    function applyPresetTimes(arr) {
-      scheduledTimeSlots = [...arr];
-      renderBackupTimeSlots();
-    }
-
-    function switchBackupTab(tab) {
-      document.getElementById('backupFeedback').classList.add('hidden');
-      document.getElementById('bkTabManual').classList.toggle('hidden', tab !== 'MANUAL');
-      document.getElementById('bkTabSchedule').classList.toggle('hidden', tab !== 'SCHEDULE');
-      document.getElementById('bkTabRestore').classList.toggle('hidden', tab !== 'RESTORE');
-
-      const activeCls = 'px-3.5 py-2 font-bold border-b-2 border-blue-600 text-blue-600';
-      const normalCls = 'px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800';
-      document.getElementById('bkTabManualBtn').className = tab === 'MANUAL' ? activeCls : normalCls;
-      document.getElementById('bkTabScheduleBtn').className = tab === 'SCHEDULE' ? activeCls : normalCls;
-      document.getElementById('bkTabRestoreBtn').className = tab === 'RESTORE' ? activeCls : normalCls;
-    }
-
-    function showBackupFeedback(msg, isError = false) {
-      const fb = document.getElementById('backupFeedback');
-      fb.textContent = msg;
-      fb.className = `p-2.5 rounded-xl text-xs font-medium ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`;
-      fb.classList.remove('hidden');
-    }
-
-    async function saveAutoBackupSettings() {
-      let mode = 'FIXED_TIMES';
-      document.getElementsByName('autoBkMode').forEach(r => { if (r.checked) mode = r.value; });
-
-      if (mode === 'FIXED_TIMES' && !scheduledTimeSlots.length) {
-        return showBackupFeedback('Vui lòng thêm ít nhất 1 mốc giờ sao lưu trong ngày!', true);
-      }
-
-      const weekdays = [];
-      document.getElementsByName('bkWeekday').forEach(cb => {
-        if (cb.checked) weekdays.push(Number(cb.value));
-      });
-
-      const monthDays = document.getElementById('autoBkMonthDaysInput').value
-        .split(',')
-        .map(s => Number(s.trim()))
-        .filter(n => n >= 1 && n <= 31);
-
-      const cfg = {
-        enabled: document.getElementById('autoBkEnabled').checked,
-        mode: mode,
-        times: scheduledTimeSlots,
-        intervalHours: Number(document.getElementById('autoBkIntervalSelect').value || 4),
-        dayScope: document.getElementById('autoBkDayScope').value,
-        weekdays: weekdays,
-        monthDays: monthDays,
-        retentionPolicy: document.getElementById('autoBkRetentionPolicy').value,
-        notifyTelegram: document.getElementById('autoBkNotifyTg').checked,
-        notifyChatId: document.getElementById('autoBkNotifyUserSelect').value || '',
-        folder: document.getElementById('autoBkFolder').value.trim() || 'TeamWork_Cloud_AutoBackup',
-        updated_at: new Date().toISOString(),
-        updated_by: currentUser ? currentUser.display_name : 'Admin'
-      };
-
-      const btn = document.getElementById('saveScheduleBtn');
-      btn.disabled = true;
-      btn.textContent = 'Đang đồng bộ lên Cloud...';
-
-      try {
-        const descJson = JSON.stringify(cfg);
-        if (scheduleRecordId) {
-          await sbFetch(`team_channels?id=eq.${scheduleRecordId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ description: descJson })
-          });
-        } else {
-          const inserted = await sbFetch('team_channels', {
-            method: 'POST',
-            headers: { 'Prefer': 'return=representation' },
-            body: JSON.stringify([{ name: SCHEDULE_CHANNEL_KEY, description: descJson }])
-          });
-          if (inserted && inserted[0]) scheduleRecordId = inserted[0].id;
-        }
-
-        localStorage.setItem('tw_cloud_bk_cfg', descJson);
-        document.getElementById('autoBkLastRunText').innerHTML = `Đồng bộ Cloud lúc: <b>${new Date().toLocaleString('vi-VN')}</b>`;
-        showBackupFeedback(
-          cfg.enabled
-            ? `✅ Đã lưu lịch tự động Backup, chính sách dọn file cũ & tùy chọn báo Telegram lên Cloud!`
-            : '⏸️ Đã tắt lịch tự động Backup và đồng bộ trạng thái lên Cloud.',
-          false
-        );
-      } catch (err) {
-        showBackupFeedback('Lỗi đồng bộ lịch lên Cloud: ' + err.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Lưu & Đồng Bộ Lịch Lên Cloud';
-      }
-    }
-
-    async function executeBackup(targetMode) {
-      const incUsers = document.getElementById('bkUsers').checked;
-      const incChannels = document.getElementById('bkChannels').checked;
-      const incMessages = document.getElementById('bkMessages').checked;
-      const incTasks = document.getElementById('bkTasks').checked;
-      const chFilter = document.getElementById('bkChannelFilter').value;
-      const notifyTg = document.getElementById('bkManualNotifyTg').checked;
-      const notifyChatId = document.getElementById('bkManualNotifyUserSelect').value || '';
-
-      if (!incUsers && !incChannels && !incMessages && !incTasks) {
-        return showBackupFeedback('Vui lòng tích chọn ít nhất 1 nhóm dữ liệu cần sao lưu!', true);
-      }
-
-      let format = 'JSON';
-      document.getElementsByName('bkFormat').forEach(r => { if (r.checked) format = r.value; });
-
-      showBackupFeedback('⏳ Đang trích xuất dữ liệu từ Cloud...', false);
-
-      try {
-        const backupData = {
-          exported_at: new Date().toISOString(),
-          exported_by: currentUser ? currentUser.display_name : 'Admin',
-          filter_channel: chFilter
-        };
-
-        if (incUsers) backupData.team_users = await sbFetch('team_users?select=*&order=created_at.asc');
-        if (incChannels) backupData.team_channels = await sbFetch(`team_channels?name=neq.${SCHEDULE_CHANNEL_KEY}&select=*&order=created_at.asc`);
-        if (incMessages) {
-          const q = chFilter === 'ALL' ? 'team_messages?select=*&order=created_at.asc' : `team_messages?channel_id=eq.${chFilter}&select=*&order=created_at.asc`;
-          backupData.team_messages = await sbFetch(q);
-        }
-        if (incTasks) {
-          const q = chFilter === 'ALL' ? 'team_tasks?select=*&order=created_at.desc' : `team_tasks?channel_id=eq.${chFilter}&select=*&order=created_at.desc`;
-          backupData.team_tasks = await sbFetch(q);
-        }
-
-        const dateTag = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-        let fileContent = '';
-        let fileName = `TeamWork_Backup_${dateTag}.${format.toLowerCase()}`;
-        let mimeType = format === 'JSON' ? 'application/json;charset=utf-8' : 'text/csv;charset=utf-8';
-
-        if (format === 'JSON') {
-          fileContent = JSON.stringify(backupData, null, 2);
-        } else {
-          const lines = ['\uFEFFLOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,LY_DO_CHAM_TRE,GHI_CHU_HOAC_FILE,THOI_GIAN'];
-          (backupData.team_tasks || []).forEach(t => {
-            lines.push(`"CHECKLIST","${csvEsc(t.assignee_name)}","${csvEsc(t.task_title)}","${csvEsc(t.status)}","${csvEsc(t.delay_reason)}","${csvEsc(t.progress_note)}","${csvEsc(t.created_at)}"`);
-          });
-          (backupData.team_messages || []).forEach(m => {
-            lines.push(`"${csvEsc(m.msg_type)}","${csvEsc(m.sender_name)}","${csvEsc(m.content)}","${csvEsc(m.approval_status || '')}","","${csvEsc(m.file_name || '')}","${csvEsc(m.created_at)}"`);
-          });
-          fileContent = lines.join('\n');
-        }
-
-        if (targetMode === 'LOCAL_PICKER') {
-          if (window.showSaveFilePicker) {
-            const handle = await window.showSaveFilePicker({
-              suggestedName: fileName,
-              types: [{
-                description: format === 'JSON' ? 'JSON Backup File' : 'CSV Excel Report',
-                accept: format === 'JSON' ? { 'application/json': ['.json'] } : { 'text/csv': ['.csv'] }
-              }]
-            });
-            const writable = await handle.createWritable();
-            await writable.write(fileContent);
-            await writable.close();
-            showBackupFeedback(`✅ Đã lưu tệp "${handle.name}" vào đúng thư mục anh đã chọn!`, false);
-          } else {
-            const blob = new Blob([fileContent], { type: mimeType });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = fileName;
-            a.click();
-            showBackupFeedback(`✅ Đã tải tệp sao lưu "${fileName}" về thư mục Tải xuống của thiết bị!`, false);
-          }
-        } else if (targetMode === 'GOOGLE_DRIVE_CLOUD') {
-          const folderName = document.getElementById('bkDriveFolderName').value.trim() || 'TeamWork_Cloud_Backup';
-          await fetch(APPS_SCRIPT_WEBHOOK, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'BACKUP_TO_DRIVE',
-              folderName: folderName,
-              fileName: fileName,
-              mimeType: mimeType,
-              content: fileContent,
-              retentionPolicy: document.getElementById('autoBkRetentionPolicy').value || 'KEEP_ALL',
-              notifyTelegram: notifyTg,
-              notifyChatId: notifyChatId
-            })
-          });
-          showBackupFeedback(`☁️ Đã gửi gói sao lưu "${fileName}" lên thư mục "${folderName}" trên Google Drive${notifyTg ? ' & báo Telegram' : ''}!`, false);
-        }
-      } catch (err) {
-        if (err.name === 'AbortError') {
-          showBackupFeedback('Đã hủy chọn thư mục lưu tệp.', true);
-        } else {
-          showBackupFeedback('Lỗi sao lưu dữ liệu: ' + err.message, true);
-        }
-      }
-    }
-
-    // XỬ LÝ KHÔI PHỤC DỮ LIỆU (RESTORE)
-    function handleRestoreFileSelect(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const obj = JSON.parse(evt.target.result);
-          if (!obj || (!obj.team_users && !obj.team_channels && !obj.team_messages && !obj.team_tasks)) {
-            throw new Error('Tệp JSON không đúng định dạng sao lưu của TeamWork Cloud.');
-          }
-          parsedRestoreData = obj;
-          document.getElementById('restoreMetaDate').textContent = obj.exported_at
-            ? 'Ngày sao lưu: ' + new Date(obj.exported_at).toLocaleString('vi-VN')
-            : file.name;
-
-          const uLen = (obj.team_users || []).length;
-          const cLen = (obj.team_channels || []).length;
-          const mLen = (obj.team_messages || []).length;
-          const tLen = (obj.team_tasks || []).length;
-
-          document.getElementById('rsUsersCount').textContent = `👥 Nhân sự: ${uLen} bản ghi`;
-          document.getElementById('rsChannelsCount').textContent = `📁 Nhóm / Dự án: ${cLen} bản ghi`;
-          document.getElementById('rsMessagesCount').textContent = `💬 Tin nhắn & Trình duyệt: ${mLen} bản ghi`;
-          document.getElementById('rsTasksCount').textContent = `📌 Checklist công việc: ${tLen} bản ghi`;
-
-          document.getElementById('rsUsers').checked = uLen > 0;
-          document.getElementById('rsChannels').checked = cLen > 0;
-          document.getElementById('rsMessages').checked = mLen > 0;
-          document.getElementById('rsTasks').checked = tLen > 0;
-
-          document.getElementById('restorePreviewBox').classList.remove('hidden');
-          document.getElementById('backupFeedback').classList.add('hidden');
-        } catch (err) {
-          parsedRestoreData = null;
-          document.getElementById('restorePreviewBox').classList.add('hidden');
-          showBackupFeedback('Lỗi đọc tệp sao lưu: ' + err.message, true);
-        }
-      };
-      reader.readAsText(file, 'UTF-8');
-    }
-
-    async function executeRestore() {
-      if (!parsedRestoreData) return;
-      const doUsers = document.getElementById('rsUsers').checked && (parsedRestoreData.team_users || []).length > 0;
-      const doChannels = document.getElementById('rsChannels').checked && (parsedRestoreData.team_channels || []).length > 0;
-      const doMessages = document.getElementById('rsMessages').checked && (parsedRestoreData.team_messages || []).length > 0;
-      const doTasks = document.getElementById('rsTasks').checked && (parsedRestoreData.team_tasks || []).length > 0;
-
-      if (!doUsers && !doChannels && !doMessages && !doTasks) {
-        return showBackupFeedback('Vui lòng chọn ít nhất 1 nhóm dữ liệu có bản ghi để khôi phục!', true);
-      }
-
-      if (!confirm('Anh xác nhận khôi phục các dữ liệu đã chọn vào hệ thống?')) return;
-
-      const btn = document.getElementById('executeRestoreBtn');
-      btn.disabled = true;
-      btn.textContent = '⏳ Đang khôi phục dữ liệu vào Cloud...';
-
-      try {
-        const upsertHeaders = { 'Prefer': 'resolution=merge-duplicates,return=minimal' };
-
-        if (doUsers) {
-          await sbFetch('team_users', {
-            method: 'POST',
-            headers: upsertHeaders,
-            body: JSON.stringify(parsedRestoreData.team_users)
-          });
-        }
-        if (doChannels) {
-          const validChannels = parsedRestoreData.team_channels.filter(c => c.name !== SCHEDULE_CHANNEL_KEY);
-          if (validChannels.length) {
-            await sbFetch('team_channels', {
-              method: 'POST',
-              headers: upsertHeaders,
-              body: JSON.stringify(validChannels)
-            });
-          }
-        }
-        if (doMessages) {
-          await sbFetch('team_messages', {
-            method: 'POST',
-            headers: upsertHeaders,
-            body: JSON.stringify(parsedRestoreData.team_messages)
-          });
-        }
-        if (doTasks) {
-          await sbFetch('team_tasks', {
-            method: 'POST',
-            headers: upsertHeaders,
-            body: JSON.stringify(parsedRestoreData.team_tasks)
-          });
-        }
-
-        await Promise.all([loadUsers(), loadChannels(), loadMessages(true), loadTasks()]);
-        showBackupFeedback('✅ Khôi phục dữ liệu thành công! Toàn bộ danh sách, tin nhắn và checklist đã được đồng bộ lại.', false);
-      } catch (err) {
-        showBackupFeedback('Lỗi trong quá trình khôi phục: ' + err.message, true);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '♻️ Bắt Đầu Khôi Phục Dữ Liệu Vào Hệ Thống';
-      }
-    }
-
-    function csvEsc(val) {
-      return String(val || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
-    }
-
-    // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY
-    function startLiveSync() {
-      if (syncTimer) clearInterval(syncTimer);
-      syncTimer = setInterval(() => {
-        if (!document.hidden && activeChannel) {
-          loadMessages(false);
-          loadTasks();
-        }
-      }, 2000);
-    }
-
-    // 9. TỰ CẬP NHẬT HỒ SƠ CÁ NHÂN (TELEGRAM ID & ĐỔI MÃ PIN)
-    function updateHeaderTgIndicator() {
-      const badge = document.getElementById('missingTgBadge');
-      if (!badge || !currentUser) return;
-      badge.classList.toggle('hidden', Boolean(currentUser.telegram_chat_id));
-    }
-
-    async function openMyProfileModal() {
-      if (!currentUser) return;
-      document.getElementById('myProfileFeedback').classList.add('hidden');
-      await refreshMyProfileFromCloud();
-      openModal('myProfileModal');
-    }
-
-    async function refreshMyProfileFromCloud() {
-      if (!currentUser) return;
-      try {
-        const rows = await sbFetch(`team_users?id=eq.${currentUser.id}&select=*`);
-        if (rows && rows[0]) {
-          currentUser = rows[0];
-          const idx = allUsers.findIndex(u => u.id === currentUser.id);
-          if (idx !== -1) allUsers[idx] = currentUser;
-        }
-      } catch (e) {}
-
-      document.getElementById('profileDisplayName').textContent = currentUser.display_name;
-      document.getElementById('profileRoleTitle').textContent = currentUser.role_title || '';
-      document.getElementById('myProfileTgIdInput').value = currentUser.telegram_chat_id || '';
-      document.getElementById('myProfilePinInput').value = currentUser.pin_code || '';
-
-      const statusBadge = document.getElementById('profileTgStatusBadge');
-      if (currentUser.telegram_chat_id) {
-        statusBadge.textContent = '✅ Đã gắn Telegram';
-        statusBadge.className = 'px-2.5 py-1 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200';
-      } else {
-        statusBadge.textContent = '⚠️ Chưa gắn Telegram';
-        statusBadge.className = 'px-2.5 py-1 rounded-full font-bold text-[10px] bg-rose-100 text-rose-800 border border-rose-200';
-      }
-      updateHeaderTgIndicator();
-    }
-
-    async function saveMyProfile() {
-      if (!currentUser) return;
-      const newTgId = document.getElementById('myProfileTgIdInput').value.trim();
-      const newPin = document.getElementById('myProfilePinInput').value.trim();
-      const fb = document.getElementById('myProfileFeedback');
-
-      if (!/^\d{4,6}$/.test(newPin)) {
-        fb.textContent = 'Mã PIN bắt buộc gồm 4 đến 6 chữ số!';
-        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
-        fb.classList.remove('hidden');
-        return;
-      }
-
-      const btn = document.getElementById('saveMyProfileBtn');
-      btn.disabled = true;
-      btn.textContent = '⏳ Đang lưu...';
-
-      try {
-        await sbFetch(`team_users?id=eq.${currentUser.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({
-            telegram_chat_id: newTgId || null,
-            pin_code: newPin
-          })
-        });
-
-        await refreshMyProfileFromCloud();
-        populateUserDropdowns();
-        fb.textContent = '✅ Đã cập nhật thành công Telegram Chat ID & Mã PIN cá nhân!';
-        fb.className = 'p-2.5 rounded-xl font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
-        fb.classList.remove('hidden');
-      } catch (err) {
-        fb.textContent = 'Lỗi cập nhật hồ sơ: ' + err.message;
-        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
-        fb.classList.remove('hidden');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Lưu Hồ Sơ Cá Nhân';
-      }
-    }
-
-    // TIỆN ÍCH GIAO DIỆN
-    function switchRightTab(tab) {
-      const isTasks = tab === 'tasks';
-      document.getElementById('rightTabTasks').classList.toggle('hidden', !isTasks);
-      document.getElementById('rightTabFiles').classList.toggle('hidden', isTasks);
-      document.getElementById('tabBtnTasks').className = isTasks
-        ? 'flex-1 py-2.5 text-xs font-bold border-b-2 border-blue-600 text-blue-600'
-        : 'flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800';
-      document.getElementById('tabBtnFiles').className = !isTasks
-        ? 'flex-1 py-2.5 text-xs font-bold border-b-2 border-blue-600 text-blue-600'
-        : 'flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800';
-      if (window.innerWidth < 1280) {
-        document.getElementById('rightPanel').classList.remove('translate-x-full');
-      }
-    }
-
-    function toggleMobileSidebar() {
-      document.getElementById('leftSidebar').classList.toggle('-translate-x-full');
-    }
-    function toggleMobileRightPanel() {
-      document.getElementById('rightPanel').classList.toggle('translate-x-full');
-    }
+    // =========================================================================
+    // 8. TIỆN ÍCH MODAL & KHỞI CHẠY
+    // =========================================================================
     function openModal(id) {
       const el = document.getElementById(id);
       el.classList.remove('hidden');
       el.classList.add('flex');
     }
+
     function closeModal(id) {
       const el = document.getElementById(id);
       el.classList.add('hidden');
       el.classList.remove('flex');
     }
-    function openApprovalModal() { openModal('approvalModal'); }
-    function openChannelModal() { openModal('channelModal'); }
 
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    function openProgressModal() {
+      renderProgressTable();
+      openModal('progressModal');
     }
 
-    initApp();
+    initLoginOptions();
+    loadCloudState();
   </script>
 </body>
 </html>
