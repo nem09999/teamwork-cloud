@@ -68,6 +68,10 @@
     </div>
 
     <div class="flex items-center gap-2 sm:gap-2.5">
+      <button onclick="openMultiShareModal()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold flex items-center gap-1 shadow-xs">
+        📤 <span class="hidden md:inline">Gửi File Nhiều Người</span>
+      </button>
+
       <button onclick="switchRightTab('tasks')" class="relative px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1.5">
         <span>📋 Việc của tôi</span>
         <span id="myPendingBadge" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full text-[11px]">0</span>
@@ -94,26 +98,42 @@
   <!-- ================= BỐ CỤC 3 CỘT CHÍNH ================= -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- CỘT 1: DANH SÁCH KÊNH / DỰ ÁN -->
+    <!-- CỘT 1: DANH SÁCH KÊNH DỰ ÁN & CHAT RIÊNG 1-1 -->
     <aside id="leftSidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 absolute lg:static inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
-      <div class="p-3.5 flex items-center justify-between border-b border-slate-800">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự Án</span>
-        <button id="createChannelBtn" onclick="openChannelModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-md font-medium">+ Nhóm mới</button>
+      <div class="flex-1 overflow-y-auto divide-y divide-slate-800/80">
+        <!-- Khu vực 1: Nhóm / Dự án chung -->
+        <div>
+          <div class="p-3.5 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự Án</span>
+            <button id="createChannelBtn" onclick="openChannelModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-md font-medium">+ Nhóm mới</button>
+          </div>
+          <div id="channelList" class="px-2 pb-3 space-y-1"></div>
+        </div>
+
+        <!-- Khu vực 2: Trao đổi riêng 1-1 giữa 2 thành viên -->
+        <div>
+          <div class="p-3.5 pb-2 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">💬 Trao Đổi Riêng (1-1)</span>
+          </div>
+          <div id="directMessageUserList" class="px-2 pb-3 space-y-1"></div>
+        </div>
       </div>
 
-      <div id="channelList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
-
       <div class="p-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-        <div class="font-semibold text-slate-300">Mẹo giao việc nhanh lúc họp:</div>
-        <div>Gõ <code class="text-amber-400">Giao @Tên việc cần làm</code> trong chat để tự động lập Checklist & báo Bot.</div>
+        <div class="font-semibold text-slate-300">Mẹo thao tác nhanh:</div>
+        <div>• Bấm tên đồng nghiệp ở mục <b>Trao Đổi Riêng</b> để chat & gửi file kín 1-1.</div>
+        <div>• Gõ <code class="text-amber-400">:) &lt;3 (y) :ok:</code> tự động đổi thành biểu tượng cảm xúc.</div>
       </div>
     </aside>
 
     <!-- CỘT 2: KHUNG CHAT REAL-TIME & PHIẾU TRÌNH DUYỆT -->
-    <main class="flex-1 flex flex-col bg-white min-w-0 border-r border-slate-200">
+    <main class="flex-1 flex flex-col bg-white min-w-0 border-r border-slate-200 relative">
       <div class="h-13 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
         <div class="min-w-0">
-          <h2 id="activeChannelTitle" class="font-bold text-sm sm:text-base text-slate-900 truncate"># Đang tải...</h2>
+          <div class="flex items-center gap-2">
+            <h2 id="activeChannelTitle" class="font-bold text-sm sm:text-base text-slate-900 truncate"># Đang tải...</h2>
+            <span id="dmBadge" class="hidden text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">🔒 Kênh riêng 2 người</span>
+          </div>
           <p id="activeChannelDesc" class="text-xs text-slate-500 truncate">---</p>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
@@ -131,6 +151,18 @@
 
       <div id="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40"></div>
 
+      <!-- Bảng chọn Emoji nhanh -->
+      <div id="emojiPickerPopover" class="hidden absolute bottom-16 left-4 z-40 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 w-72">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b text-[11px] font-bold text-slate-600">
+          <span>Chọn biểu tượng cảm xúc (hoặc gõ tắt)</span>
+          <button type="button" onclick="toggleEmojiPicker()" class="text-slate-400 hover:text-slate-700">✕</button>
+        </div>
+        <div id="emojiGrid" class="grid grid-cols-8 gap-1 text-lg text-center"></div>
+        <div class="mt-2 pt-1.5 border-t text-[10px] text-slate-400">
+          Gõ tắt tự động: <code>:)</code> 😊 • <code>:D</code> 😄 • <code>&lt;3</code> ❤️ • <code>(y)</code> 👍 • <code>:ok:</code> 👌
+        </div>
+      </div>
+
       <div id="selectedFileBar" class="hidden px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center justify-between text-xs text-blue-800">
         <span id="selectedFileName" class="font-medium truncate">📎 file.pdf</span>
         <button onclick="clearSelectedFile()" class="text-red-600 font-bold ml-2">✕ Bỏ chọn</button>
@@ -138,12 +170,16 @@
 
       <div class="p-3 bg-white border-t border-slate-200 shrink-0">
         <div class="flex items-end gap-2">
-          <label class="cursor-pointer p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0" title="Đính kèm PDF, Word, Excel, Ảnh">
+          <label class="cursor-pointer p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0" title="Đính kèm tệp vào khung chat hiện tại">
             📎
             <input id="chatFileInput" type="file" class="hidden" onchange="handleFileSelect(event)" />
           </label>
 
-          <textarea id="chatInput" rows="1" placeholder="Nhập trao đổi nhóm... (Hoặc gõ: Giao @Tên nội dung việc)"
+          <button type="button" onclick="toggleEmojiPicker()" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition shrink-0" title="Chèn biểu tượng cảm xúc">
+            😊
+          </button>
+
+          <textarea id="chatInput" rows="1" placeholder="Nhập tin nhắn... (Hỗ trợ gõ tắt :) :D <3 (y) :ok:)"
             class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-28"
             onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"></textarea>
 
@@ -161,7 +197,7 @@
           📌 Checklist Công Việc
         </button>
         <button id="tabBtnFiles" onclick="switchRightTab('files')" class="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
-          📁 Kho Tài Liệu Nhóm
+          📁 Kho Tài Liệu Kênh
         </button>
         <button onclick="toggleMobileRightPanel()" class="xl:hidden px-3 text-slate-400 hover:text-slate-700">✕</button>
       </div>
@@ -380,24 +416,23 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 6: BACKUP THỦ CÔNG, LỊCH TỰ ĐỘNG & RESTORE ================= -->
+  <!-- ================= MODAL 6: BACKUP THỦ CÔNG, LỊCH TỰ ĐỘNG, DỌN FILE CŨ & RESTORE ================= -->
   <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between border-b pb-3 shrink-0">
         <div>
-          <h3 class="font-bold text-base text-slate-900">💾 Trung Tâm Sao Lưu (Backup), Lịch Tự Động & Khôi Phục (Restore)</h3>
-          <p class="text-[11px] text-slate-500">Bảo toàn dữ liệu về máy tính, Google Drive Cloud, hẹn giờ tự động & phục hồi bản sao lưu</p>
+          <h3 class="font-bold text-base text-slate-900">💾 Trung Tâm Sao Lưu (Backup), Dọn File Cũ & Khôi Phục (Restore)</h3>
+          <p class="text-[11px] text-slate-500">Tùy chọn thông báo Telegram, tự động xóa/ghi đè file backup cũ theo tháng & phục hồi dữ liệu</p>
         </div>
         <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
 
-      <!-- Thanh chuyển 3 tab chức năng -->
       <div class="flex border-b border-slate-200 text-xs shrink-0">
         <button id="bkTabManualBtn" onclick="switchBackupTab('MANUAL')" class="px-3.5 py-2 font-bold border-b-2 border-blue-600 text-blue-600">
           📤 1. Sao Lưu Ngay
         </button>
         <button id="bkTabScheduleBtn" onclick="switchBackupTab('SCHEDULE')" class="px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800">
-          ⏰ 2. Lịch Tự Động Backup
+          ⏰ 2. Lịch Tự Động & Dọn File Cũ
         </button>
         <button id="bkTabRestoreBtn" onclick="switchBackupTab('RESTORE')" class="px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800">
           ♻️ 3. Khôi Phục (Restore)
@@ -409,7 +444,7 @@
         <!-- TAB 1: SAO LƯU NGAY CÓ CHỌN LỌC -->
         <div id="bkTabManual" class="space-y-3">
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-            <div class="font-bold text-slate-700">Chọn nhóm dữ liệu cần sao lưu:</div>
+            <div class="font-bold text-slate-700">1. Chọn nhóm dữ liệu cần sao lưu:</div>
             <div class="grid grid-cols-2 gap-2">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="bkUsers" checked class="accent-blue-600" />
@@ -438,7 +473,7 @@
           </div>
 
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-            <div class="font-bold text-slate-700">Định dạng tệp sao lưu:</div>
+            <div class="font-bold text-slate-700">2. Định dạng tệp & Tùy chọn thông báo Telegram:</div>
             <div class="grid grid-cols-2 gap-2">
               <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
                 <input type="radio" name="bkFormat" value="JSON" checked class="accent-blue-600" />
@@ -455,10 +490,18 @@
                 </div>
               </label>
             </div>
+
+            <div class="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <label class="inline-flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                <input type="checkbox" id="bkManualNotifyTg" class="accent-blue-600 w-4 h-4" />
+                <span>📲 Gửi tin báo Telegram khi sao lưu xong</span>
+              </label>
+              <select id="bkManualNotifyUserSelect" class="border border-slate-300 rounded-lg px-2 py-1 bg-white text-[11px]"></select>
+            </div>
           </div>
 
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
-            <div class="font-bold text-slate-700">Chọn nơi lưu trữ tệp:</div>
+            <div class="font-bold text-slate-700">3. Chọn nơi lưu trữ tệp:</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button type="button" onclick="executeBackup('LOCAL_PICKER')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-left transition shadow-xs">
                 <div class="font-bold text-xs">💻 Lưu Vào Thư Mục Máy Tính</div>
@@ -477,42 +520,137 @@
           </div>
         </div>
 
-        <!-- TAB 2: LỊCH TRÌNH TỰ ĐỘNG BACKUP -->
+        <!-- TAB 2: LỊCH TRÌNH TỰ ĐỘNG, THÔNG BÁO TELEGRAM & DỌN FILE CŨ -->
         <div id="bkTabSchedule" class="hidden space-y-3">
-          <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div class="font-bold text-amber-950 text-sm">⏰ Lịch Tự Động Backup Lên Google Drive</div>
-              <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-amber-900">
+          <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-amber-200/80 pb-2">
+              <div>
+                <div class="font-bold text-amber-950 text-sm">⏰ Cấu Hình Lịch Tự Động Backup</div>
+                <div class="text-[11px] text-amber-800">Đồng bộ lên Cloud để chạy ngầm 24/7 kể cả khi tắt máy tính</div>
+              </div>
+              <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-amber-950 bg-white px-3 py-1.5 rounded-lg border border-amber-300">
                 <input type="checkbox" id="autoBkEnabled" class="accent-blue-600 w-4 h-4" />
-                <span>BẬT TỰ ĐỘNG</span>
+                <span>BẬT LỊCH</span>
               </label>
             </div>
-            <p class="text-[11px] text-amber-900 leading-relaxed">
-              Khi bật, hệ thống sẽ tự động đóng gói toàn bộ dữ liệu (.JSON) và đẩy lên thư mục <b>TeamWork_Cloud_AutoBackup</b> trên Google Drive đúng khung giờ cài đặt hàng ngày (không cần thao tác thủ công).
-            </p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              <div>
-                <label class="block font-semibold text-slate-700 mb-1">Giờ tự động chạy mỗi ngày:</label>
-                <input type="time" id="autoBkTime" value="17:30" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-bold text-slate-800" />
-              </div>
-              <div>
-                <label class="block font-semibold text-slate-700 mb-1">Thư mục nhận trên Google Drive:</label>
-                <input type="text" id="autoBkFolder" value="TeamWork_Cloud_AutoBackup" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white" />
+            <!-- 1. Chế độ tần suất giờ -->
+            <div class="space-y-2">
+              <label class="block font-bold text-slate-700">1. Chế độ khung giờ sao lưu:</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label class="cursor-pointer border rounded-lg p-2.5 bg-white flex items-start gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/60">
+                  <input type="radio" name="autoBkMode" value="FIXED_TIMES" checked onchange="toggleAutoBkModeUI()" class="accent-blue-600 mt-0.5" />
+                  <div>
+                    <div class="font-bold text-slate-800">Nhiều mốc giờ cố định trong ngày</div>
+                    <div class="text-[10px] text-slate-500">VD: 08:30 sáng, 12:00 trưa, 17:30 chiều</div>
+                  </div>
+                </label>
+
+                <label class="cursor-pointer border rounded-lg p-2.5 bg-white flex items-start gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/60">
+                  <input type="radio" name="autoBkMode" value="INTERVAL" onchange="toggleAutoBkModeUI()" class="accent-blue-600 mt-0.5" />
+                  <div>
+                    <div class="font-bold text-slate-800">Lặp lại theo chu kỳ giờ</div>
+                    <div class="text-[10px] text-slate-500">VD: Tự động lưu sau mỗi 2 giờ, 4 giờ, 6 giờ...</div>
+                  </div>
+                </label>
               </div>
             </div>
 
-            <div class="flex items-center justify-between pt-2 border-t border-amber-200/70">
-              <div id="autoBkLastRunText" class="text-[11px] text-slate-600">Lần chạy tự động gần nhất: <b>Chưa ghi nhận</b></div>
-              <button type="button" onclick="saveAutoBackupSettings()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                💾 Lưu Lịch Tự Động
+            <div id="autoBkFixedBox" class="bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-slate-700">Các mốc giờ chạy trong ngày:</span>
+                <div class="flex items-center gap-1.5">
+                  <input type="time" id="newBackupTimeInput" value="12:00" class="border border-slate-300 rounded px-2 py-1 text-xs font-bold" />
+                  <button type="button" onclick="addBackupTimeSlot()" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                    + Thêm giờ
+                  </button>
+                </div>
+              </div>
+              <div id="backupTimeSlotsList" class="flex flex-wrap gap-1.5 pt-1"></div>
+              <div class="flex flex-wrap gap-1 pt-1 border-t border-slate-100 text-[10px]">
+                <span class="text-slate-400 py-0.5">Gợi ý nhanh:</span>
+                <button type="button" onclick="applyPresetTimes(['17:30'])" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-medium">Cuối ngày (17:30)</button>
+                <button type="button" onclick="applyPresetTimes(['12:00', '17:30'])" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-medium">Trưa & Chiều (12:00, 17:30)</button>
+                <button type="button" onclick="applyPresetTimes(['08:30', '12:00', '17:30', '21:30'])" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 font-medium">4 mốc/ngày</button>
+              </div>
+            </div>
+
+            <div id="autoBkIntervalBox" class="hidden bg-white p-3 rounded-lg border border-slate-200 space-y-1.5">
+              <label class="block font-semibold text-slate-700">Tần suất lặp lại tự động:</label>
+              <select id="autoBkIntervalSelect" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-bold text-slate-800">
+                <option value="1">Mỗi 1 giờ một lần</option>
+                <option value="2">Mỗi 2 giờ một lần</option>
+                <option value="3">Mỗi 3 giờ một lần</option>
+                <option value="4" selected>Mỗi 4 giờ một lần</option>
+                <option value="6">Mỗi 6 giờ một lần</option>
+                <option value="8">Mỗi 8 giờ một lần</option>
+                <option value="12">Mỗi 12 giờ một lần</option>
+              </select>
+            </div>
+
+            <!-- 2. Phạm vi ngày áp dụng -->
+            <div class="bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+              <label class="block font-bold text-slate-700">2. Phạm vi ngày áp dụng:</label>
+              <select id="autoBkDayScope" onchange="toggleAutoBkDayScopeUI()" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 font-medium">
+                <option value="ALL_DAYS">Tất cả các ngày trong tuần (Thứ 2 – Chủ Nhật)</option>
+                <option value="WORKDAYS">Chỉ ngày làm việc hành chính (Thứ 2 – Thứ 6)</option>
+                <option value="CUSTOM_WEEKDAYS">Tùy chọn các thứ cụ thể trong tuần</option>
+                <option value="MONTHLY_DAYS">Tùy chọn ngày cụ thể trong tháng (VD: ngày 15, 30)</option>
+              </select>
+
+              <div id="autoBkWeekdaysBox" class="hidden flex flex-wrap gap-2 pt-1">
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="1" checked /> T2</label>
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="2" checked /> T3</label>
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="3" checked /> T4</label>
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="4" checked /> T5</label>
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="5" checked /> T6</label>
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="6" /> T7</label>
+                <label class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border"><input type="checkbox" name="bkWeekday" value="7" /> CN</label>
+              </div>
+
+              <div id="autoBkMonthDaysBox" class="hidden pt-1">
+                <input type="text" id="autoBkMonthDaysInput" value="1, 15, 28, 30" placeholder="Nhập các ngày trong tháng cách nhau dấu phẩy (VD: 1, 15, 30)"
+                  class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+              </div>
+            </div>
+
+            <!-- 3. Chính sách dọn file cũ / Overwrite & Thông báo Telegram -->
+            <div class="bg-white p-3 rounded-lg border border-slate-200 space-y-2.5">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">3. Chính sách dọn dẹp / Ghi đè file Backup cũ trên Drive:</label>
+                <select id="autoBkRetentionPolicy" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 font-semibold text-slate-800">
+                  <option value="KEEP_ALL">📁 Giữ lại tất cả các bản sao lưu (Không xóa file cũ)</option>
+                  <option value="OVERWRITE">🔄 Ghi đè (Overwrite) — Chỉ giữ lại 1 bản mới nhất duy nhất</option>
+                  <option value="DAYS_15">🗑️ Tự động xóa các file backup cũ hơn 15 ngày</option>
+                  <option value="DAYS_30" selected>🗑️ Tự động xóa các file backup cũ hơn 1 tháng (30 ngày)</option>
+                  <option value="DAYS_60">🗑️ Tự động xóa các file backup cũ hơn 2 tháng (60 ngày)</option>
+                  <option value="DAYS_90">🗑️ Tự động xóa các file backup cũ hơn 3 tháng (90 ngày)</option>
+                  <option value="DAYS_180">🗑️ Tự động xóa các file backup cũ hơn 6 tháng (180 ngày)</option>
+                </select>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 space-y-1.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                    <input type="checkbox" id="autoBkNotifyTg" checked class="accent-blue-600 w-4 h-4" />
+                    <span>📲 Báo tin nhắn Telegram mỗi khi tự động Backup xong</span>
+                  </label>
+                  <select id="autoBkNotifyUserSelect" class="border border-slate-300 rounded-lg px-2 py-1 bg-slate-50 text-[11px] font-medium"></select>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100">
+                <label class="block font-bold text-slate-700 mb-1">Thư mục lưu trữ trên Google Drive:</label>
+                <input type="text" id="autoBkFolder" value="TeamWork_Cloud_AutoBackup" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <div id="autoBkLastRunText" class="text-[11px] text-slate-600">Trạng thái: <b>Chưa đồng bộ lịch</b></div>
+              <button id="saveScheduleBtn" type="button" onclick="saveAutoBackupSettings()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow">
+                💾 Lưu & Đồng Bộ Lịch Lên Cloud
               </button>
             </div>
-          </div>
-
-          <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-[11px] text-slate-600 space-y-1">
-            <div class="font-bold text-slate-800">💡 Mẹo chạy ngầm 24/7 kể cả khi tắt máy tính:</div>
-            <div>Ngoài bộ hẹn giờ trên trình duyệt này, anh có thể bật thêm <b>Day Timer (17h–18h)</b> trong Google Apps Script (hàm <code>autoScheduledBackupToDrive</code>) để máy chủ Google tự động sao lưu mỗi chiều ngay cả khi không ai mở trình duyệt.</div>
           </div>
         </div>
 
@@ -523,7 +661,6 @@
             <input type="file" id="restoreFileInput" accept=".json,application/json" onchange="handleRestoreFileSelect(event)"
               class="w-full border border-slate-300 rounded-xl p-2.5 bg-white text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold" />
 
-            <!-- Khung xem trước nội dung gói backup -->
             <div id="restorePreviewBox" class="hidden bg-white border border-blue-200 rounded-xl p-3 space-y-2.5">
               <div class="flex items-center justify-between border-b pb-1.5">
                 <span class="font-bold text-blue-900">📦 Thông tin gói sao lưu đã đọc được:</span>
@@ -565,11 +702,55 @@
     </div>
   </div>
 
+  <!-- ================= MODAL 7: CHIA SẺ FILE TỪ 1 NGƯỜI CHO NHIỀU NGƯỜI ================= -->
+  <div id="multiShareModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <h3 class="font-bold text-base text-slate-900">📤 Chia Sẻ Tài Liệu Cho Nhiều Thành Viên</h3>
+          <p class="text-[11px] text-slate-500">Gửi trực tiếp tệp đính kèm vào kênh trao đổi riêng (1-1) của từng người được chọn</p>
+        </div>
+        <button onclick="closeModal('multiShareModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">1. Chọn tệp cần chia sẻ (PDF, Word, Excel, Ảnh, Bản vẽ...) *</label>
+          <input type="file" id="multiShareFileInput" class="w-full border border-slate-300 rounded-xl p-2 bg-slate-50" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700">2. Chọn danh sách người nhận *</label>
+            <button type="button" onclick="toggleSelectAllShareUsers()" class="text-blue-600 font-semibold hover:underline">Chọn / Bỏ chọn tất cả</button>
+          </div>
+          <div id="multiShareUserCheckboxes" class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2.5 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-1.5"></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">3. Lời nhắn đính kèm (tùy chọn):</label>
+          <textarea id="multiShareNoteInput" rows="2" placeholder="VD: Gửi anh/em hồ sơ mặt bằng mới nhất để triển khai thực địa..."
+            class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div id="multiShareFeedback" class="hidden p-2.5 rounded-xl font-medium"></div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('multiShareModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
+        <button id="submitMultiShareBtn" onclick="executeMultiShareFile()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">
+          📤 Gửi File Cho Các Thành Viên Đã Chọn
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= LOGIC KẾT NỐI TRỰC TIẾP SUPABASE REST API ================= -->
   <script>
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
     const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
+    const SCHEDULE_CHANNEL_KEY = '__BACKUP_SCHEDULE__';
 
     async function sbFetch(path, options = {}) {
       const headers = {
@@ -591,6 +772,7 @@
 
     let allUsers = [];
     let allChannels = [];
+    let rawAllChannels = [];
     let currentUser = null;
     let activeChannel = null;
     let channelMessages = [];
@@ -599,6 +781,66 @@
     let confirmingTaskId = null;
     let syncTimer = null;
     let parsedRestoreData = null;
+    let scheduledTimeSlots = ['17:30'];
+    let scheduleRecordId = null;
+
+    // THUẬT TOÁN BIỂU TƯỢNG CẢM XÚC (EMOJI PARSER + QUICK PICKER)
+    const EMOJI_SHORTCUTS = [
+      { code: /:\)/g, icon: '😊' },
+      { code: /:-\)/g, icon: '😊' },
+      { code: /:D/g, icon: '😄' },
+      { code: /:-D/g, icon: '😄' },
+      { code: /:\(/g, icon: '😢' },
+      { code: /;\)/g, icon: '😉' },
+      { code: /<3/g, icon: '❤️' },
+      { code: /\(y\)/gi, icon: '👍' },
+      { code: /\(n\)/gi, icon: '👎' },
+      { code: /:ok:/gi, icon: '👌' },
+      { code: /:check:/gi, icon: '✅' },
+      { code: /:x:/gi, icon: '❌' },
+      { code: /:fire:/gi, icon: '🔥' },
+      { code: /:star:/gi, icon: '⭐' },
+      { code: /:clap:/gi, icon: '👏' },
+      { code: /:pray:/gi, icon: '🙏' },
+      { code: /:rocket:/gi, icon: '🚀' },
+      { code: /:warn:/gi, icon: '⚠️' }
+    ];
+
+    const QUICK_EMOJIS = [
+      '👍','👌','✅','👏','🙏','❤️','😊','😄','😉','🤝','💪','🔥',
+      '⭐','🚀','📌','📋','📎','📁','📊','📈','⏰','⚠️','❌','🎉',
+      '💡','🔍','✍️','🏢','🏗️','🗺️','📞','💬'
+    ];
+
+    function parseEmojis(text) {
+      if (!text) return '';
+      let out = text;
+      EMOJI_SHORTCUTS.forEach(item => {
+        out = out.replace(item.code, item.icon);
+      });
+      return out;
+    }
+
+    function initEmojiGrid() {
+      const grid = document.getElementById('emojiGrid');
+      if (!grid) return;
+      grid.innerHTML = QUICK_EMOJIS.map(em => `
+        <button type="button" onclick="insertEmojiToChat('${em}')" class="hover:bg-slate-100 rounded-lg p-1 transition">${em}</button>
+      `).join('');
+    }
+
+    function toggleEmojiPicker() {
+      document.getElementById('emojiPickerPopover').classList.toggle('hidden');
+    }
+
+    function insertEmojiToChat(em) {
+      const input = document.getElementById('chatInput');
+      const start = input.selectionStart || input.value.length;
+      const end = input.selectionEnd || input.value.length;
+      input.value = input.value.slice(0, start) + em + input.value.slice(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + em.length;
+    }
 
     // Kiểm tra quyền chi tiết của người dùng
     function hasPerm(permKey) {
@@ -623,6 +865,7 @@
 
     // 1. KHỞI TẠO HỆ THỐNG
     async function initApp() {
+      initEmojiGrid();
       await loadUsers();
       const savedUserId = localStorage.getItem('tw_user_id');
       if (savedUserId) {
@@ -647,6 +890,7 @@
         errEl.classList.add('hidden');
         sel.innerHTML = allUsers.map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} (${escapeHtml(u.role_title)})</option>`).join('');
         populateUserDropdowns();
+        if (currentUser) renderDirectMessageUsers();
       } catch (err) {
         sel.innerHTML = `<option value="">Lỗi kết nối dữ liệu</option>`;
         errEl.textContent = 'Chi tiết lỗi kết nối: ' + err.message;
@@ -664,8 +908,15 @@
       document.getElementById('approvalApproverSelect').innerHTML = appList
         .map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} — ${escapeHtml(u.role_title)}</option>`).join('');
 
-      document.getElementById('taskAssigneeSelect').innerHTML = allUsers
+      const allUserOpts = allUsers
         .map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} (${escapeHtml(u.role_title)})</option>`).join('');
+      document.getElementById('taskAssigneeSelect').innerHTML = allUserOpts;
+
+      const tgUsers = allUsers.filter(u => u.telegram_chat_id);
+      const tgOpts = (tgUsers.length ? tgUsers : allUsers)
+        .map(u => `<option value="${escapeHtml(u.telegram_chat_id || '')}">Báo cho: ${escapeHtml(u.display_name)}${u.telegram_chat_id ? '' : ' (Chưa gắn Bot ID)'}</option>`).join('');
+      document.getElementById('bkManualNotifyUserSelect').innerHTML = tgOpts;
+      document.getElementById('autoBkNotifyUserSelect').innerHTML = tgOpts;
     }
 
     function handleLogin() {
@@ -691,6 +942,7 @@
       document.getElementById('currentUserRole').textContent = user.role_title;
 
       applyUserPermissionsToUI();
+      renderDirectMessageUsers();
       await loadChannels();
       startLiveSync();
     }
@@ -700,10 +952,91 @@
       location.reload();
     }
 
-    // 2. QUẢN LÝ KÊNH / DỰ ÁN
+    // 2. QUẢN LÝ KÊNH DỰ ÁN & PHÒNG CHAT RIÊNG 1-1 (DM)
+    function buildDmChannelKey(userIdA, userIdB) {
+      const sorted = [String(userIdA), String(userIdB)].sort();
+      return `DM_${sorted[0]}_${sorted[1]}`;
+    }
+
+    function renderDirectMessageUsers() {
+      const box = document.getElementById('directMessageUserList');
+      if (!box || !currentUser) return;
+      const peers = allUsers.filter(u => u.id !== currentUser.id);
+      if (!peers.length) {
+        box.innerHTML = `<div class="px-2 py-2 text-[11px] text-slate-500">Chưa có thành viên khác.</div>`;
+        return;
+      }
+      box.innerHTML = peers.map(peer => {
+        const dmKey = buildDmChannelKey(currentUser.id, peer.id);
+        const isActive = activeChannel && activeChannel.name === dmKey;
+        return `
+          <button onclick="openDirectMessageWith('${peer.id}')"
+            class="w-full text-left px-3 py-2 rounded-xl text-xs transition flex items-center justify-between gap-2 ${isActive ? 'bg-emerald-600 text-white font-semibold shadow' : 'hover:bg-slate-800 text-slate-300'}">
+            <div class="min-w-0">
+              <div class="truncate">👤 ${escapeHtml(peer.display_name)}</div>
+              <div class="text-[10px] ${isActive ? 'text-emerald-100' : 'text-slate-500'} truncate">${escapeHtml(peer.role_title)}</div>
+            </div>
+            <span class="text-[10px] shrink-0 opacity-80">🔒</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    async function openDirectMessageWith(peerId) {
+      if (!currentUser) return;
+      const peer = allUsers.find(u => u.id === peerId);
+      if (!peer) return;
+
+      const dmKey = buildDmChannelKey(currentUser.id, peer.id);
+      let dmChannel = rawAllChannels.find(c => c.name === dmKey);
+
+      if (!dmChannel) {
+        const created = await sbFetch('team_channels', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify([{
+            name: dmKey,
+            description: `Trao đổi riêng giữa ${currentUser.display_name} & ${peer.display_name}`
+          }])
+        });
+        if (created && created[0]) {
+          dmChannel = created[0];
+          rawAllChannels.push(dmChannel);
+        }
+      }
+
+      if (!dmChannel) return;
+      activeChannel = {
+        ...dmChannel,
+        displayTitle: `Trao đổi riêng: ${peer.display_name}`,
+        isDM: true,
+        peerUser: peer
+      };
+
+      document.getElementById('activeChannelTitle').textContent = `💬 ${peer.display_name}`;
+      document.getElementById('activeChannelDesc').textContent = `Kênh riêng tư 1–1 (${peer.role_title}) — Chỉ 2 người nhìn thấy`;
+      document.getElementById('dmBadge').classList.remove('hidden');
+
+      renderChannels();
+      renderDirectMessageUsers();
+      await Promise.all([loadMessages(true), loadTasks()]);
+      if (window.innerWidth < 1024) {
+        document.getElementById('leftSidebar').classList.add('-translate-x-full');
+      }
+    }
+
     async function loadChannels() {
       const data = await sbFetch('team_channels?select=*&order=created_at.asc');
-      allChannels = data || [];
+      rawAllChannels = data || [];
+
+      const schedRow = rawAllChannels.find(c => c.name === SCHEDULE_CHANNEL_KEY);
+      if (schedRow) {
+        scheduleRecordId = schedRow.id;
+        localStorage.setItem('tw_cloud_bk_cfg', schedRow.description || '{}');
+      }
+
+      // Lọc bỏ bản ghi cấu hình và các kênh DM_ khỏi danh sách nhóm công khai
+      allChannels = rawAllChannels.filter(c => c.name !== SCHEDULE_CHANNEL_KEY && !c.name.startsWith('DM_'));
       renderChannels();
       if (allChannels.length && !activeChannel) {
         selectChannel(allChannels[0].id);
@@ -713,7 +1046,7 @@
     function renderChannels() {
       const container = document.getElementById('channelList');
       container.innerHTML = allChannels.map(ch => {
-        const isActive = activeChannel && activeChannel.id === ch.id;
+        const isActive = activeChannel && !activeChannel.isDM && activeChannel.id === ch.id;
         return `
           <button onclick="selectChannel('${ch.id}')"
             class="w-full text-left px-3 py-2.5 rounded-xl text-xs transition flex flex-col gap-0.5 ${isActive ? 'bg-blue-600 text-white font-semibold shadow' : 'hover:bg-slate-800 text-slate-300'}">
@@ -725,11 +1058,14 @@
     }
 
     async function selectChannel(channelId) {
-      activeChannel = allChannels.find(c => c.id === channelId);
-      if (!activeChannel) return;
+      const found = allChannels.find(c => c.id === channelId);
+      if (!found) return;
+      activeChannel = { ...found, isDM: false };
       document.getElementById('activeChannelTitle').textContent = '# ' + activeChannel.name;
       document.getElementById('activeChannelDesc').textContent = activeChannel.description || '';
+      document.getElementById('dmBadge').classList.add('hidden');
       renderChannels();
+      renderDirectMessageUsers();
       await Promise.all([loadMessages(true), loadTasks()]);
       if (window.innerWidth < 1024) {
         document.getElementById('leftSidebar').classList.add('-translate-x-full');
@@ -753,7 +1089,7 @@
       if (data && data[0]) selectChannel(data[0].id);
     }
 
-    // 3. CHAT THỜI GIAN THỰC & ĐÍNH KÈM FILE
+    // 3. CHAT THỜI GIAN THỰC, EMOJI PARSER & ĐÍNH KÈM FILE
     async function loadMessages(forceScroll = false) {
       if (!activeChannel) return;
       const data = await sbFetch(`team_messages?channel_id=eq.${activeChannel.id}&select=*&order=created_at.asc&limit=150`);
@@ -770,7 +1106,7 @@
       const wasAtBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 80;
 
       if (!channelMessages.length) {
-        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-10">Chưa có trao đổi nào trong nhóm này. Hãy gửi tin nhắn đầu tiên!</div>`;
+        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-10">Chưa có trao đổi nào ở đây. Hãy gửi tin nhắn hoặc tệp đính kèm đầu tiên!</div>`;
         return;
       }
 
@@ -889,10 +1225,12 @@
 
     async function sendChatMessage() {
       const input = document.getElementById('chatInput');
-      const text = input.value.trim();
+      const rawText = input.value.trim();
+      const text = parseEmojis(rawText);
       if (!text && !selectedChatFile) return;
       if (!activeChannel || !currentUser) return;
 
+      document.getElementById('emojiPickerPopover').classList.add('hidden');
       const btn = document.getElementById('sendBtn');
       btn.disabled = true;
 
@@ -909,7 +1247,7 @@
             sender_name: currentUser.display_name,
             sender_role: currentUser.role_title,
             msg_type: 'CHAT',
-            content: text || `Đã gửi tệp: ${fileInfo.name}`,
+            content: text || `📎 Đã gửi tệp: ${fileInfo.name}`,
             file_url: fileInfo.url,
             file_name: fileInfo.name
           }])
@@ -943,9 +1281,119 @@
       }
     }
 
+    // CHIA SẺ FILE TỪ 1 NGƯỜI CHO NHIỀU NGƯỜI (VÀO TỪNG KÊNH RIÊNG 1-1)
+    function openMultiShareModal() {
+      const fb = document.getElementById('multiShareFeedback');
+      fb.classList.add('hidden');
+      document.getElementById('multiShareFileInput').value = '';
+      document.getElementById('multiShareNoteInput').value = '';
+
+      const box = document.getElementById('multiShareUserCheckboxes');
+      const peers = allUsers.filter(u => currentUser && u.id !== currentUser.id);
+      box.innerHTML = peers.map(u => `
+        <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-white border border-slate-200 hover:border-indigo-400">
+          <input type="checkbox" name="shareRecipient" value="${u.id}" class="accent-indigo-600" />
+          <div class="truncate">
+            <div class="font-bold text-slate-800 truncate">${escapeHtml(u.display_name)}</div>
+            <div class="text-[10px] text-slate-500 truncate">${escapeHtml(u.role_title)}</div>
+          </div>
+        </label>
+      `).join('');
+      openModal('multiShareModal');
+    }
+
+    function toggleSelectAllShareUsers() {
+      const cbs = Array.from(document.getElementsByName('shareRecipient'));
+      const allChecked = cbs.every(cb => cb.checked);
+      cbs.forEach(cb => { cb.checked = !allChecked; });
+    }
+
+    async function executeMultiShareFile() {
+      const fileEl = document.getElementById('multiShareFileInput');
+      const note = parseEmojis(document.getElementById('multiShareNoteInput').value.trim());
+      const fb = document.getElementById('multiShareFeedback');
+
+      const recipientIds = Array.from(document.getElementsByName('shareRecipient'))
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+
+      if (!fileEl.files[0]) {
+        fb.textContent = 'Vui lòng chọn tệp cần chia sẻ!';
+        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
+        fb.classList.remove('hidden');
+        return;
+      }
+      if (!recipientIds.length) {
+        fb.textContent = 'Vui lòng tích chọn ít nhất 1 thành viên nhận file!';
+        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
+        fb.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('submitMultiShareBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang tải tệp & gửi cho các thành viên...';
+
+      try {
+        // Upload 1 lần lên Storage dùng chung link tốc độ cao
+        const fileInfo = await uploadFileToStorage(fileEl.files[0]);
+
+        for (const rId of recipientIds) {
+          const peer = allUsers.find(u => u.id === rId);
+          if (!peer) continue;
+          const dmKey = buildDmChannelKey(currentUser.id, peer.id);
+          let dmChannel = rawAllChannels.find(c => c.name === dmKey);
+
+          if (!dmChannel) {
+            const created = await sbFetch('team_channels', {
+              method: 'POST',
+              headers: { 'Prefer': 'return=representation' },
+              body: JSON.stringify([{
+                name: dmKey,
+                description: `Trao đổi riêng giữa ${currentUser.display_name} & ${peer.display_name}`
+              }])
+            });
+            if (created && created[0]) {
+              dmChannel = created[0];
+              rawAllChannels.push(dmChannel);
+            }
+          }
+
+          if (dmChannel) {
+            await sbFetch('team_messages', {
+              method: 'POST',
+              body: JSON.stringify([{
+                channel_id: dmChannel.id,
+                sender_name: currentUser.display_name,
+                sender_role: currentUser.role_title,
+                msg_type: 'CHAT',
+                content: note ? `📤 Chia sẻ tài liệu: ${note}` : `📤 Đã chia sẻ tài liệu: ${fileInfo.name}`,
+                file_url: fileInfo.url,
+                file_name: fileInfo.name
+              }])
+            });
+          }
+        }
+
+        fb.textContent = `✅ Đã chia sẻ tệp "${fileInfo.name}" vào hộp thư riêng của ${recipientIds.length} thành viên!`;
+        fb.className = 'p-2.5 rounded-xl font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+        fb.classList.remove('hidden');
+        if (activeChannel && activeChannel.isDM) {
+          await loadMessages(true);
+        }
+      } catch (err) {
+        fb.textContent = 'Lỗi chia sẻ tệp: ' + err.message;
+        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
+        fb.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📤 Gửi File Cho Các Thành Viên Đã Chọn';
+      }
+    }
+
     // 4. PHIẾU TRÌNH PHÊ DUYỆT & GỬI BOT TELEGRAM
     async function submitApprovalRequest() {
-      const content = document.getElementById('approvalContentInput').value.trim();
+      const content = parseEmojis(document.getElementById('approvalContentInput').value.trim());
       if (!content) return alert('Vui lòng nhập nội dung trình phê duyệt!');
 
       const approverId = document.getElementById('approvalApproverSelect').value;
@@ -987,7 +1435,7 @@
             messageId: insertedMsg.id,
             senderName: currentUser.display_name,
             senderRole: currentUser.role_title,
-            channelName: activeChannel.name,
+            channelName: activeChannel.isDM ? `Kênh riêng (${currentUser.display_name})` : activeChannel.name,
             content: content,
             fileUrl: fileInfo.url || '',
             fileName: fileInfo.name || '',
@@ -1033,7 +1481,7 @@
     async function submitNewTask() {
       if (!hasPerm('can_assign')) return alert('Bạn chưa được cấp quyền giao việc!');
       const assigneeId = document.getElementById('taskAssigneeSelect').value;
-      const title = document.getElementById('taskTitleInput').value.trim();
+      const title = parseEmojis(document.getElementById('taskTitleInput').value.trim());
       const dueDate = document.getElementById('taskDueInput').value.trim();
       if (!title) return alert('Vui lòng nhập nội dung công việc!');
 
@@ -1082,7 +1530,7 @@
           assigneeName: assignee.display_name,
           assigneeChatId: assignee.telegram_chat_id || '',
           assignedBy: currentUser.display_name,
-          channelName: activeChannel.name,
+          channelName: activeChannel.isDM ? `Kênh riêng (${currentUser.display_name})` : activeChannel.name,
           taskTitle: taskTitle,
           dueDate: dueDate
         })
@@ -1156,7 +1604,7 @@
 
     async function saveTaskConfirmation() {
       if (!confirmingTaskId) return;
-      const note = document.getElementById('confirmTaskNoteInput').value.trim();
+      const note = parseEmojis(document.getElementById('confirmTaskNoteInput').value.trim());
       let selectedStatus = 'PENDING';
       document.getElementsByName('taskConfirmStatus').forEach(r => { if (r.checked) selectedStatus = r.value; });
 
@@ -1182,7 +1630,7 @@
       const files = channelMessages.filter(m => m.file_url);
       const box = document.getElementById('rightTabFiles');
       if (!files.length) {
-        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">Chưa có tệp nào được gửi trong nhóm này.</div>`;
+        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">Chưa có tệp nào được gửi trong kênh này.</div>`;
         return;
       }
       box.innerHTML = files.map(f => `
@@ -1382,24 +1830,104 @@
       }
     }
 
-    // 7. TRUNG TÂM BACKUP THỦ CÔNG, LỊCH TỰ ĐỘNG & RESTORE
-    function openBackupModal() {
+    // 7. TRUNG TÂM BACKUP, LỊCH TỰ ĐỘNG, DỌN FILE CŨ & RESTORE
+    async function openBackupModal() {
       const fb = document.getElementById('backupFeedback');
       fb.classList.add('hidden');
       const sel = document.getElementById('bkChannelFilter');
       sel.innerHTML = `<option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>` +
         allChannels.map(c => `<option value="${c.id}">Chỉ dự án: # ${escapeHtml(c.name)}</option>`).join('');
 
-      // Tải cấu hình lịch tự động
-      const cfg = JSON.parse(localStorage.getItem('tw_auto_bk_cfg') || '{"enabled":false,"time":"17:30","folder":"TeamWork_Cloud_AutoBackup"}');
+      try {
+        const rows = await sbFetch(`team_channels?name=eq.${SCHEDULE_CHANNEL_KEY}&select=*`);
+        if (rows && rows.length) {
+          scheduleRecordId = rows[0].id;
+          localStorage.setItem('tw_cloud_bk_cfg', rows[0].description || '{}');
+        }
+      } catch (e) {}
+
+      const cfg = JSON.parse(localStorage.getItem('tw_cloud_bk_cfg') || '{"enabled":false,"mode":"FIXED_TIMES","times":["17:30"],"intervalHours":4,"dayScope":"ALL_DAYS","weekdays":[1,2,3,4,5],"monthDays":[1,15,30],"retentionPolicy":"DAYS_30","notifyTelegram":true,"folder":"TeamWork_Cloud_AutoBackup"}');
+
       document.getElementById('autoBkEnabled').checked = Boolean(cfg.enabled);
-      document.getElementById('autoBkTime').value = cfg.time || '17:30';
       document.getElementById('autoBkFolder').value = cfg.folder || 'TeamWork_Cloud_AutoBackup';
-      const lastRun = localStorage.getItem('tw_auto_bk_last_run');
-      document.getElementById('autoBkLastRunText').innerHTML = `Lần chạy tự động gần nhất: <b>${lastRun || 'Chưa ghi nhận'}</b>`;
+      document.getElementById('autoBkIntervalSelect').value = String(cfg.intervalHours || 4);
+      document.getElementById('autoBkDayScope').value = cfg.dayScope || 'ALL_DAYS';
+      document.getElementById('autoBkRetentionPolicy').value = cfg.retentionPolicy || 'DAYS_30';
+      document.getElementById('autoBkNotifyTg').checked = cfg.notifyTelegram !== false;
+      if (cfg.notifyChatId) {
+        document.getElementById('autoBkNotifyUserSelect').value = cfg.notifyChatId;
+      }
+
+      scheduledTimeSlots = Array.isArray(cfg.times) && cfg.times.length ? [...cfg.times] : ['17:30'];
+      renderBackupTimeSlots();
+
+      document.getElementsByName('autoBkMode').forEach(r => {
+        r.checked = (r.value === (cfg.mode || 'FIXED_TIMES'));
+      });
+
+      const wd = cfg.weekdays || [1, 2, 3, 4, 5];
+      document.getElementsByName('bkWeekday').forEach(cb => {
+        cb.checked = wd.includes(Number(cb.value));
+      });
+
+      document.getElementById('autoBkMonthDaysInput').value = (cfg.monthDays || [1, 15, 30]).join(', ');
+
+      toggleAutoBkModeUI();
+      toggleAutoBkDayScopeUI();
+
+      document.getElementById('autoBkLastRunText').innerHTML = cfg.updated_at
+        ? `Đồng bộ Cloud lúc: <b>${new Date(cfg.updated_at).toLocaleString('vi-VN')}</b>`
+        : `Trạng thái: <b>Chưa đồng bộ lên Cloud</b>`;
 
       switchBackupTab('MANUAL');
       openModal('backupModal');
+    }
+
+    function toggleAutoBkModeUI() {
+      let mode = 'FIXED_TIMES';
+      document.getElementsByName('autoBkMode').forEach(r => { if (r.checked) mode = r.value; });
+      document.getElementById('autoBkFixedBox').classList.toggle('hidden', mode !== 'FIXED_TIMES');
+      document.getElementById('autoBkIntervalBox').classList.toggle('hidden', mode !== 'INTERVAL');
+    }
+
+    function toggleAutoBkDayScopeUI() {
+      const scope = document.getElementById('autoBkDayScope').value;
+      document.getElementById('autoBkWeekdaysBox').classList.toggle('hidden', scope !== 'CUSTOM_WEEKDAYS');
+      document.getElementById('autoBkMonthDaysBox').classList.toggle('hidden', scope !== 'MONTHLY_DAYS');
+    }
+
+    function renderBackupTimeSlots() {
+      const box = document.getElementById('backupTimeSlotsList');
+      scheduledTimeSlots.sort();
+      if (!scheduledTimeSlots.length) {
+        box.innerHTML = `<span class="text-slate-400 italic">Chưa có mốc giờ nào. Hãy chọn giờ và bấm + Thêm giờ.</span>`;
+        return;
+      }
+      box.innerHTML = scheduledTimeSlots.map(t => `
+        <span class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-900 font-bold px-2.5 py-1 rounded-lg border border-blue-200">
+          🕒 ${t}
+          <button type="button" onclick="removeBackupTimeSlot('${t}')" class="text-rose-600 hover:text-rose-800 font-bold">✕</button>
+        </span>
+      `).join('');
+    }
+
+    function addBackupTimeSlot() {
+      const val = document.getElementById('newBackupTimeInput').value;
+      if (!val) return;
+      if (!scheduledTimeSlots.includes(val)) {
+        scheduledTimeSlots.push(val);
+        renderBackupTimeSlots();
+      }
+    }
+
+    function removeBackupTimeSlot(t) {
+      scheduledTimeSlots = scheduledTimeSlots.filter(x => x !== t);
+      renderBackupTimeSlots();
+    }
+
+    function applyPresetTimes(arr) {
+      scheduledTimeSlots = [...arr];
+      renderBackupTimeSlots();
     }
 
     function switchBackupTab(tab) {
@@ -1422,64 +1950,73 @@
       fb.classList.remove('hidden');
     }
 
-    function saveAutoBackupSettings() {
+    async function saveAutoBackupSettings() {
+      let mode = 'FIXED_TIMES';
+      document.getElementsByName('autoBkMode').forEach(r => { if (r.checked) mode = r.value; });
+
+      if (mode === 'FIXED_TIMES' && !scheduledTimeSlots.length) {
+        return showBackupFeedback('Vui lòng thêm ít nhất 1 mốc giờ sao lưu trong ngày!', true);
+      }
+
+      const weekdays = [];
+      document.getElementsByName('bkWeekday').forEach(cb => {
+        if (cb.checked) weekdays.push(Number(cb.value));
+      });
+
+      const monthDays = document.getElementById('autoBkMonthDaysInput').value
+        .split(',')
+        .map(s => Number(s.trim()))
+        .filter(n => n >= 1 && n <= 31);
+
       const cfg = {
         enabled: document.getElementById('autoBkEnabled').checked,
-        time: document.getElementById('autoBkTime').value || '17:30',
-        folder: document.getElementById('autoBkFolder').value.trim() || 'TeamWork_Cloud_AutoBackup'
+        mode: mode,
+        times: scheduledTimeSlots,
+        intervalHours: Number(document.getElementById('autoBkIntervalSelect').value || 4),
+        dayScope: document.getElementById('autoBkDayScope').value,
+        weekdays: weekdays,
+        monthDays: monthDays,
+        retentionPolicy: document.getElementById('autoBkRetentionPolicy').value,
+        notifyTelegram: document.getElementById('autoBkNotifyTg').checked,
+        notifyChatId: document.getElementById('autoBkNotifyUserSelect').value || '',
+        folder: document.getElementById('autoBkFolder').value.trim() || 'TeamWork_Cloud_AutoBackup',
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser ? currentUser.display_name : 'Admin'
       };
-      localStorage.setItem('tw_auto_bk_cfg', JSON.stringify(cfg));
-      showBackupFeedback(
-        cfg.enabled
-          ? `✅ Đã bật lịch tự động Backup vào lúc ${cfg.time} hàng ngày lên thư mục "${cfg.folder}"!`
-          : '⏸️ Đã tạm tắt lịch tự động Backup trên trình duyệt.',
-        false
-      );
-    }
 
-    async function checkAndRunAutoBackup() {
-      const cfg = JSON.parse(localStorage.getItem('tw_auto_bk_cfg') || '{"enabled":false}');
-      if (!cfg.enabled || !hasPerm('can_backup')) return;
+      const btn = document.getElementById('saveScheduleBtn');
+      btn.disabled = true;
+      btn.textContent = 'Đang đồng bộ lên Cloud...';
 
-      const now = new Date();
-      const todayKey = now.toISOString().slice(0, 10);
-      const lastDate = localStorage.getItem('tw_auto_bk_last_date');
-      if (lastDate === todayKey) return;
-
-      const [targetH, targetM] = (cfg.time || '17:30').split(':').map(Number);
-      const nowMins = now.getHours() * 60 + now.getMinutes();
-      const targetMins = targetH * 60 + targetM;
-
-      if (nowMins >= targetMins) {
-        localStorage.setItem('tw_auto_bk_last_date', todayKey);
-        const runStamp = now.toLocaleString('vi-VN');
-        localStorage.setItem('tw_auto_bk_last_run', runStamp);
-
-        try {
-          const fullDump = {
-            exported_at: now.toISOString(),
-            exported_by: `AUTO_WEB_${currentUser ? currentUser.display_name : 'Admin'}`,
-            team_users: await sbFetch('team_users?select=*&order=created_at.asc'),
-            team_channels: await sbFetch('team_channels?select=*&order=created_at.asc'),
-            team_messages: await sbFetch('team_messages?select=*&order=created_at.asc'),
-            team_tasks: await sbFetch('team_tasks?select=*&order=created_at.desc')
-          };
-          const fileName = `TeamWork_AutoBackup_${todayKey}_${String(targetH).padStart(2,'0')}-${String(targetM).padStart(2,'0')}.json`;
-          await fetch(APPS_SCRIPT_WEBHOOK, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'BACKUP_TO_DRIVE',
-              folderName: cfg.folder || 'TeamWork_Cloud_AutoBackup',
-              fileName: fileName,
-              mimeType: 'application/json',
-              content: JSON.stringify(fullDump, null, 2)
-            })
+      try {
+        const descJson = JSON.stringify(cfg);
+        if (scheduleRecordId) {
+          await sbFetch(`team_channels?id=eq.${scheduleRecordId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ description: descJson })
           });
-        } catch (e) {
-          console.error('Auto backup error:', e);
+        } else {
+          const inserted = await sbFetch('team_channels', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=representation' },
+            body: JSON.stringify([{ name: SCHEDULE_CHANNEL_KEY, description: descJson }])
+          });
+          if (inserted && inserted[0]) scheduleRecordId = inserted[0].id;
         }
+
+        localStorage.setItem('tw_cloud_bk_cfg', descJson);
+        document.getElementById('autoBkLastRunText').innerHTML = `Đồng bộ Cloud lúc: <b>${new Date().toLocaleString('vi-VN')}</b>`;
+        showBackupFeedback(
+          cfg.enabled
+            ? `✅ Đã lưu lịch tự động Backup, chính sách dọn file cũ & tùy chọn báo Telegram lên Cloud!`
+            : '⏸️ Đã tắt lịch tự động Backup và đồng bộ trạng thái lên Cloud.',
+          false
+        );
+      } catch (err) {
+        showBackupFeedback('Lỗi đồng bộ lịch lên Cloud: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Lưu & Đồng Bộ Lịch Lên Cloud';
       }
     }
 
@@ -1489,6 +2026,8 @@
       const incMessages = document.getElementById('bkMessages').checked;
       const incTasks = document.getElementById('bkTasks').checked;
       const chFilter = document.getElementById('bkChannelFilter').value;
+      const notifyTg = document.getElementById('bkManualNotifyTg').checked;
+      const notifyChatId = document.getElementById('bkManualNotifyUserSelect').value || '';
 
       if (!incUsers && !incChannels && !incMessages && !incTasks) {
         return showBackupFeedback('Vui lòng tích chọn ít nhất 1 nhóm dữ liệu cần sao lưu!', true);
@@ -1507,7 +2046,7 @@
         };
 
         if (incUsers) backupData.team_users = await sbFetch('team_users?select=*&order=created_at.asc');
-        if (incChannels) backupData.team_channels = await sbFetch('team_channels?select=*&order=created_at.asc');
+        if (incChannels) backupData.team_channels = await sbFetch(`team_channels?name=neq.${SCHEDULE_CHANNEL_KEY}&select=*&order=created_at.asc`);
         if (incMessages) {
           const q = chFilter === 'ALL' ? 'team_messages?select=*&order=created_at.asc' : `team_messages?channel_id=eq.${chFilter}&select=*&order=created_at.asc`;
           backupData.team_messages = await sbFetch(q);
@@ -1567,10 +2106,13 @@
               folderName: folderName,
               fileName: fileName,
               mimeType: mimeType,
-              content: fileContent
+              content: fileContent,
+              retentionPolicy: document.getElementById('autoBkRetentionPolicy').value || 'KEEP_ALL',
+              notifyTelegram: notifyTg,
+              notifyChatId: notifyChatId
             })
           });
-          showBackupFeedback(`☁️ Đã gửi gói sao lưu "${fileName}" lên thư mục "${folderName}" trên Google Drive thành công!`, false);
+          showBackupFeedback(`☁️ Đã gửi gói sao lưu "${fileName}" lên thư mục "${folderName}" trên Google Drive${notifyTg ? ' & báo Telegram' : ''}!`, false);
         }
       } catch (err) {
         if (err.name === 'AbortError') {
@@ -1651,11 +2193,14 @@
           });
         }
         if (doChannels) {
-          await sbFetch('team_channels', {
-            method: 'POST',
-            headers: upsertHeaders,
-            body: JSON.stringify(parsedRestoreData.team_channels)
-          });
+          const validChannels = parsedRestoreData.team_channels.filter(c => c.name !== SCHEDULE_CHANNEL_KEY);
+          if (validChannels.length) {
+            await sbFetch('team_channels', {
+              method: 'POST',
+              headers: upsertHeaders,
+              body: JSON.stringify(validChannels)
+            });
+          }
         }
         if (doMessages) {
           await sbFetch('team_messages', {
@@ -1686,14 +2231,13 @@
       return String(val || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
     }
 
-    // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY & KIỂM TRA LỊCH BACKUP
+    // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY
     function startLiveSync() {
       if (syncTimer) clearInterval(syncTimer);
       syncTimer = setInterval(() => {
         if (!document.hidden && activeChannel) {
           loadMessages(false);
           loadTasks();
-          checkAndRunAutoBackup();
         }
       }, 2000);
     }
