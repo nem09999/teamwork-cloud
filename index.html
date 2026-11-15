@@ -30,19 +30,55 @@
         </div>
       </div>
 
-      <div class="space-y-4">
+      <!-- FORM ĐĂNG NHẬP CHÍNH -->
+      <div id="loginFormBox" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1.5">Chọn tài khoản làm việc</label>
           <select id="loginUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Mật khẩu / Mã PIN truy cập</label>
-          <input id="loginPassword" type="password" placeholder="Nhập mật khẩu (mặc định: 123456)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') handleLogin()" />
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-medium text-slate-400">Mật khẩu / Mã PIN truy cập</label>
+            <button type="button" onclick="toggleForgotPassword(true)" class="text-xs text-blue-400 hover:text-blue-300 font-medium underline">
+              Quên mật khẩu / PIN?
+            </button>
+          </div>
+          <input id="loginPassword" type="password" placeholder="Nhập mật khẩu hoặc mã PIN 6 số" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') handleLogin()" />
         </div>
         <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-blue-600/25">
           Đăng Nhập Hệ Thống
         </button>
         <p id="loginError" class="text-xs text-rose-400 text-center hidden"></p>
+      </div>
+
+      <!-- FORM KHÔI PHỤC MẬT KHẨU QUA TELEGRAM -->
+      <div id="forgotPasswordBox" class="space-y-4 hidden">
+        <div class="bg-blue-950/50 border border-blue-800/60 rounded-xl p-3 text-xs text-blue-200 leading-relaxed">
+          🔐 <b>Cấp lại Mã PIN 6 số qua Telegram:</b><br/>
+          Chọn đúng tài khoản của bạn và nhập <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo ngẫu nhiên mã PIN 6 số mới và gửi trực tiếp vào Telegram của bạn.
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Tài khoản cần cấp lại mật khẩu</label>
+          <select id="resetUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Nhập Telegram Chat ID xác thực</label>
+          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 5182940123" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') handleResetPasswordViaTelegram()" />
+        </div>
+
+        <button id="btnResetSubmit" onclick="handleResetPasswordViaTelegram()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/25">
+          📩 Cấp Mã PIN Mới & Gửi Qua Telegram
+        </button>
+
+        <p id="resetFeedback" class="text-xs text-center hidden leading-relaxed"></p>
+
+        <div class="pt-1 text-center">
+          <button type="button" onclick="toggleForgotPassword(false)" class="text-xs text-slate-400 hover:text-white">
+            ← Quay lại màn hình đăng nhập
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -105,7 +141,6 @@
 
     <!-- CỘT GIỮA: LUỒNG TRAO ĐỔI & PHÊ DUYỆT -->
     <main class="flex-1 flex flex-col bg-slate-950 min-w-0">
-      <!-- Header kênh -->
       <div class="h-14 bg-slate-900/60 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
         <div class="min-w-0">
           <h2 id="activeChannelTitle" class="text-sm font-bold text-white truncate"># Phòng Điều Hành Chung</h2>
@@ -121,10 +156,8 @@
         </div>
       </div>
 
-      <!-- Khung tin nhắn -->
       <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
 
-      <!-- Khung nhập tin nhắn -->
       <div class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
         <input id="chatInput" type="text" placeholder="Nhập nội dung trao đổi hoặc cập nhật tiến độ..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendChatMessage()" />
         <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition">
@@ -157,7 +190,7 @@
     </aside>
   </div>
 
-  <!-- MODAL 1: BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST DỰ ÁN (CÓ NÚT XÓA) -->
+  <!-- MODAL 1: BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST DỰ ÁN -->
   <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
@@ -228,19 +261,19 @@
   <div id="profileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">⚙️ Cài Đặt Nhận Thông Báo Telegram</h3>
+        <h3 class="text-sm font-bold text-white">⚙️ Cài Đặt Telegram ID & Mật Khẩu</h3>
         <button onclick="closeModal('profileModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <div class="space-y-3 text-xs">
         <p class="text-slate-400 leading-relaxed">
-          Nhập <b>Telegram Chat ID</b> của anh (lấy qua bot <code class="text-blue-400">@userinfobot</code> trên Telegram) và đảm bảo đã bấm <b>Start</b> với Bot điều hành để nhận cảnh báo giao việc tự động.
+          Nhập <b>Telegram Chat ID</b> của anh (lấy qua bot <code class="text-blue-400">@userinfobot</code> trên Telegram) để nhận thông báo giao việc và dùng khi cần khôi phục mã PIN đăng nhập.
         </p>
         <div>
           <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
           <input id="profileTelegramId" type="text" placeholder="Ví dụ: 5182940123" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Mật khẩu đăng nhập mới (để trống nếu giữ nguyên)</label>
+          <label class="block text-slate-400 mb-1">Mật khẩu / Mã PIN mới (để trống nếu giữ nguyên)</label>
           <input id="profileNewPass" type="password" placeholder="••••••" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
         </div>
         <div class="pt-2 flex justify-end gap-2">
@@ -267,11 +300,12 @@
 
   <script>
     // =========================================================================
-    // 1. CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT WEBHOOK
+    // 1. CẤU HÌNH KẾT NỐI SUPABASE & TELEGRAM / WEBHOOK
     // =========================================================================
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3Z2cmlpcWdrc2hrcHFuYWhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4ODc1NDYsImV4cCI6MjA1ODQ2MzU0Nn0.23uW0h7d-fE6Q8x_aY1s6hZ9pQ0w8vR4kL2mN5bV7cX';
-    const GAS_WEBHOOK_URL = ''; // Dán URL Web App Google Apps Script của anh vào đây nếu dùng webhook riêng
+    const GAS_WEBHOOK_URL = ''; // Dán URL Google Apps Script Web App nếu dùng trung gian
+    const TELEGRAM_BOT_TOKEN = ''; // Hoặc dán trực tiếp Token Bot Telegram (dạng 123456:ABC-DEF...) để gửi thẳng
 
     let sb = null;
     try {
@@ -310,11 +344,12 @@
     async function loadCloudState() {
       if (!sb) return;
       try {
-        const { data, error } = await sb.from('teamwork_state').select('payload').eq('id', 'main').single();
+        const { data } = await sb.from('teamwork_state').select('payload').eq('id', 'main').single();
         if (data && data.payload) {
           appState = { ...DEFAULT_STATE, ...data.payload };
           localStorage.setItem('tw_cloud_state_v2', JSON.stringify(appState));
-          renderAll();
+          initLoginOptions();
+          if (currentUser) renderAll();
         }
       } catch (err) {
         console.log('Dùng dữ liệu bộ nhớ đệm cục bộ.');
@@ -332,11 +367,137 @@
     }
 
     // =========================================================================
-    // 4. ĐĂNG NHẬP & QUẢN LÝ TÀI KHOẢN
+    // 4. ĐĂNG NHẬP & QUÊN MẬT KHẨU CẤP MÃ PIN 6 SỐ QUA TELEGRAM
     // =========================================================================
     function initLoginOptions() {
-      const sel = document.getElementById('loginUserSelect');
-      sel.innerHTML = appState.users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('');
+      const optionsHtml = appState.users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('');
+      const sel1 = document.getElementById('loginUserSelect');
+      const sel2 = document.getElementById('resetUserSelect');
+      if (sel1) sel1.innerHTML = optionsHtml;
+      if (sel2) sel2.innerHTML = optionsHtml;
+    }
+
+    function toggleForgotPassword(showForgot) {
+      const loginBox = document.getElementById('loginFormBox');
+      const forgotBox = document.getElementById('forgotPasswordBox');
+      const errEl = document.getElementById('loginError');
+      const fbEl = document.getElementById('resetFeedback');
+      errEl.classList.add('hidden');
+      fbEl.classList.add('hidden');
+
+      if (showForgot) {
+        document.getElementById('resetUserSelect').value = document.getElementById('loginUserSelect').value;
+        document.getElementById('resetTelegramIdInput').value = '';
+        loginBox.classList.add('hidden');
+        forgotBox.classList.remove('hidden');
+      } else {
+        forgotBox.classList.add('hidden');
+        loginBox.classList.remove('hidden');
+      }
+    }
+
+    async function sendTelegramMessage(chatId, textMessage, actionType = 'RESET_PIN', extraPayload = {}) {
+      if (!chatId) return false;
+      let sent = false;
+
+      // Ưu tiên 1: Gửi qua Google Apps Script Webhook nếu có cấu hình
+      if (GAS_WEBHOOK_URL) {
+        try {
+          await fetch(GAS_WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+              action: actionType,
+              chatId: String(chatId),
+              message: textMessage,
+              ...extraPayload
+            })
+          });
+          sent = true;
+        } catch (e) {
+          console.warn('Lỗi gửi qua GAS Webhook:', e);
+        }
+      }
+
+      // Ưu tiên 2: Gửi trực tiếp qua Telegram Bot API nếu có Token
+      if (TELEGRAM_BOT_TOKEN) {
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: String(chatId),
+              text: textMessage,
+              parse_mode: 'HTML'
+            })
+          });
+          if (res.ok) sent = true;
+        } catch (e) {
+          console.warn('Lỗi gửi trực tiếp Telegram API:', e);
+        }
+      }
+
+      return sent;
+    }
+
+    async function handleResetPasswordViaTelegram() {
+      const userId = document.getElementById('resetUserSelect').value;
+      const inputTgId = document.getElementById('resetTelegramIdInput').value.trim();
+      const fbEl = document.getElementById('resetFeedback');
+      const btn = document.getElementById('btnResetSubmit');
+
+      fbEl.classList.remove('hidden', 'text-rose-400', 'text-emerald-400', 'text-amber-400');
+
+      if (!inputTgId) {
+        fbEl.textContent = '⚠️ Vui lòng nhập Telegram Chat ID của bạn!';
+        fbEl.classList.add('text-rose-400');
+        return;
+      }
+
+      const user = appState.users.find(u => u.id === userId);
+      if (!user) return;
+
+      if (!user.telegramId) {
+        fbEl.innerHTML = '❌ Tài khoản này chưa gắn Telegram ID trên hệ thống.<br/>Vui lòng liên hệ Quản trị viên để cấp lại thủ công.';
+        fbEl.classList.add('text-rose-400');
+        return;
+      }
+
+      if (String(user.telegramId).trim() !== inputTgId) {
+        fbEl.textContent = '❌ Telegram Chat ID không khớp với hồ sơ tài khoản đã đăng ký!';
+        fbEl.classList.add('text-rose-400');
+        return;
+      }
+
+      // Sinh ngẫu nhiên chuỗi 6 chữ số (từ 100000 đến 999999)
+      const randomPin = String(Math.floor(100000 + Math.random() * 900000));
+      user.pass = randomPin;
+
+      btn.disabled = true;
+      btn.textContent = 'Đang tạo mã PIN & gửi Telegram...';
+
+      await saveCloudState();
+
+      const msg = `🔐 <b>TEAMWORK CLOUD — KHÔI PHỤC MẬT KHẨU</b>\n\n` +
+                  `👤 Tài khoản: <b>${user.name}</b>\n` +
+                  `🔑 Mã PIN đăng nhập mới của bạn là: <code>${randomPin}</code>\n\n` +
+                  `Vui lòng dùng mã PIN 6 số này để đăng nhập lại hệ thống.`;
+
+      const isSent = await sendTelegramMessage(user.telegramId, msg, 'RESET_PIN', {
+        userName: user.name,
+        newPin: randomPin
+      });
+
+      btn.disabled = false;
+      btn.textContent = '📩 Cấp Mã PIN Mới & Gửi Qua Telegram';
+
+      if (isSent) {
+        fbEl.innerHTML = `✅ Đã tạo mã PIN 6 số mới và gửi qua Telegram ID <b>${inputTgId}</b>.<br/>Vui lòng kiểm tra tin nhắn Bot và quay lại đăng nhập!`;
+        fbEl.classList.add('text-emerald-400');
+      } else {
+        fbEl.innerHTML = `⚠️ Hệ thống đã đặt lại mã PIN mới trên cơ sở dữ liệu, nhưng chưa cấu hình <b>GAS_WEBHOOK_URL</b> hoặc <b>TELEGRAM_BOT_TOKEN</b> trong file code để gửi tự động.`;
+        fbEl.classList.add('text-amber-400');
+      }
     }
 
     function handleLogin() {
@@ -345,13 +506,23 @@
       const user = appState.users.find(u => u.id === userId);
       const errEl = document.getElementById('loginError');
 
-      if (!user || (user.pass && pass !== user.pass && pass !== '123456')) {
-        errEl.textContent = 'Mật khẩu chưa chính xác. Vui lòng thử lại!';
+      // Hỗ trợ mật khẩu cá nhân, mật khẩu mặc định 123456, hoặc mã cứu hộ ADMIN999 cho quản trị viên
+      const isMasterRecovery = user && user.isAdmin && pass === 'ADMIN999';
+      const isValid = user && (pass === user.pass || (!user.pass && pass === '123456') || isMasterRecovery);
+
+      if (!isValid) {
+        errEl.textContent = 'Mật khẩu / Mã PIN chưa chính xác. Bấm "Quên mật khẩu / PIN?" phía trên để nhận mã mới qua Telegram.';
         errEl.classList.remove('hidden');
         return;
       }
 
+      if (isMasterRecovery) {
+        user.pass = '123456';
+        saveCloudState();
+      }
+
       currentUser = user;
+      errEl.classList.add('hidden');
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('currentUserName').textContent = user.name;
       document.getElementById('currentUserRole').textContent = user.role;
@@ -362,6 +533,7 @@
     function handleLogout() {
       currentUser = null;
       document.getElementById('loginPassword').value = '';
+      toggleForgotPassword(false);
       document.getElementById('loginScreen').classList.remove('hidden');
     }
 
@@ -463,7 +635,6 @@
       renderMessages();
     }
 
-    // HIỂN THỊ THẺ CHECKLIST CÔNG VIỆC CỘT PHẢI (CÓ NÚT XÓA 🗑️)
     function renderTasks() {
       const container = document.getElementById('checklistContainer');
       const hideDone = document.getElementById('hideDoneToggle').checked;
@@ -523,7 +694,6 @@
       }).join('');
     }
 
-    // HIỂN THỊ BẢNG THEO DÕI TIẾN ĐỘ (CÓ NÚT XÓA 🗑️ NGAY CỘT TÁC VỤ)
     function renderProgressTable() {
       const tbody = document.getElementById('progressTableBody');
       const tasks = appState.tasks.filter(t => t.channelId === activeChannelId);
@@ -569,7 +739,7 @@
     }
 
     // =========================================================================
-    // 6. CÁC THAO TÁC CÔNG VIỆC: GIAO VIỆC, HOÀN THÀNH, HỒI ĐÁP, XÓA
+    // 6. CÁC THAO TÁC CÔNG VIỆC
     // =========================================================================
     function openAssignModal() {
       const sel = document.getElementById('taskAssignee');
@@ -620,19 +790,16 @@
       closeModal('assignModal');
       renderAll();
 
-      // Gửi thông báo qua Google Apps Script Webhook nếu có cấu hình
-      if (GAS_WEBHOOK_URL && assignee.telegramId) {
-        fetch(GAS_WEBHOOK_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({
-            action: 'NOTIFY_TASK',
-            chatId: assignee.telegramId,
-            assignee: assignee.name,
-            task: content,
-            deadline: deadlineDisplay
-          })
-        }).catch(() => {});
+      if (assignee.telegramId) {
+        const taskMsg = `📌 <b>GIAO VIỆC MỚI — TEAMWORK CLOUD</b>\n\n` +
+                        `👤 Người nhận: <b>${assignee.name}</b>\n` +
+                        `📝 Nội dung: ${content}\n` +
+                        `⏰ Hạn hoàn thành: <b>${deadlineDisplay}</b>`;
+        sendTelegramMessage(assignee.telegramId, taskMsg, 'NOTIFY_TASK', {
+          assignee: assignee.name,
+          task: content,
+          deadline: deadlineDisplay
+        });
       }
     }
 
@@ -657,7 +824,6 @@
       renderAll();
     }
 
-    // HÀM XÓA CÔNG VIỆC DÙNG CHUNG CHO CẢ CHECKLIST VÀ BẢNG TIẾN ĐỘ
     async function deleteTask(taskId) {
       const task = appState.tasks.find(t => t.id === taskId);
       if (!task) return;
@@ -735,9 +901,6 @@
       a.click();
     }
 
-    // =========================================================================
-    // 8. TIỆN ÍCH MODAL & KHỞI CHẠY
-    // =========================================================================
     function openModal(id) {
       const el = document.getElementById(id);
       el.classList.remove('hidden');
