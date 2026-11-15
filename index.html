@@ -1,7 +1,3 @@
-
-index.html
-
-100%
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1849,9 +1845,7 @@ index.html
           sender_name: currentUser.display_name,
           sender_role: currentUser.role_title,
           msg_type: 'TASK',
-          content: `Giao cho @${assignee.display_name}: ${taskTitle}
-• Bắt đầu: ${fmtStart} | Hoàn thành: ${fmtDue}
-• Trạng thái: ${chairTag}`
+          content: `Giao cho @${assignee.display_name}: ${taskTitle}\n• Bắt đầu: ${fmtStart} | Hoàn thành: ${fmtDue}\n• Trạng thái: ${chairTag}`
         }])
       });
 
@@ -2068,8 +2062,7 @@ index.html
     function autoParseMeetingMinutes() {
       const raw = document.getElementById('meetingMinutesRawInput').value.trim();
       if (!raw) return alert('Vui lòng dán nội dung kết luận cuộc họp vào ô phía trên!');
-      const lines = raw.split(/
-|;/).map(s => s.trim()).filter(Boolean);
+      const lines = raw.split(/\n|;/).map(s => s.trim()).filter(Boolean);
       const container = document.getElementById('meetingTaskRowsContainer');
       container.innerHTML = '';
 
@@ -2203,10 +2196,7 @@ index.html
       if (task && activeChannel) {
         const msgContent = selectedStatus === 'DONE'
           ? `✅ Đã hoàn thành (DONE) công việc: "${task.task_title}" — ${finalNote}`
-          : `📝 Hồi đáp tiến độ công việc "${task.task_title}":
-• Trạng thái: CHƯA XONG (PENDING)
-• Nhóm lý do: ${delayReason}
-• Chi tiết & Cam kết: ${finalNote}`;
+          : `📝 Hồi đáp tiến độ công việc "${task.task_title}":\n• Trạng thái: CHƯA XONG (PENDING)\n• Nhóm lý do: ${delayReason}\n• Chi tiết & Cam kết: ${finalNote}`;
 
         await sbFetch('team_messages', {
           method: 'POST',
@@ -2664,15 +2654,14 @@ index.html
         if (format === 'JSON') {
           fileContent = JSON.stringify(backupData, null, 2);
         } else {
-          const lines = ['﻿LOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,LY_DO_CHAM_TRE,GHI_CHU_HOAC_FILE,THOI_GIAN'];
+          const lines = ['\uFEFFLOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,LY_DO_CHAM_TRE,GHI_CHU_HOAC_FILE,THOI_GIAN'];
           (backupData.team_tasks || []).forEach(t => {
             lines.push(`"CHECKLIST","${csvEsc(t.assignee_name)}","${csvEsc(t.task_title)}","${csvEsc(t.status)}","${csvEsc(t.delay_reason)}","${csvEsc(t.progress_note)}","${csvEsc(t.created_at)}"`);
           });
           (backupData.team_messages || []).forEach(m => {
             lines.push(`"${csvEsc(m.msg_type)}","${csvEsc(m.sender_name)}","${csvEsc(m.content)}","${csvEsc(m.approval_status || '')}","","${csvEsc(m.file_name || '')}","${csvEsc(m.created_at)}"`);
           });
-          fileContent = lines.join('
-');
+          fileContent = lines.join('\n');
         }
 
         if (targetMode === 'LOCAL_PICKER') {
@@ -2829,9 +2818,7 @@ index.html
     }
 
     function csvEsc(val) {
-      return String(val || '').replace(/"/g, '""').replace(/
-?
-/g, ' ');
+      return String(val || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
     }
 
     // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY
@@ -2974,4 +2961,3 @@ index.html
   </script>
 </body>
 </html>
-Đang hiển thị index.html.
