@@ -74,7 +74,7 @@
       </button>
 
       <button id="headerBackupBtn" onclick="openBackupModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1">
-        💾 <span class="hidden md:inline">Sao lưu</span>
+        💾 <span class="hidden md:inline">Backup & Restore</span>
       </button>
 
       <button id="headerUserBtn" onclick="openUserModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1">
@@ -324,7 +324,6 @@
         <button onclick="closeModal('userModal')" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
 
-      <!-- Form Thêm Mới / Chỉnh Sửa Thành Viên -->
       <div class="text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
         <div class="flex items-center justify-between">
           <span id="userFormTitle" class="font-bold text-slate-800 uppercase tracking-wide">+ Thêm Thành Viên Mới</span>
@@ -344,7 +343,6 @@
           <input id="newUserTgId" type="text" placeholder="Telegram Chat ID" class="border rounded-lg px-2.5 py-2 bg-white" />
         </div>
 
-        <!-- Ma trận phân quyền chi tiết -->
         <div class="bg-white p-2.5 rounded-lg border border-slate-200">
           <div class="text-[11px] font-bold text-slate-600 mb-1.5">Phân quyền chức năng thực thi trong ứng dụng:</div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
@@ -366,7 +364,7 @@
             </label>
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input type="checkbox" id="permBackup" class="accent-blue-600 rounded" />
-              <span>💾 Sao lưu dữ liệu (Backup)</span>
+              <span>💾 Backup & Restore dữ liệu</span>
             </label>
           </div>
         </div>
@@ -378,93 +376,187 @@
         <div id="userModalFeedback" class="text-xs font-medium hidden px-2.5 py-1.5 rounded-lg"></div>
       </div>
 
-      <!-- Danh sách nhân sự hiện có -->
       <div id="userManagementList" class="flex-1 overflow-y-auto divide-y text-xs"></div>
     </div>
   </div>
 
-  <!-- ================= MODAL 6: SAO LƯU DỮ LIỆU CÓ CHỌN LỌC & ĐƯỜNG DẪN CLOUD ================= -->
+  <!-- ================= MODAL 6: BACKUP THỦ CÔNG, LỊCH TỰ ĐỘNG & RESTORE ================= -->
   <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b pb-3">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between border-b pb-3 shrink-0">
         <div>
-          <h3 class="font-bold text-base text-slate-900">💾 Sao Lưu Dữ Liệu Có Chọn Lọc (Backup)</h3>
-          <p class="text-[11px] text-slate-500">Chọn phạm vi dữ liệu và chỉ định thư mục máy tính, Google Drive hoặc Cloud</p>
+          <h3 class="font-bold text-base text-slate-900">💾 Trung Tâm Sao Lưu (Backup), Lịch Tự Động & Khôi Phục (Restore)</h3>
+          <p class="text-[11px] text-slate-500">Bảo toàn dữ liệu về máy tính, Google Drive Cloud, hẹn giờ tự động & phục hồi bản sao lưu</p>
         </div>
         <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <!-- 1. Chọn lọc phạm vi dữ liệu -->
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-          <div class="font-bold text-slate-700">1. Chọn nhóm dữ liệu cần sao lưu:</div>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="bkUsers" checked class="accent-blue-600" />
-              <span>👥 Danh sách Nhân sự & Phân quyền</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="bkChannels" checked class="accent-blue-600" />
-              <span>📁 Danh sách Nhóm / Dự án</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="bkMessages" checked class="accent-blue-600" />
-              <span>💬 Lịch sử Chat & Phiếu trình duyệt</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="bkTasks" checked class="accent-blue-600" />
-              <span>📌 Toàn bộ Checklist & Tiến độ</span>
-            </label>
+      <!-- Thanh chuyển 3 tab chức năng -->
+      <div class="flex border-b border-slate-200 text-xs shrink-0">
+        <button id="bkTabManualBtn" onclick="switchBackupTab('MANUAL')" class="px-3.5 py-2 font-bold border-b-2 border-blue-600 text-blue-600">
+          📤 1. Sao Lưu Ngay
+        </button>
+        <button id="bkTabScheduleBtn" onclick="switchBackupTab('SCHEDULE')" class="px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800">
+          ⏰ 2. Lịch Tự Động Backup
+        </button>
+        <button id="bkTabRestoreBtn" onclick="switchBackupTab('RESTORE')" class="px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800">
+          ♻️ 3. Khôi Phục (Restore)
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
+
+        <!-- TAB 1: SAO LƯU NGAY CÓ CHỌN LỌC -->
+        <div id="bkTabManual" class="space-y-3">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-700">Chọn nhóm dữ liệu cần sao lưu:</div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="bkUsers" checked class="accent-blue-600" />
+                <span>👥 Nhân sự & Phân quyền</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="bkChannels" checked class="accent-blue-600" />
+                <span>📁 Danh sách Nhóm / Dự án</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="bkMessages" checked class="accent-blue-600" />
+                <span>💬 Lịch sử Chat & Trình duyệt</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="bkTasks" checked class="accent-blue-600" />
+                <span>📌 Toàn bộ Checklist & Tiến độ</span>
+              </label>
+            </div>
+
+            <div class="pt-1.5 border-t border-slate-200">
+              <label class="block font-semibold text-slate-600 mb-1">Lọc theo Nhóm / Dự án cụ thể:</label>
+              <select id="bkChannelFilter" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-medium">
+                <option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>
+              </select>
+            </div>
           </div>
 
-          <div class="pt-1.5 border-t border-slate-200">
-            <label class="block font-semibold text-slate-600 mb-1">Lọc theo Nhóm / Dự án cụ thể (áp dụng cho Chat & Checklist):</label>
-            <select id="bkChannelFilter" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-medium">
-              <option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>
-            </select>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-700">Định dạng tệp sao lưu:</div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                <input type="radio" name="bkFormat" value="JSON" checked class="accent-blue-600" />
+                <div>
+                  <div class="font-bold">Gói dữ liệu gốc (.JSON)</div>
+                  <div class="text-[10px] text-slate-500">Dùng để Khôi phục (Restore)</div>
+                </div>
+              </label>
+              <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+                <input type="radio" name="bkFormat" value="CSV" class="accent-blue-600" />
+                <div>
+                  <div class="font-bold">Báo cáo Excel (.CSV)</div>
+                  <div class="text-[10px] text-slate-500">Mở xem trực tiếp trên Excel</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+            <div class="font-bold text-slate-700">Chọn nơi lưu trữ tệp:</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button type="button" onclick="executeBackup('LOCAL_PICKER')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-left transition shadow-xs">
+                <div class="font-bold text-xs">💻 Lưu Vào Thư Mục Máy Tính</div>
+                <div class="text-[10px] text-blue-100 mt-0.5">Chọn ổ đĩa cứng, USB hoặc thư mục Google Drive / OneDrive trên máy</div>
+              </button>
+
+              <button type="button" onclick="executeBackup('GOOGLE_DRIVE_CLOUD')" class="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-left transition shadow-xs">
+                <div class="font-bold text-xs">☁️ Đẩy Thẳng Lên Google Drive</div>
+                <div class="text-[10px] text-emerald-100 mt-0.5">Gửi gói sao lưu lên Cloud Google Drive qua Webhook tự động</div>
+              </button>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tên thư mục lưu trên Google Drive Cloud:</label>
+              <input id="bkDriveFolderName" type="text" value="TeamWork_Cloud_Backup" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white" />
+            </div>
           </div>
         </div>
 
-        <!-- 2. Chọn định dạng tệp -->
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-          <div class="font-bold text-slate-700">2. Định dạng tệp sao lưu:</div>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-              <input type="radio" name="bkFormat" value="JSON" checked class="accent-blue-600" />
+        <!-- TAB 2: LỊCH TRÌNH TỰ ĐỘNG BACKUP -->
+        <div id="bkTabSchedule" class="hidden space-y-3">
+          <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="font-bold text-amber-950 text-sm">⏰ Lịch Tự Động Backup Lên Google Drive</div>
+              <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-amber-900">
+                <input type="checkbox" id="autoBkEnabled" class="accent-blue-600 w-4 h-4" />
+                <span>BẬT TỰ ĐỘNG</span>
+              </label>
+            </div>
+            <p class="text-[11px] text-amber-900 leading-relaxed">
+              Khi bật, hệ thống sẽ tự động đóng gói toàn bộ dữ liệu (.JSON) và đẩy lên thư mục <b>TeamWork_Cloud_AutoBackup</b> trên Google Drive đúng khung giờ cài đặt hàng ngày (không cần thao tác thủ công).
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
               <div>
-                <div class="font-bold">Gói dữ liệu gốc (.JSON)</div>
-                <div class="text-[10px] text-slate-500">Bảo toàn nguyên vẹn cấu trúc</div>
+                <label class="block font-semibold text-slate-700 mb-1">Giờ tự động chạy mỗi ngày:</label>
+                <input type="time" id="autoBkTime" value="17:30" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-bold text-slate-800" />
               </div>
-            </label>
-            <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
-              <input type="radio" name="bkFormat" value="CSV" class="accent-blue-600" />
               <div>
-                <div class="font-bold">Bảng tổng hợp Excel (.CSV)</div>
-                <div class="text-[10px] text-slate-500">Mở xem trực tiếp bằng Excel</div>
+                <label class="block font-semibold text-slate-700 mb-1">Thư mục nhận trên Google Drive:</label>
+                <input type="text" id="autoBkFolder" value="TeamWork_Cloud_AutoBackup" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white" />
               </div>
-            </label>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-amber-200/70">
+              <div id="autoBkLastRunText" class="text-[11px] text-slate-600">Lần chạy tự động gần nhất: <b>Chưa ghi nhận</b></div>
+              <button type="button" onclick="saveAutoBackupSettings()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                💾 Lưu Lịch Tự Động
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-[11px] text-slate-600 space-y-1">
+            <div class="font-bold text-slate-800">💡 Mẹo chạy ngầm 24/7 kể cả khi tắt máy tính:</div>
+            <div>Ngoài bộ hẹn giờ trên trình duyệt này, anh có thể bật thêm <b>Day Timer (17h–18h)</b> trong Google Apps Script (hàm <code>autoScheduledBackupToDrive</code>) để máy chủ Google tự động sao lưu mỗi chiều ngay cả khi không ai mở trình duyệt.</div>
           </div>
         </div>
 
-        <!-- 3. Chọn đường dẫn / Đích lưu trữ -->
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
-          <div class="font-bold text-slate-700">3. Chọn nơi lưu trữ (Thư mục máy tính / Google Drive / Cloud):</div>
+        <!-- TAB 3: KHÔI PHỤC DỮ LIỆU (RESTORE) -->
+        <div id="bkTabRestore" class="hidden space-y-3">
+          <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-3">
+            <div class="font-bold text-slate-800">1. Chọn tệp sao lưu gốc (.JSON) từ máy tính hoặc Google Drive:</div>
+            <input type="file" id="restoreFileInput" accept=".json,application/json" onchange="handleRestoreFileSelect(event)"
+              class="w-full border border-slate-300 rounded-xl p-2.5 bg-white text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold" />
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button type="button" onclick="executeBackup('LOCAL_PICKER')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-left transition shadow-xs">
-              <div class="font-bold text-xs">💻 Chọn Thư Mục Máy Tính / Drive</div>
-              <div class="text-[10px] text-blue-100 mt-0.5">Mở hộp thoại chọn đúng ổ đĩa hoặc thư mục Google Drive / OneDrive trên máy</div>
-            </button>
+            <!-- Khung xem trước nội dung gói backup -->
+            <div id="restorePreviewBox" class="hidden bg-white border border-blue-200 rounded-xl p-3 space-y-2.5">
+              <div class="flex items-center justify-between border-b pb-1.5">
+                <span class="font-bold text-blue-900">📦 Thông tin gói sao lưu đã đọc được:</span>
+                <span id="restoreMetaDate" class="text-[11px] text-slate-500">---</span>
+              </div>
 
-            <button type="button" onclick="executeBackup('GOOGLE_DRIVE_CLOUD')" class="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-left transition shadow-xs">
-              <div class="font-bold text-xs">☁️ Đẩy Thẳng Lên Google Drive</div>
-              <div class="text-[10px] text-emerald-100 mt-0.5">Gửi gói sao lưu lên Cloud Google Drive qua Webhook tự động</div>
-            </button>
-          </div>
+              <div class="grid grid-cols-2 gap-2 text-[11px]">
+                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
+                  <input type="checkbox" id="rsUsers" checked class="accent-blue-600" />
+                  <span id="rsUsersCount">👥 Nhân sự: 0 bản ghi</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
+                  <input type="checkbox" id="rsChannels" checked class="accent-blue-600" />
+                  <span id="rsChannelsCount">📁 Nhóm / Dự án: 0 bản ghi</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
+                  <input type="checkbox" id="rsMessages" checked class="accent-blue-600" />
+                  <span id="rsMessagesCount">💬 Tin nhắn & Trình duyệt: 0 bản ghi</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer p-1.5 rounded bg-slate-50">
+                  <input type="checkbox" id="rsTasks" checked class="accent-blue-600" />
+                  <span id="rsTasksCount">📌 Checklist công việc: 0 bản ghi</span>
+                </label>
+              </div>
 
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tên thư mục con trên Google Drive Cloud (tùy chọn):</label>
-            <input id="bkDriveFolderName" type="text" value="TeamWork_Cloud_Backup" placeholder="VD: TeamWork_Cloud_Backup" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white" />
+              <div class="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                ⚠️ <b>Cơ chế khôi phục an toàn (Upsert):</b> Các bản ghi đã bị xóa sẽ được phục hồi nguyên vẹn; các bản ghi trùng ID sẽ được cập nhật lại đúng trạng thái tại thời điểm sao lưu.
+              </div>
+
+              <button id="executeRestoreBtn" type="button" onclick="executeRestore()" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow transition">
+                ♻️ Bắt Đầu Khôi Phục Dữ Liệu Vào Hệ Thống
+              </button>
+            </div>
           </div>
         </div>
 
@@ -506,8 +598,9 @@
     let selectedChatFile = null;
     let confirmingTaskId = null;
     let syncTimer = null;
+    let parsedRestoreData = null;
 
-    // Hàm kiểm tra quyền của người dùng hiện tại
+    // Kiểm tra quyền chi tiết của người dùng
     function hasPerm(permKey) {
       if (!currentUser) return false;
       if (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN') return true;
@@ -1172,7 +1265,7 @@
       if (cp.can_approve) tags.push('Duyệt thay');
       if (cp.can_create_channel) tags.push('Tạo nhóm');
       if (cp.can_manage_users) tags.push('Quản lý nhân sự');
-      if (cp.can_backup) tags.push('Sao lưu');
+      if (cp.can_backup) tags.push('Backup/Restore');
       if (!tags.length) return `<span class="text-slate-400">Thành viên cơ bản (Chat & Báo cáo việc)</span>`;
       return tags.map(t => `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-medium">${t}</span>`).join(' ');
     }
@@ -1230,14 +1323,8 @@
         can_backup: document.getElementById('permBackup').checked
       };
 
-      if (!display_name) {
-        showUserFeedback('Vui lòng nhập Họ tên thành viên!', true);
-        return;
-      }
-      if (!pin_code) {
-        showUserFeedback('Vui lòng nhập Mã PIN (4-6 số)!', true);
-        return;
-      }
+      if (!display_name) return showUserFeedback('Vui lòng nhập Họ tên thành viên!', true);
+      if (!pin_code) return showUserFeedback('Vui lòng nhập Mã PIN (4-6 số)!', true);
 
       const btn = document.getElementById('saveUserBtn');
       btn.disabled = true;
@@ -1276,7 +1363,7 @@
         resetUserForm();
         renderUserManagementList();
       } catch (err) {
-        showUserFeedback('Lỗi lưu thành viên (Nếu báo thiếu cột custom_perms, anh hãy chạy lệnh SQL ALTER TABLE trên Supabase): ' + err.message, true);
+        showUserFeedback('Lỗi lưu thành viên: ' + err.message, true);
       } finally {
         btn.disabled = false;
         btn.textContent = document.getElementById('editingUserId').value ? '💾 Cập Nhật Thông Tin & Phân Quyền' : '+ Lưu Thành Viên Mới';
@@ -1295,14 +1382,37 @@
       }
     }
 
-    // 7. SAO LƯU DỮ LIỆU CÓ CHỌN LỌC & ĐƯỜNG DẪN LƯU TRỮ
+    // 7. TRUNG TÂM BACKUP THỦ CÔNG, LỊCH TỰ ĐỘNG & RESTORE
     function openBackupModal() {
       const fb = document.getElementById('backupFeedback');
       fb.classList.add('hidden');
       const sel = document.getElementById('bkChannelFilter');
       sel.innerHTML = `<option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>` +
         allChannels.map(c => `<option value="${c.id}">Chỉ dự án: # ${escapeHtml(c.name)}</option>`).join('');
+
+      // Tải cấu hình lịch tự động
+      const cfg = JSON.parse(localStorage.getItem('tw_auto_bk_cfg') || '{"enabled":false,"time":"17:30","folder":"TeamWork_Cloud_AutoBackup"}');
+      document.getElementById('autoBkEnabled').checked = Boolean(cfg.enabled);
+      document.getElementById('autoBkTime').value = cfg.time || '17:30';
+      document.getElementById('autoBkFolder').value = cfg.folder || 'TeamWork_Cloud_AutoBackup';
+      const lastRun = localStorage.getItem('tw_auto_bk_last_run');
+      document.getElementById('autoBkLastRunText').innerHTML = `Lần chạy tự động gần nhất: <b>${lastRun || 'Chưa ghi nhận'}</b>`;
+
+      switchBackupTab('MANUAL');
       openModal('backupModal');
+    }
+
+    function switchBackupTab(tab) {
+      document.getElementById('backupFeedback').classList.add('hidden');
+      document.getElementById('bkTabManual').classList.toggle('hidden', tab !== 'MANUAL');
+      document.getElementById('bkTabSchedule').classList.toggle('hidden', tab !== 'SCHEDULE');
+      document.getElementById('bkTabRestore').classList.toggle('hidden', tab !== 'RESTORE');
+
+      const activeCls = 'px-3.5 py-2 font-bold border-b-2 border-blue-600 text-blue-600';
+      const normalCls = 'px-3.5 py-2 font-semibold text-slate-500 hover:text-slate-800';
+      document.getElementById('bkTabManualBtn').className = tab === 'MANUAL' ? activeCls : normalCls;
+      document.getElementById('bkTabScheduleBtn').className = tab === 'SCHEDULE' ? activeCls : normalCls;
+      document.getElementById('bkTabRestoreBtn').className = tab === 'RESTORE' ? activeCls : normalCls;
     }
 
     function showBackupFeedback(msg, isError = false) {
@@ -1310,6 +1420,67 @@
       fb.textContent = msg;
       fb.className = `p-2.5 rounded-xl text-xs font-medium ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`;
       fb.classList.remove('hidden');
+    }
+
+    function saveAutoBackupSettings() {
+      const cfg = {
+        enabled: document.getElementById('autoBkEnabled').checked,
+        time: document.getElementById('autoBkTime').value || '17:30',
+        folder: document.getElementById('autoBkFolder').value.trim() || 'TeamWork_Cloud_AutoBackup'
+      };
+      localStorage.setItem('tw_auto_bk_cfg', JSON.stringify(cfg));
+      showBackupFeedback(
+        cfg.enabled
+          ? `✅ Đã bật lịch tự động Backup vào lúc ${cfg.time} hàng ngày lên thư mục "${cfg.folder}"!`
+          : '⏸️ Đã tạm tắt lịch tự động Backup trên trình duyệt.',
+        false
+      );
+    }
+
+    async function checkAndRunAutoBackup() {
+      const cfg = JSON.parse(localStorage.getItem('tw_auto_bk_cfg') || '{"enabled":false}');
+      if (!cfg.enabled || !hasPerm('can_backup')) return;
+
+      const now = new Date();
+      const todayKey = now.toISOString().slice(0, 10);
+      const lastDate = localStorage.getItem('tw_auto_bk_last_date');
+      if (lastDate === todayKey) return;
+
+      const [targetH, targetM] = (cfg.time || '17:30').split(':').map(Number);
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const targetMins = targetH * 60 + targetM;
+
+      if (nowMins >= targetMins) {
+        localStorage.setItem('tw_auto_bk_last_date', todayKey);
+        const runStamp = now.toLocaleString('vi-VN');
+        localStorage.setItem('tw_auto_bk_last_run', runStamp);
+
+        try {
+          const fullDump = {
+            exported_at: now.toISOString(),
+            exported_by: `AUTO_WEB_${currentUser ? currentUser.display_name : 'Admin'}`,
+            team_users: await sbFetch('team_users?select=*&order=created_at.asc'),
+            team_channels: await sbFetch('team_channels?select=*&order=created_at.asc'),
+            team_messages: await sbFetch('team_messages?select=*&order=created_at.asc'),
+            team_tasks: await sbFetch('team_tasks?select=*&order=created_at.desc')
+          };
+          const fileName = `TeamWork_AutoBackup_${todayKey}_${String(targetH).padStart(2,'0')}-${String(targetM).padStart(2,'0')}.json`;
+          await fetch(APPS_SCRIPT_WEBHOOK, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'BACKUP_TO_DRIVE',
+              folderName: cfg.folder || 'TeamWork_Cloud_AutoBackup',
+              fileName: fileName,
+              mimeType: 'application/json',
+              content: JSON.stringify(fullDump, null, 2)
+            })
+          });
+        } catch (e) {
+          console.error('Auto backup error:', e);
+        }
+      }
     }
 
     async function executeBackup(targetMode) {
@@ -1335,12 +1506,8 @@
           filter_channel: chFilter
         };
 
-        if (incUsers) {
-          backupData.team_users = await sbFetch('team_users?select=*&order=created_at.asc');
-        }
-        if (incChannels) {
-          backupData.team_channels = await sbFetch('team_channels?select=*&order=created_at.asc');
-        }
+        if (incUsers) backupData.team_users = await sbFetch('team_users?select=*&order=created_at.asc');
+        if (incChannels) backupData.team_channels = await sbFetch('team_channels?select=*&order=created_at.asc');
         if (incMessages) {
           const q = chFilter === 'ALL' ? 'team_messages?select=*&order=created_at.asc' : `team_messages?channel_id=eq.${chFilter}&select=*&order=created_at.asc`;
           backupData.team_messages = await sbFetch(q);
@@ -1358,7 +1525,6 @@
         if (format === 'JSON') {
           fileContent = JSON.stringify(backupData, null, 2);
         } else {
-          // Xuất CSV tổng hợp Checklist & Tin nhắn trình duyệt
           const lines = ['\uFEFFLOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,GHI_CHU_HOAC_FILE,THOI_GIAN'];
           (backupData.team_tasks || []).forEach(t => {
             lines.push(`"CHECKLIST","${csvEsc(t.assignee_name)}","${csvEsc(t.task_title)}","${csvEsc(t.status)}","${csvEsc(t.progress_note)}","${csvEsc(t.created_at)}"`);
@@ -1370,7 +1536,6 @@
         }
 
         if (targetMode === 'LOCAL_PICKER') {
-          // Sử dụng File System Access API cho phép chọn đúng thư mục máy tính / thư mục Google Drive đồng bộ
           if (window.showSaveFilePicker) {
             const handle = await window.showSaveFilePicker({
               suggestedName: fileName,
@@ -1384,7 +1549,6 @@
             await writable.close();
             showBackupFeedback(`✅ Đã lưu tệp "${handle.name}" vào đúng thư mục anh đã chọn!`, false);
           } else {
-            // Fallback cho trình duyệt Safari / Mobile
             const blob = new Blob([fileContent], { type: mimeType });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -1417,17 +1581,119 @@
       }
     }
 
+    // XỬ LÝ KHÔI PHỤC DỮ LIỆU (RESTORE)
+    function handleRestoreFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const obj = JSON.parse(evt.target.result);
+          if (!obj || (!obj.team_users && !obj.team_channels && !obj.team_messages && !obj.team_tasks)) {
+            throw new Error('Tệp JSON không đúng định dạng sao lưu của TeamWork Cloud.');
+          }
+          parsedRestoreData = obj;
+          document.getElementById('restoreMetaDate').textContent = obj.exported_at
+            ? 'Ngày sao lưu: ' + new Date(obj.exported_at).toLocaleString('vi-VN')
+            : file.name;
+
+          const uLen = (obj.team_users || []).length;
+          const cLen = (obj.team_channels || []).length;
+          const mLen = (obj.team_messages || []).length;
+          const tLen = (obj.team_tasks || []).length;
+
+          document.getElementById('rsUsersCount').textContent = `👥 Nhân sự: ${uLen} bản ghi`;
+          document.getElementById('rsChannelsCount').textContent = `📁 Nhóm / Dự án: ${cLen} bản ghi`;
+          document.getElementById('rsMessagesCount').textContent = `💬 Tin nhắn & Trình duyệt: ${mLen} bản ghi`;
+          document.getElementById('rsTasksCount').textContent = `📌 Checklist công việc: ${tLen} bản ghi`;
+
+          document.getElementById('rsUsers').checked = uLen > 0;
+          document.getElementById('rsChannels').checked = cLen > 0;
+          document.getElementById('rsMessages').checked = mLen > 0;
+          document.getElementById('rsTasks').checked = tLen > 0;
+
+          document.getElementById('restorePreviewBox').classList.remove('hidden');
+          document.getElementById('backupFeedback').classList.add('hidden');
+        } catch (err) {
+          parsedRestoreData = null;
+          document.getElementById('restorePreviewBox').classList.add('hidden');
+          showBackupFeedback('Lỗi đọc tệp sao lưu: ' + err.message, true);
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    async function executeRestore() {
+      if (!parsedRestoreData) return;
+      const doUsers = document.getElementById('rsUsers').checked && (parsedRestoreData.team_users || []).length > 0;
+      const doChannels = document.getElementById('rsChannels').checked && (parsedRestoreData.team_channels || []).length > 0;
+      const doMessages = document.getElementById('rsMessages').checked && (parsedRestoreData.team_messages || []).length > 0;
+      const doTasks = document.getElementById('rsTasks').checked && (parsedRestoreData.team_tasks || []).length > 0;
+
+      if (!doUsers && !doChannels && !doMessages && !doTasks) {
+        return showBackupFeedback('Vui lòng chọn ít nhất 1 nhóm dữ liệu có bản ghi để khôi phục!', true);
+      }
+
+      if (!confirm('Anh xác nhận khôi phục các dữ liệu đã chọn vào hệ thống?')) return;
+
+      const btn = document.getElementById('executeRestoreBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang khôi phục dữ liệu vào Cloud...';
+
+      try {
+        const upsertHeaders = { 'Prefer': 'resolution=merge-duplicates,return=minimal' };
+
+        if (doUsers) {
+          await sbFetch('team_users', {
+            method: 'POST',
+            headers: upsertHeaders,
+            body: JSON.stringify(parsedRestoreData.team_users)
+          });
+        }
+        if (doChannels) {
+          await sbFetch('team_channels', {
+            method: 'POST',
+            headers: upsertHeaders,
+            body: JSON.stringify(parsedRestoreData.team_channels)
+          });
+        }
+        if (doMessages) {
+          await sbFetch('team_messages', {
+            method: 'POST',
+            headers: upsertHeaders,
+            body: JSON.stringify(parsedRestoreData.team_messages)
+          });
+        }
+        if (doTasks) {
+          await sbFetch('team_tasks', {
+            method: 'POST',
+            headers: upsertHeaders,
+            body: JSON.stringify(parsedRestoreData.team_tasks)
+          });
+        }
+
+        await Promise.all([loadUsers(), loadChannels(), loadMessages(true), loadTasks()]);
+        showBackupFeedback('✅ Khôi phục dữ liệu thành công! Toàn bộ danh sách, tin nhắn và checklist đã được đồng bộ lại.', false);
+      } catch (err) {
+        showBackupFeedback('Lỗi trong quá trình khôi phục: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '♻️ Bắt Đầu Khôi Phục Dữ Liệu Vào Hệ Thống';
+      }
+    }
+
     function csvEsc(val) {
       return String(val || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
     }
 
-    // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY
+    // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY & KIỂM TRA LỊCH BACKUP
     function startLiveSync() {
       if (syncTimer) clearInterval(syncTimer);
       syncTimer = setInterval(() => {
         if (!document.hidden && activeChannel) {
           loadMessages(false);
           loadTasks();
+          checkAndRunAutoBackup();
         }
       }, 2000);
     }
