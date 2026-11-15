@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TeamWork Cloud — Điều Hành Nhóm & Phê Duyệt Thời Gian Thực</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen overflow-hidden flex flex-col">
+
+  <!-- ================= MÀN HÌNH ĐĂNG NHẬP NHANH ================= -->
+  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-7">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">TW</div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900">TeamWork Cloud</h1>
+          <p class="text-xs text-slate-500">Hệ thống Trao đổi, Trình duyệt & Checklist Thực thi</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Chọn thành viên</label>
+          <select id="loginUserSelect" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50">
+            <option value="">Đang tải danh sách nhân sự...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Mã PIN truy cập</label>
+          <input id="loginPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Nhập mã PIN (VD: 9999 hoặc 1111)"
+            class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onkeydown="if(event.key==='Enter') handleLogin()" />
+        </div>
+
+        <p id="loginError" class="text-xs text-red-600 font-medium hidden"></p>
+
+        <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-md">
+          Vào Không Gian Làm Việc
+        </button>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-500 space-y-1">
+          <div class="font-semibold text-slate-700">Tài khoản thử nghiệm sẵn có:</div>
+          <div>• <b>Lãnh Đạo / Quản Lý</b> — PIN: <code class="bg-slate-200 px-1 rounded">9999</code></div>
+          <div>• <b>Thành Viên 01</b> — PIN: <code class="bg-slate-200 px-1 rounded">1111</code></div>
+          <div>• <b>Thành Viên 02</b> — PIN: <code class="bg-slate-200 px-1 rounded">2222</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= THANH HEADER CHÍNH ================= -->
+  <header class="bg-slate-900 text-white h-14 px-4 flex items-center justify-between shrink-0 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleMobileSidebar()" class="lg:hidden p-1.5 rounded-lg hover:bg-slate-800">☰</button>
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-sm">TW</div>
+      <div>
+        <div class="font-bold text-sm leading-tight">TeamWork Cloud</div>
+        <div class="text-[11px] text-emerald-400 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Kết nối thời gian thực
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Chuông thông báo việc cá nhân -->
+      <button onclick="switchRightTab('tasks')" class="relative px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1.5">
+        <span>📋 Việc của tôi</span>
+        <span id="myPendingBadge" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full text-[11px]">0</span>
+      </button>
+
+      <!-- Quản lý nhân sự (Admin / Approver) -->
+      <button onclick="openUserModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium hidden sm:flex items-center gap-1">
+        👥 Nhân sự & Bot ID
+      </button>
+
+      <!-- Thông tin người dùng hiện tại -->
+      <div class="flex items-center gap-2 pl-2 border-l border-slate-700">
+        <div class="text-right hidden sm:block">
+          <div id="currentUserName" class="text-xs font-semibold">---</div>
+          <div id="currentUserRole" class="text-[10px] text-slate-400">---</div>
+        </div>
+        <button onclick="logout()" title="Đăng xuất" class="px-2 py-1 rounded bg-slate-800 hover:bg-red-600 text-xs transition">Thoát</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= BỐ CỤC 3 CỘT CHÍNH ================= -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- CỘT 1: DANH SÁCH KÊNH / DỰ ÁN -->
+    <aside id="leftSidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 absolute lg:static inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
+      <div class="p-3.5 flex items-center justify-between border-b border-slate-800">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự Án</span>
+        <button onclick="openChannelModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-md font-medium">+ Nhóm mới</button>
+      </div>
+
+      <div id="channelList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+
+      <div class="p-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+        <div class="font-semibold text-slate-300">Mẹo giao việc nhanh lúc họp:</div>
+        <div>Gõ <code class="text-amber-400">Giao @Tên việc cần làm</code> trong chat để tự động lập Checklist & báo Bot.</div>
+      </div>
+    </aside>
+
+    <!-- CỘT 2: KHUNG CHAT REAL-TIME & PHIẾU TRÌNH DUYỆT -->
+    <main class="flex-1 flex flex-col bg-white min-w-0 border-r border-slate-200">
+      <!-- Tiêu đề kênh đang mở -->
+      <div class="h-13 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
+        <div class="min-w-0">
+          <h2 id="activeChannelTitle" class="font-bold text-sm sm:text-base text-slate-900 truncate"># Đang tải...</h2>
+          <p id="activeChannelDesc" class="text-xs text-slate-500 truncate">---</p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="openApprovalModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
+            📋 Trình phê duyệt
+          </button>
+          <button onclick="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
+            ✅ Giao việc
+          </button>
+          <button onclick="toggleMobileRightPanel()" class="xl:hidden bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold px-2.5 py-1.5 rounded-lg">
+            Checklist & File
+          </button>
+        </div>
+      </div>
+
+      <!-- Luồng tin nhắn thời gian thực -->
+      <div id="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/40"></div>
+
+      <!-- Thanh hiển thị file đang chọn đính kèm -->
+      <div id="selectedFileBar" class="hidden px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center justify-between text-xs text-blue-800">
+        <span id="selectedFileName" class="font-medium truncate">📎 file.pdf</span>
+        <button onclick="clearSelectedFile()" class="text-red-600 font-bold ml-2">✕ Bỏ chọn</button>
+      </div>
+
+      <!-- Khung nhập tin nhắn / đính kèm file -->
+      <div class="p-3 bg-white border-t border-slate-200 shrink-0">
+        <div class="flex items-end gap-2">
+          <label class="cursor-pointer p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0" title="Đính kèm PDF, Word, Excel, Ảnh">
+            📎
+            <input id="chatFileInput" type="file" class="hidden" onchange="handleFileSelect(event)" />
+          </label>
+
+          <textarea id="chatInput" rows="1" placeholder="Nhập trao đổi nhóm... (Hoặc gõ: Giao @Thành Viên 01 nội dung việc)"
+            class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-28"
+            onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"></textarea>
+
+          <button id="sendBtn" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition shrink-0">
+            Gửi
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- CỘT 3: CHECKLIST CÔNG VIỆC HỌP NHÓM & KHO TÀI LIỆU -->
+    <aside id="rightPanel" class="w-80 sm:w-96 bg-white flex flex-col shrink-0 border-l border-slate-200 fixed xl:static inset-y-14 right-0 z-30 transform translate-x-full xl:translate-x-0 transition-transform duration-200 shadow-xl xl:shadow-none">
+      <!-- Tab chuyển đổi Checklist / Kho Tài Liệu -->
+      <div class="flex border-b border-slate-200 bg-slate-50 shrink-0">
+        <button id="tabBtnTasks" onclick="switchRightTab('tasks')" class="flex-1 py-2.5 text-xs font-bold border-b-2 border-blue-600 text-blue-600">
+          📌 Checklist Công Việc
+        </button>
+        <button id="tabBtnFiles" onclick="switchRightTab('files')" class="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
+          📁 Kho Tài Liệu Nhóm
+        </button>
+        <button onclick="toggleMobileRightPanel()" class="xl:hidden px-3 text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <!-- Nội dung Tab 1: Checklist Công Việc -->
+      <div id="rightTabTasks" class="flex-1 flex flex-col overflow-hidden">
+        <div class="p-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-xs">
+          <select id="taskFilterSelect" onchange="renderTasks()" class="border border-slate-200 rounded-lg px-2 py-1 bg-white font-medium text-slate-700">
+            <option value="ALL">Tất cả đầu việc kênh này</option>
+            <option value="MINE">Chỉ việc giao cho tôi</option>
+            <option value="PENDING">Đang PENDING (Chưa xong)</option>
+            <option value="DONE">Đã xác nhận DONE</option>
+          </select>
+          <button onclick="openTaskModal()" class="text-blue-600 font-semibold hover:underline">+ Thêm việc</button>
+        </div>
+        <div id="taskListContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
+      </div>
+
+      <!-- Nội dung Tab 2: Kho Tài Liệu -->
+      <div id="rightTabFiles" class="flex-1 overflow-y-auto p-3 space-y-2 hidden"></div>
+    </aside>
+  </div>
+
+  <!-- ================= MODAL 1: TẠO PHIẾU TRÌNH DUYỆT QUA BOT ================= -->
+  <div id="approvalModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-base text-slate-900">📋 Tạo Phiếu Trình Phê Duyệt (Báo Bot Telegram)</h3>
+        <button onclick="closeModal('approvalModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Người phê duyệt nhận thông báo</label>
+          <select id="approvalApproverSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2 bg-slate-50"></select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nội dung tờ trình / Đề xuất phê duyệt *</label>
+          <textarea id="approvalContentInput" rows="3" placeholder="VD: Kính trình Lãnh đạo phê duyệt phương án đo đạc ranh mốc Dự án Nhà Bè..."
+            class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Đính kèm hồ sơ / file trình duyệt (nếu có)</label>
+          <input id="approvalFileInput" type="file" class="w-full text-xs border border-slate-200 rounded-xl p-2 bg-slate-50" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('approvalModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
+        <button id="submitApprovalBtn" onclick="submitApprovalRequest()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow">
+          Gửi Trình Duyệt & Báo Bot
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 2: GIAO VIỆC CHECKLIST HỌP NHÓM ================= -->
+  <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-base text-slate-900">📌 Giao Việc Checklist Thành Viên</h3>
+        <button onclick="closeModal('taskModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Giao cho thành viên *</label>
+          <select id="taskAssigneeSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2 bg-slate-50"></select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nội dung công việc cụ thể *</label>
+          <textarea id="taskTitleInput" rows="2" placeholder="VD: Hoàn thiện hồ sơ pháp lý lô đất & gửi báo cáo trước cuộc họp tuần sau"
+            class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Thời hạn hoàn thành (Deadline)</label>
+          <input id="taskDueInput" type="text" placeholder="VD: 17h00 ngày 18/11/2026"
+            class="w-full border border-slate-300 rounded-xl px-3 py-2" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('taskModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
+        <button onclick="submitNewTask()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow">
+          Phát Hành Checklist & Thông Báo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: XÁC NHẬN CHECKLIST (XONG / CÒN + GHI CHÚ) ================= -->
+  <div id="confirmTaskModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-base text-slate-900">✍️ Xác Nhận Tiến Độ Checklist</h3>
+        <button onclick="closeModal('confirmTaskModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div id="confirmTaskTitleDisplay" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700"></div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Trạng thái thực hiện *</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer border rounded-xl p-2.5 flex items-center gap-2 text-xs font-semibold has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500">
+              <input type="radio" name="taskConfirmStatus" value="DONE" class="accent-emerald-600" />
+              <span>✅ ĐÃ XONG (DONE)</span>
+            </label>
+            <label class="cursor-pointer border rounded-xl p-2.5 flex items-center gap-2 text-xs font-semibold has-[:checked]:bg-amber-50 has-[:checked]:border-amber-500">
+              <input type="radio" name="taskConfirmStatus" value="PENDING" checked class="accent-amber-600" />
+              <span>⏳ VẪN CÒN (PENDING)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú cụ thể ngắn gọn *</label>
+          <textarea id="confirmTaskNoteInput" rows="2" placeholder="VD: Đã nộp hồ sơ lúc 14h, đang chờ ký xác nhận giáp ranh..."
+            class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('confirmTaskModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
+        <button onclick="saveTaskConfirmation()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow">
+          Cập Nhật Xác Nhận
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 4: TẠO NHÓM / DỰ ÁN MỚI ================= -->
+  <div id="channelModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-base text-slate-900">➕ Tạo Nhóm / Dự Án Mới</h3>
+        <button onclick="closeModal('channelModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <input id="newChannelName" type="text" placeholder="Tên nhóm / dự án (VD: Dự Án Trường Vĩ)" class="w-full border border-slate-300 rounded-xl px-3 py-2" />
+        <input id="newChannelDesc" type="text" placeholder="Mô tả ngắn mục tiêu nhóm" class="w-full border border-slate-300 rounded-xl px-3 py-2" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('channelModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600">Hủy</button>
+        <button onclick="createChannel()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white">Tạo Nhóm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 5: QUẢN LÝ NHÂN SỰ & TELEGRAM CHAT ID ================= -->
+  <div id="userModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-base text-slate-900">👥 Quản Lý Thành Viên & ID Nhận Thông Báo Telegram</h3>
+        <button onclick="closeModal('userModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
+        <input id="newUserName" type="text" placeholder="Họ tên thành viên" class="border rounded-lg px-2.5 py-2" />
+        <input id="newUserRole" type="text" placeholder="Chức danh" class="border rounded-lg px-2.5 py-2" />
+        <select id="newUserPerm" class="border rounded-lg px-2 py-2 bg-white">
+          <option value="MEMBER">Nhân viên</option>
+          <option value="APPROVER">Lãnh đạo duyệt</option>
+        </select>
+        <input id="newUserPin" type="text" maxlength="6" placeholder="Mã PIN (4 số)" class="border rounded-lg px-2.5 py-2" />
+        <input id="newUserTgId" type="text" placeholder="Telegram Chat ID" class="border rounded-lg px-2.5 py-2" />
+        <button onclick="addNewUser()" class="sm:col-span-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg">
+          + Thêm Thành Viên Mới
+        </button>
+      </div>
+
+      <div id="userManagementList" class="flex-1 overflow-y-auto divide-y text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ================= LOGIC KẾT NỐI SUPABASE & TELEGRAM BOT ================= -->
+  <script>
+    const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
+    const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let allUsers = [];
+    let allChannels = [];
+    let currentUser = null;
+    let activeChannel = null;
+    let channelMessages = [];
+    let channelTasks = [];
+    let selectedChatFile = null;
+    let confirmingTaskId = null;
+
+    // 1. KHỞI TẠO HỆ THỐNG
+    async function initApp() {
+      await loadUsers();
+      const savedUserId = localStorage.getItem('tw_user_id');
+      if (savedUserId) {
+        const found = allUsers.find(u => u.id === savedUserId);
+        if (found) {
+          completeLogin(found);
+          return;
+        }
+      }
+    }
+
+    async function loadUsers() {
+      const { data } = await db.from('team_users').select('*').order('created_at', { ascending: true });
+      allUsers = data || [];
+      const sel = document.getElementById('loginUserSelect');
+      sel.innerHTML = allUsers.map(u => `<option value="${u.id}">${u.display_name} (${u.role_title})</option>`).join('');
+      populateUserDropdowns();
+    }
+
+    function populateUserDropdowns() {
+      const approvers = allUsers.filter(u => u.permission === 'APPROVER' || u.permission === 'ADMIN');
+      const appList = approvers.length ? approvers : allUsers;
+      document.getElementById('approvalApproverSelect').innerHTML = appList
+        .map(u => `<option value="${u.id}">${u.display_name} — ${u.role_title}</option>`).join('');
+
+      document.getElementById('taskAssigneeSelect').innerHTML = allUsers
+        .map(u => `<option value="${u.id}">${u.display_name} (${u.role_title})</option>`).join('');
+    }
+
+    function handleLogin() {
+      const userId = document.getElementById('loginUserSelect').value;
+      const pin = document.getElementById('loginPinInput').value.trim();
+      const errEl = document.getElementById('loginError');
+      const user = allUsers.find(u => u.id === userId);
+
+      if (!user || user.pin_code !== pin) {
+        errEl.textContent = 'Mã PIN chưa chính xác. Vui lòng kiểm tra lại!';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      errEl.classList.add('hidden');
+      localStorage.setItem('tw_user_id', user.id);
+      completeLogin(user);
+    }
+
+    async function completeLogin(user) {
+      currentUser = user;
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('currentUserName').textContent = user.display_name;
+      document.getElementById('currentUserRole').textContent = user.role_title;
+
+      await loadChannels();
+      subscribeRealtime();
+    }
+
+    function logout() {
+      localStorage.removeItem('tw_user_id');
+      location.reload();
+    }
+
+    // 2. QUẢN LÝ KÊNH / DỰ ÁN
+    async function loadChannels() {
+      const { data } = await db.from('team_channels').select('*').order('created_at', { ascending: true });
+      allChannels = data || [];
+      renderChannels();
+      if (allChannels.length && !activeChannel) {
+        selectChannel(allChannels[0].id);
+      }
+    }
+
+    function renderChannels() {
+      const container = document.getElementById('channelList');
+      container.innerHTML = allChannels.map(ch => {
+        const isActive = activeChannel && activeChannel.id === ch.id;
+        return `
+          <button onclick="selectChannel('${ch.id}')"
+            class="w-full text-left px-3 py-2.5 rounded-xl text-xs transition flex flex-col gap-0.5 ${isActive ? 'bg-blue-600 text-white font-semibold shadow' : 'hover:bg-slate-800 text-slate-300'}">
+            <span class="truncate"># ${escapeHtml(ch.name)}</span>
+            <span class="text-[10px] ${isActive ? 'text-blue-100' : 'text-slate-500'} truncate">${escapeHtml(ch.description || '')}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    async function selectChannel(channelId) {
+      activeChannel = allChannels.find(c => c.id === channelId);
+      if (!activeChannel) return;
+      document.getElementById('activeChannelTitle').textContent = '# ' + activeChannel.name;
+      document.getElementById('activeChannelDesc').textContent = activeChannel.description || '';
+      renderChannels();
+      await Promise.all([loadMessages(), loadTasks()]);
+      if (window.innerWidth < 1024) {
+        document.getElementById('leftSidebar').classList.add('-translate-x-full');
+      }
+    }
+
+    async function createChannel() {
+      const name = document.getElementById('newChannelName').value.trim();
+      const description = document.getElementById('newChannelDesc').value.trim();
+      if (!name) return alert('Vui lòng nhập tên nhóm!');
+      const { data } = await db.from('team_channels').insert([{ name, description }]).select();
+      closeModal('channelModal');
+      document.getElementById('newChannelName').value = '';
+      document.getElementById('newChannelDesc').value = '';
+      await loadChannels();
+      if (data && data[0]) selectChannel(data[0].id);
+    }
+
+    // 3. CHAT THỜI GIAN THỰC & ĐÍNH KÈM FILE
+    async function loadMessages() {
+      if (!activeChannel) return;
+      const { data } = await db.from('team_messages')
+        .select('*')
+        .eq('channel_id', activeChannel.id)
+        .order('created_at', { ascending: true })
+        .limit(150);
+      channelMessages = data || [];
+      renderMessages();
+      renderFilesTab();
+    }
+
+    function renderMessages() {
+      const box = document.getElementById('messageContainer');
+      if (!channelMessages.length) {
+        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-10">Chưa có trao đổi nào trong nhóm này. Hãy gửi tin nhắn đầu tiên!</div>`;
+        return;
+      }
+
+      box.innerHTML = channelMessages.map(m => {
+        const isMe = currentUser && m.sender_name === currentUser.display_name;
+        const timeStr = new Date(m.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+        // THẺ PHIẾU TRÌNH DUYỆT (APPROVAL CARD)
+        if (m.msg_type === 'APPROVAL') {
+          let badgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
+          let badgeText = '⏳ ĐANG CHỜ LÃNH ĐẠO DUYỆT';
+          if (m.approval_status === 'APPROVED') {
+            badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            badgeText = `✅ ĐÃ CHẤP THUẬN (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
+          } else if (m.approval_status === 'REVIEW') {
+            badgeClass = 'bg-sky-100 text-sky-800 border-sky-300';
+            badgeText = `🔍 YÊU CẦU XEM XÉT LẠI (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
+          } else if (m.approval_status === 'REJECTED') {
+            badgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
+            badgeText = `❌ ĐÃ TỪ CHỐI (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
+          }
+
+          const canApproveOnWeb = currentUser && (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN') && m.approval_status === 'PENDING';
+
+          return `
+            <div class="max-w-xl mx-auto my-2 bg-white border-2 border-indigo-200 rounded-2xl p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full">📋 Phiếu Trình Phê Duyệt</span>
+                <span class="text-[11px] text-slate-400">${timeStr}</span>
+              </div>
+              <div class="text-xs text-slate-500 mb-1.5">Người trình: <b class="text-slate-800">${escapeHtml(m.sender_name)}</b> (${escapeHtml(m.sender_role || '')})</div>
+              <div class="text-sm text-slate-800 whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-100">${escapeHtml(m.content)}</div>
+              ${m.file_url ? `<a href="${m.file_url}" target="_blank" class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-lg">📎 ${escapeHtml(m.file_name || 'Xem tài liệu đính kèm')}</a>` : ''}
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-bold px-3 py-1 rounded-full border ${badgeClass}">${badgeText}</span>
+                ${canApproveOnWeb ? `
+                  <div class="flex gap-1.5">
+                    <button onclick="approveOnWeb('${m.id}', 'APPROVED')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">✅ Duyệt</button>
+                    <button onclick="approveOnWeb('${m.id}', 'REVIEW')" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold">🔍 Xem xét</button>
+                    <button onclick="approveOnWeb('${m.id}', 'REJECTED')" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold">❌ Từ chối</button>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }
+
+        // TIN NHẮN THÔNG BÁO GIAO VIỆC CHECKLIST
+        if (m.msg_type === 'TASK') {
+          return `
+            <div class="max-w-lg mx-auto bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-950 flex items-start justify-between gap-2">
+              <div>
+                <div class="font-bold text-amber-800 mb-0.5">📌 Đã giao việc Checklist • ${timeStr}</div>
+                <div>${escapeHtml(m.content)}</div>
+              </div>
+              <button onclick="switchRightTab('tasks')" class="shrink-0 text-[11px] font-bold text-amber-800 underline">Xem bảng</button>
+            </div>
+          `;
+        }
+
+        // TIN NHẮN CHAT THÔNG THƯỜNG
+        return `
+          <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+            <div class="text-[11px] text-slate-500 mb-0.5 px-1">
+              <b>${escapeHtml(m.sender_name)}</b> • ${escapeHtml(m.sender_role || '')} • ${timeStr}
+            </div>
+            <div class="max-w-[82%] sm:max-w-lg rounded-2xl px-3.5 py-2.5 text-sm shadow-xs ${isMe ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'}">
+              <div class="whitespace-pre-line break-words">${escapeHtml(m.content)}</div>
+              ${m.file_url ? `
+                <a href="${m.file_url}" target="_blank" class="mt-2 flex items-center gap-1.5 text-xs font-semibold underline ${isMe ? 'text-blue-100' : 'text-blue-600'}">
+                  📎 ${escapeHtml(m.file_name || 'Tải tệp đính kèm')}
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      selectedChatFile = file;
+      document.getElementById('selectedFileName').textContent = `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      document.getElementById('selectedFileBar').classList.remove('hidden');
+    }
+
+    function clearSelectedFile() {
+      selectedChatFile = null;
+      document.getElementById('chatFileInput').value = '';
+      document.getElementById('selectedFileBar').classList.add('hidden');
+    }
+
+    async function uploadFileToStorage(file) {
+      const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error } = await db.storage.from('team-files').upload(safeName, file);
+      if (error) throw error;
+      const { data } = db.storage.from('team-files').getPublicUrl(safeName);
+      return { url: data.publicUrl, name: file.name };
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text && !selectedChatFile) return;
+      if (!activeChannel || !currentUser) return;
+
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+
+      try {
+        let fileInfo = { url: null, name: null };
+        if (selectedChatFile) {
+          fileInfo = await uploadFileToStorage(selectedChatFile);
+        }
+
+        // 1. Lưu tin nhắn vào khung chat
+        await db.from('team_messages').insert([{
+          channel_id: activeChannel.id,
+          sender_name: currentUser.display_name,
+          sender_role: currentUser.role_title,
+          msg_type: 'CHAT',
+          content: text || `Đã gửi tệp: ${fileInfo.name}`,
+          file_url: fileInfo.url,
+          file_name: fileInfo.name
+        }]);
+
+        // 2. TỰ ĐỘNG BẮT CÚ PHÁP GIAO VIỆC KHI HỌP: "Giao @Tên nội dung việc"
+        await detectAndCreateTaskFromChat(text);
+
+        input.value = '';
+        clearSelectedFile();
+      } catch (err) {
+        alert('Lỗi gửi tin: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Tự động nhận diện @Tên thành viên trong câu giao việc khi họp
+    async function detectAndCreateTaskFromChat(text) {
+      if (!text || !text.includes('@')) return;
+      for (const user of allUsers) {
+        const mentionTag = '@' + user.display_name;
+        if (text.toLowerCase().includes(mentionTag.toLowerCase())) {
+          const cleanTask = text.replace(new RegExp(mentionTag, 'ig'), '').replace(/^giao\s*/i, '').trim();
+          if (cleanTask.length >= 3) {
+            await createChecklistTaskRecord(user, cleanTask, '');
+          }
+          break;
+        }
+      }
+    }
+
+    // 4. PHIẾU TRÌNH PHÊ DUYỆT & GỬI BOT TELEGRAM
+    async function submitApprovalRequest() {
+      const content = document.getElementById('approvalContentInput').value.trim();
+      if (!content) return alert('Vui lòng nhập nội dung trình phê duyệt!');
+
+      const approverId = document.getElementById('approvalApproverSelect').value;
+      const approver = allUsers.find(u => u.id === approverId);
+      const fileEl = document.getElementById('approvalFileInput');
+      const btn = document.getElementById('submitApprovalBtn');
+      btn.disabled = true;
+      btn.textContent = 'Đang gửi...';
+
+      try {
+        let fileInfo = { url: null, name: null };
+        if (fileEl.files[0]) {
+          fileInfo = await uploadFileToStorage(fileEl.files[0]);
+        }
+
+        const { data, error } = await db.from('team_messages').insert([{
+          channel_id: activeChannel.id,
+          sender_name: currentUser.display_name,
+          sender_role: currentUser.role_title,
+          msg_type: 'APPROVAL',
+          content: content,
+          file_url: fileInfo.url,
+          file_name: fileInfo.name,
+          approval_status: 'PENDING'
+        }]).select();
+
+        if (error) throw error;
+        const insertedMsg = data[0];
+
+        // Gọi Webhook Apps Script bắn 3 nút duyệt lên Telegram Lãnh đạo
+        fetch(APPS_SCRIPT_WEBHOOK, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'NOTIFY_APPROVAL',
+            messageId: insertedMsg.id,
+            senderName: currentUser.display_name,
+            senderRole: currentUser.role_title,
+            channelName: activeChannel.name,
+            content: content,
+            fileUrl: fileInfo.url || '',
+            fileName: fileInfo.name || '',
+            approverChatId: approver ? approver.telegram_chat_id : ''
+          })
+        });
+
+        document.getElementById('approvalContentInput').value = '';
+        fileEl.value = '';
+        closeModal('approvalModal');
+      } catch (err) {
+        alert('Lỗi gửi phiếu trình duyệt: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gửi Trình Duyệt & Báo Bot';
+      }
+    }
+
+    async function approveOnWeb(msgId, status) {
+      await db.from('team_messages').update({
+        approval_status: status,
+        approver_name: currentUser.display_name,
+        approved_at: new Date().toISOString()
+      }).eq('id', msgId);
+    }
+
+    // 5. HỆ THỐNG CHECKLIST CÔNG VIỆC HỌP NHÓM
+    async function loadTasks() {
+      if (!activeChannel) return;
+      const { data } = await db.from('team_tasks')
+        .select('*')
+        .eq('channel_id', activeChannel.id)
+        .order('created_at', { ascending: false });
+      channelTasks = data || [];
+      renderTasks();
+    }
+
+    async function submitNewTask() {
+      const assigneeId = document.getElementById('taskAssigneeSelect').value;
+      const title = document.getElementById('taskTitleInput').value.trim();
+      const dueDate = document.getElementById('taskDueInput').value.trim();
+      if (!title) return alert('Vui lòng nhập nội dung công việc!');
+
+      const assignee = allUsers.find(u => u.id === assigneeId);
+      await createChecklistTaskRecord(assignee, title, dueDate);
+
+      document.getElementById('taskTitleInput').value = '';
+      document.getElementById('taskDueInput').value = '';
+      closeModal('taskModal');
+    }
+
+    async function createChecklistTaskRecord(assignee, taskTitle, dueDate) {
+      if (!assignee || !activeChannel) return;
+
+      // 1. Tạo dòng Checklist mặc định trạng thái PENDING
+      await db.from('team_tasks').insert([{
+        channel_id: activeChannel.id,
+        assignee_name: assignee.display_name,
+        assigned_by: currentUser.display_name,
+        task_title: taskTitle,
+        due_date: dueDate,
+        status: 'PENDING',
+        progress_note: ''
+      }]);
+
+      // 2. Ghi thẻ thông báo trong luồng chat
+      await db.from('team_messages').insert([{
+        channel_id: activeChannel.id,
+        sender_name: currentUser.display_name,
+        sender_role: currentUser.role_title,
+        msg_type: 'TASK',
+        content: `Giao cho @${assignee.display_name}: ${taskTitle}${dueDate ? ' (Hạn: ' + dueDate + ')' : ''}`
+      }]);
+
+      // 3. Gửi thông báo Telegram riêng cho thành viên được giao việc
+      fetch(APPS_SCRIPT_WEBHOOK, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'NOTIFY_TASK',
+          assigneeName: assignee.display_name,
+          assigneeChatId: assignee.telegram_chat_id || '',
+          assignedBy: currentUser.display_name,
+          channelName: activeChannel.name,
+          taskTitle: taskTitle,
+          dueDate: dueDate
+        })
+      });
+    }
+
+    function renderTasks() {
+      const filter = document.getElementById('taskFilterSelect').value;
+      const myPendingCount = channelTasks.filter(t => currentUser && t.assignee_name === currentUser.display_name && t.status === 'PENDING').length;
+      document.getElementById('myPendingBadge').textContent = myPendingCount;
+
+      let list = [...channelTasks];
+      if (filter === 'MINE' && currentUser) list = list.filter(t => t.assignee_name === currentUser.display_name);
+      if (filter === 'PENDING') list = list.filter(t => t.status === 'PENDING');
+      if (filter === 'DONE') list = list.filter(t => t.status === 'DONE');
+
+      const box = document.getElementById('taskListContainer');
+      if (!list.length) {
+        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">Chưa có đầu việc Checklist nào ở bộ lọc này.</div>`;
+        return;
+      }
+
+      box.innerHTML = list.map(t => {
+        const isDone = t.status === 'DONE';
+        const isMine = currentUser && t.assignee_name === currentUser.display_name;
+        const canConfirm = isMine || (currentUser && (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN'));
+
+        return `
+          <div class="border rounded-xl p-3 text-xs space-y-2 ${isDone ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50/40 border-amber-200'}">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-slate-800">👤 ${escapeHtml(t.assignee_name)}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-slate-950'}">
+                ${isDone ? 'DONE' : 'PENDING'}
+              </span>
+            </div>
+
+            <div class="text-slate-800 font-medium leading-relaxed">${escapeHtml(t.task_title)}</div>
+
+            <div class="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5">
+              <span>Giao bởi: ${escapeHtml(t.assigned_by)}</span>
+              ${t.due_date ? `<span class="text-rose-600 font-medium">⏰ ${escapeHtml(t.due_date)}</span>` : ''}
+            </div>
+
+            ${t.progress_note ? `
+              <div class="bg-white border border-slate-200 rounded-lg p-2 text-[11px] text-slate-700">
+                <b>Ghi chú cập nhật:</b> ${escapeHtml(t.progress_note)}
+              </div>
+            ` : ''}
+
+            ${canConfirm ? `
+              <button onclick="openConfirmTaskModal('${t.id}')"
+                class="w-full py-1.5 rounded-lg font-semibold text-center transition ${isDone ? 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' : 'bg-blue-600 hover:bg-blue-700 text-white'}">
+                ${isDone ? '✏️ Cập nhật lại ghi chú' : '✍️ Xác nhận XONG / CÒN'}
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openConfirmTaskModal(taskId) {
+      const task = channelTasks.find(t => t.id === taskId);
+      if (!task) return;
+      confirmingTaskId = taskId;
+      document.getElementById('confirmTaskTitleDisplay').textContent = `Công việc: ${task.task_title}`;
+      document.getElementById('confirmTaskNoteInput').value = task.progress_note || '';
+      const radios = document.getElementsByName('taskConfirmStatus');
+      radios.forEach(r => { r.checked = (r.value === task.status); });
+      openModal('confirmTaskModal');
+    }
+
+    async function saveTaskConfirmation() {
+      if (!confirmingTaskId) return;
+      const note = document.getElementById('confirmTaskNoteInput').value.trim();
+      let selectedStatus = 'PENDING';
+      document.getElementsByName('taskConfirmStatus').forEach(r => { if (r.checked) selectedStatus = r.value; });
+
+      if (selectedStatus === 'PENDING' && !note) {
+        return alert('Vui lòng nhập ghi chú ngắn gọn về tình trạng thực hiện hiện tại!');
+      }
+
+      await db.from('team_tasks').update({
+        status: selectedStatus,
+        progress_note: note || 'Đã hoàn thành công việc được giao.',
+        confirmed_at: new Date().toISOString()
+      }).eq('id', confirmingTaskId);
+
+      closeModal('confirmTaskModal');
+    }
+
+    // 6. KHO TÀI LIỆU NHÓM & QUẢN LÝ NHÂN SỰ
+    function renderFilesTab() {
+      const files = channelMessages.filter(m => m.file_url);
+      const box = document.getElementById('rightTabFiles');
+      if (!files.length) {
+        box.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">Chưa có tệp nào được gửi trong nhóm này.</div>`;
+        return;
+      }
+      box.innerHTML = files.map(f => `
+        <a href="${f.file_url}" target="_blank" class="block p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 transition text-xs">
+          <div class="font-semibold text-blue-700 truncate">📎 ${escapeHtml(f.file_name || 'Tài liệu')}</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Gửi bởi ${escapeHtml(f.sender_name)} • ${new Date(f.created_at).toLocaleDateString('vi-VN')}</div>
+        </a>
+      `).join('');
+    }
+
+    function openUserModal() {
+      renderUserManagementList();
+      openModal('userModal');
+    }
+
+    function renderUserManagementList() {
+      const box = document.getElementById('userManagementList');
+      box.innerHTML = allUsers.map(u => `
+        <div class="py-2.5 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-bold text-slate-800">${escapeHtml(u.display_name)} <span class="text-slate-400 font-normal">(${escapeHtml(u.role_title)})</span></div>
+            <div class="text-[11px] text-slate-500">Quyền: <b>${u.permission}</b> • PIN: <code>${u.pin_code}</code> • Telegram ID: <b>${u.telegram_chat_id || 'Chưa gắn'}</b></div>
+          </div>
+          <button onclick="updateUserTelegramId('${u.id}', '${escapeHtml(u.telegram_chat_id || '')}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 font-semibold text-slate-700">
+            Sửa Telegram ID
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function addNewUser() {
+      const display_name = document.getElementById('newUserName').value.trim();
+      const role_title = document.getElementById('newUserRole').value.trim() || 'Chuyên viên';
+      const permission = document.getElementById('newUserPerm').value;
+      const pin_code = document.getElementById('newUserPin').value.trim();
+      const telegram_chat_id = document.getElementById('newUserTgId').value.trim();
+
+      if (!display_name || !pin_code) return alert('Vui lòng nhập Tên và Mã PIN!');
+      await db.from('team_users').insert([{ display_name, role_title, permission, pin_code, telegram_chat_id }]);
+
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserRole').value = '';
+      document.getElementById('newUserPin').value = '';
+      document.getElementById('newUserTgId').value = '';
+
+      await loadUsers();
+      renderUserManagementList();
+    }
+
+    async function updateUserTelegramId(userId, oldId) {
+      const newId = prompt('Nhập Telegram Chat ID mới cho thành viên này (lấy qua @userinfobot):', oldId);
+      if (newId === null) return;
+      await db.from('team_users').update({ telegram_chat_id: newId.trim() }).eq('id', userId);
+      await loadUsers();
+      renderUserManagementList();
+    }
+
+    // 7. ĐỒNG BỘ REALTIME QUA WEBSOCKET SUPABASE
+    function subscribeRealtime() {
+      db.channel('teamwork-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, payload => {
+          if (activeChannel && (payload.new.channel_id === activeChannel.id || payload.old.channel_id === activeChannel.id)) {
+            loadMessages();
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_tasks' }, payload => {
+          if (activeChannel && (payload.new.channel_id === activeChannel.id || payload.old.channel_id === activeChannel.id)) {
+            loadTasks();
+          }
+        })
+        .subscribe();
+    }
+
+    // TIỆN ÍCH GIAO DIỆN
+    function switchRightTab(tab) {
+      const isTasks = tab === 'tasks';
+      document.getElementById('rightTabTasks').classList.toggle('hidden', !isTasks);
+      document.getElementById('rightTabFiles').classList.toggle('hidden', isTasks);
+      document.getElementById('tabBtnTasks').className = isTasks
+        ? 'flex-1 py-2.5 text-xs font-bold border-b-2 border-blue-600 text-blue-600'
+        : 'flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800';
+      document.getElementById('tabBtnFiles').className = !isTasks
+        ? 'flex-1 py-2.5 text-xs font-bold border-b-2 border-blue-600 text-blue-600'
+        : 'flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800';
+      if (window.innerWidth < 1280) {
+        document.getElementById('rightPanel').classList.remove('translate-x-full');
+      }
+    }
+
+    function toggleMobileSidebar() {
+      document.getElementById('leftSidebar').classList.toggle('-translate-x-full');
+    }
+    function toggleMobileRightPanel() {
+      document.getElementById('rightPanel').classList.toggle('translate-x-full');
+    }
+    function openModal(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    }
+    function openApprovalModal() { openModal('approvalModal'); }
+    function openTaskModal() { openModal('taskModal'); }
+    function openChannelModal() { openModal('channelModal'); }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
