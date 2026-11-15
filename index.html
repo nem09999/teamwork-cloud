@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TeamWork Cloud — Điều Hành Nhóm & Phê Duyệt Thời Gian Thực</title>
   <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -352,13 +353,22 @@
     </div>
   </div>
 
-  <!-- ================= LOGIC KẾT NỐI  & TELEGRAM BOT ================= -->
+  <!-- ================= LOGIC KẾT NỐI SUPABASE & TELEGRAM BOT ================= -->
   <script>
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
     const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
 
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      global: {
+        fetch: (url, options = {}) => {
+          const headers = new Headers(options.headers || {});
+          headers.set('apikey', SUPABASE_KEY);
+          headers.delete('Authorization');
+          return fetch(url, { ...options, headers });
+        }
+      }
+    });
 
     let allUsers = [];
     let allChannels = [];
@@ -383,7 +393,11 @@
     }
 
     async function loadUsers() {
-      const { data } = await db.from('team_users').select('*').order('created_at', { ascending: true });
+      const { data, error } = await db.from('team_users').select('*').order('created_at', { ascending: true });
+      if (error) {
+        console.error('Lỗi tải danh sách thành viên:', error);
+        return;
+      }
       allUsers = data || [];
       const sel = document.getElementById('loginUserSelect');
       sel.innerHTML = allUsers.map(u => `<option value="${u.id}">${u.display_name} (${u.role_title})</option>`).join('');
