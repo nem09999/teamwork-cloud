@@ -1,3 +1,7 @@
+
+index.html
+
+100%
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -86,10 +90,15 @@
       </button>
 
       <div class="flex items-center gap-2 pl-2 border-l border-slate-700">
-        <div class="text-right hidden sm:block">
-          <div id="currentUserName" class="text-xs font-semibold">---</div>
-          <div id="currentUserRole" class="text-[10px] text-slate-400">---</div>
-        </div>
+        <button type="button" onclick="openMyProfileModal()" title="Bấm để cập nhật Telegram ID & đổi mã PIN cá nhân"
+          class="text-right hover:bg-slate-800 px-2 py-1 rounded-lg transition flex items-center gap-1.5">
+          <div class="hidden sm:block">
+            <div id="currentUserName" class="text-xs font-semibold flex items-center justify-end gap-1">---</div>
+            <div id="currentUserRole" class="text-[10px] text-slate-400">---</div>
+          </div>
+          <span id="missingTgBadge" class="hidden w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" title="Chưa gắn Telegram ID"></span>
+          <span class="text-xs text-slate-300">⚙️</span>
+        </button>
         <button onclick="logout()" title="Đăng xuất" class="px-2 py-1 rounded bg-slate-800 hover:bg-red-600 text-xs transition">Thoát</button>
       </div>
     </div>
@@ -869,6 +878,60 @@
     </div>
   </div>
 
+  <!-- ================= MODAL 10: HỒ SƠ CÁ NHÂN (TỰ CẬP NHẬT TELEGRAM ID & ĐỔI MÃ PIN) ================= -->
+  <div id="myProfileModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <h3 class="font-bold text-base text-slate-900">⚙️ Hồ Sơ Cá Nhân & Bảo Mật</h3>
+          <p class="text-[11px] text-slate-500">Tự liên kết Telegram Chat ID nhận việc & đổi mã PIN riêng tư</p>
+        </div>
+        <button onclick="closeModal('myProfileModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+          <div>
+            <div id="profileDisplayName" class="font-bold text-sm text-slate-900">---</div>
+            <div id="profileRoleTitle" class="text-[11px] text-slate-500">---</div>
+          </div>
+          <span id="profileTgStatusBadge" class="px-2.5 py-1 rounded-full font-bold text-[10px]">---</span>
+        </div>
+
+        <div class="bg-blue-50/70 border border-blue-200 p-3 rounded-xl space-y-1.5 text-blue-950">
+          <div class="font-bold">💡 Cách tự lấy & gắn Telegram ID siêu nhanh (10 giây):</div>
+          <div>1. Mở Bot Telegram của công ty trên điện thoại, nhắn lệnh: <code class="bg-white px-1.5 py-0.5 rounded border font-bold text-blue-700">/link [Mã PIN của bạn]</code></div>
+          <div>2. Bot sẽ tự động điền dãy số ID vào hệ thống. Bấm nút <b>🔄 Kiểm tra lại từ Cloud</b> bên dưới để xác nhận (hoặc tự dán dãy số ID vào ô dưới nếu đã biết).</div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700">Telegram Chat ID cá nhân:</label>
+            <button type="button" onclick="refreshMyProfileFromCloud()" class="text-blue-600 font-semibold hover:underline">🔄 Kiểm tra lại từ Cloud</button>
+          </div>
+          <input id="myProfileTgIdInput" type="text" placeholder="VD: 5182940123 (Để trống hoặc dùng lệnh /link)"
+            class="w-full border border-slate-300 rounded-xl px-3 py-2 font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Mã PIN đăng nhập cá nhân (4–6 chữ số) *</label>
+          <input id="myProfilePinInput" type="text" inputmode="numeric" maxlength="6" placeholder="Nhập mã PIN bí mật mới (4-6 số)"
+            class="w-full border border-slate-300 rounded-xl px-3 py-2 tracking-widest font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p class="text-[10px] text-slate-400 mt-1">Nên đổi sang mã PIN riêng sau khi nhận mã PIN tạm từ Quản lý.</p>
+        </div>
+
+        <div id="myProfileFeedback" class="hidden p-2.5 rounded-xl font-medium"></div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('myProfileModal')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
+        <button id="saveMyProfileBtn" onclick="saveMyProfile()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow">
+          💾 Lưu Hồ Sơ Cá Nhân
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= LOGIC KẾT NỐI TRỰC TIẾP SUPABASE REST API ================= -->
   <script>
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
@@ -1071,6 +1134,7 @@
       document.getElementById('currentUserRole').textContent = user.role_title;
 
       applyUserPermissionsToUI();
+      updateHeaderTgIndicator();
       renderDirectMessageUsers();
       await loadChannels();
       startLiveSync();
@@ -1753,8 +1817,9 @@
       const fmtDue = new Date(dueAtIso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
       const dueSummary = `${fmtStart} → ${fmtDue}`;
 
-      await sbFetch('team_tasks', {
+      const insertedTasks = await sbFetch('team_tasks', {
         method: 'POST',
+        headers: { 'Prefer': 'return=representation' },
         body: JSON.stringify([{
           channel_id: activeChannel.id,
           assignee_name: assignee.display_name,
@@ -1771,6 +1836,8 @@
         }])
       });
 
+      const newTaskId = (insertedTasks && insertedTasks[0]) ? insertedTasks[0].id : '';
+
       const chairTag = chairConfirmed
         ? `✅ Chủ trì (${meetingChair}) đã xác nhận`
         : `⏳ Chờ Chủ trì (${meetingChair}) xác nhận`;
@@ -1782,7 +1849,9 @@
           sender_name: currentUser.display_name,
           sender_role: currentUser.role_title,
           msg_type: 'TASK',
-          content: `Giao cho @${assignee.display_name}: ${taskTitle}\n• Bắt đầu: ${fmtStart} | Hoàn thành: ${fmtDue}\n• Trạng thái: ${chairTag}`
+          content: `Giao cho @${assignee.display_name}: ${taskTitle}
+• Bắt đầu: ${fmtStart} | Hoàn thành: ${fmtDue}
+• Trạng thái: ${chairTag}`
         }])
       });
 
@@ -1793,6 +1862,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'NOTIFY_TASK',
+            taskId: newTaskId,
             assigneeName: assignee.display_name,
             assigneeChatId: assignee.telegram_chat_id || '',
             assignedBy: currentUser.display_name,
@@ -1998,7 +2068,8 @@
     function autoParseMeetingMinutes() {
       const raw = document.getElementById('meetingMinutesRawInput').value.trim();
       if (!raw) return alert('Vui lòng dán nội dung kết luận cuộc họp vào ô phía trên!');
-      const lines = raw.split(/\n|;/).map(s => s.trim()).filter(Boolean);
+      const lines = raw.split(/
+|;/).map(s => s.trim()).filter(Boolean);
       const container = document.getElementById('meetingTaskRowsContainer');
       container.innerHTML = '';
 
@@ -2132,7 +2203,10 @@
       if (task && activeChannel) {
         const msgContent = selectedStatus === 'DONE'
           ? `✅ Đã hoàn thành (DONE) công việc: "${task.task_title}" — ${finalNote}`
-          : `📝 Hồi đáp tiến độ công việc "${task.task_title}":\n• Trạng thái: CHƯA XONG (PENDING)\n• Nhóm lý do: ${delayReason}\n• Chi tiết & Cam kết: ${finalNote}`;
+          : `📝 Hồi đáp tiến độ công việc "${task.task_title}":
+• Trạng thái: CHƯA XONG (PENDING)
+• Nhóm lý do: ${delayReason}
+• Chi tiết & Cam kết: ${finalNote}`;
 
         await sbFetch('team_messages', {
           method: 'POST',
@@ -2332,6 +2406,7 @@
         if (currentUser && editId === currentUser.id) {
           currentUser = allUsers.find(u => u.id === editId) || currentUser;
           applyUserPermissionsToUI();
+          updateHeaderTgIndicator();
         }
         resetUserForm();
         renderUserManagementList();
@@ -2589,14 +2664,15 @@
         if (format === 'JSON') {
           fileContent = JSON.stringify(backupData, null, 2);
         } else {
-          const lines = ['\uFEFFLOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,LY_DO_CHAM_TRE,GHI_CHU_HOAC_FILE,THOI_GIAN'];
+          const lines = ['﻿LOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,LY_DO_CHAM_TRE,GHI_CHU_HOAC_FILE,THOI_GIAN'];
           (backupData.team_tasks || []).forEach(t => {
             lines.push(`"CHECKLIST","${csvEsc(t.assignee_name)}","${csvEsc(t.task_title)}","${csvEsc(t.status)}","${csvEsc(t.delay_reason)}","${csvEsc(t.progress_note)}","${csvEsc(t.created_at)}"`);
           });
           (backupData.team_messages || []).forEach(m => {
             lines.push(`"${csvEsc(m.msg_type)}","${csvEsc(m.sender_name)}","${csvEsc(m.content)}","${csvEsc(m.approval_status || '')}","","${csvEsc(m.file_name || '')}","${csvEsc(m.created_at)}"`);
           });
-          fileContent = lines.join('\n');
+          fileContent = lines.join('
+');
         }
 
         if (targetMode === 'LOCAL_PICKER') {
@@ -2753,7 +2829,9 @@
     }
 
     function csvEsc(val) {
-      return String(val || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
+      return String(val || '').replace(/"/g, '""').replace(/
+?
+/g, ' ');
     }
 
     // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY
@@ -2765,6 +2843,88 @@
           loadTasks();
         }
       }, 2000);
+    }
+
+    // 9. TỰ CẬP NHẬT HỒ SƠ CÁ NHÂN (TELEGRAM ID & ĐỔI MÃ PIN)
+    function updateHeaderTgIndicator() {
+      const badge = document.getElementById('missingTgBadge');
+      if (!badge || !currentUser) return;
+      badge.classList.toggle('hidden', Boolean(currentUser.telegram_chat_id));
+    }
+
+    async function openMyProfileModal() {
+      if (!currentUser) return;
+      document.getElementById('myProfileFeedback').classList.add('hidden');
+      await refreshMyProfileFromCloud();
+      openModal('myProfileModal');
+    }
+
+    async function refreshMyProfileFromCloud() {
+      if (!currentUser) return;
+      try {
+        const rows = await sbFetch(`team_users?id=eq.${currentUser.id}&select=*`);
+        if (rows && rows[0]) {
+          currentUser = rows[0];
+          const idx = allUsers.findIndex(u => u.id === currentUser.id);
+          if (idx !== -1) allUsers[idx] = currentUser;
+        }
+      } catch (e) {}
+
+      document.getElementById('profileDisplayName').textContent = currentUser.display_name;
+      document.getElementById('profileRoleTitle').textContent = currentUser.role_title || '';
+      document.getElementById('myProfileTgIdInput').value = currentUser.telegram_chat_id || '';
+      document.getElementById('myProfilePinInput').value = currentUser.pin_code || '';
+
+      const statusBadge = document.getElementById('profileTgStatusBadge');
+      if (currentUser.telegram_chat_id) {
+        statusBadge.textContent = '✅ Đã gắn Telegram';
+        statusBadge.className = 'px-2.5 py-1 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200';
+      } else {
+        statusBadge.textContent = '⚠️ Chưa gắn Telegram';
+        statusBadge.className = 'px-2.5 py-1 rounded-full font-bold text-[10px] bg-rose-100 text-rose-800 border border-rose-200';
+      }
+      updateHeaderTgIndicator();
+    }
+
+    async function saveMyProfile() {
+      if (!currentUser) return;
+      const newTgId = document.getElementById('myProfileTgIdInput').value.trim();
+      const newPin = document.getElementById('myProfilePinInput').value.trim();
+      const fb = document.getElementById('myProfileFeedback');
+
+      if (!/^\d{4,6}$/.test(newPin)) {
+        fb.textContent = 'Mã PIN bắt buộc gồm 4 đến 6 chữ số!';
+        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
+        fb.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('saveMyProfileBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang lưu...';
+
+      try {
+        await sbFetch(`team_users?id=eq.${currentUser.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            telegram_chat_id: newTgId || null,
+            pin_code: newPin
+          })
+        });
+
+        await refreshMyProfileFromCloud();
+        populateUserDropdowns();
+        fb.textContent = '✅ Đã cập nhật thành công Telegram Chat ID & Mã PIN cá nhân!';
+        fb.className = 'p-2.5 rounded-xl font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+        fb.classList.remove('hidden');
+      } catch (err) {
+        fb.textContent = 'Lỗi cập nhật hồ sơ: ' + err.message;
+        fb.className = 'p-2.5 rounded-xl font-medium bg-red-50 text-red-700 border border-red-200';
+        fb.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Lưu Hồ Sơ Cá Nhân';
+      }
     }
 
     // TIỆN ÍCH GIAO DIỆN
@@ -2814,3 +2974,4 @@
   </script>
 </body>
 </html>
+Đang hiển thị index.html.
