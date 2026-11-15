@@ -40,7 +40,7 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Mã PIN truy cập</label>
-          <input id="loginPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Nhập mã PIN (VD: 9999 hoặc 1111)"
+          <input id="loginPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Nhập mã PIN cá nhân"
             class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
             onkeydown="if(event.key==='Enter') handleLogin()" />
         </div>
@@ -50,13 +50,6 @@
         <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-md">
           Vào Không Gian Làm Việc
         </button>
-
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-500 space-y-1">
-          <div class="font-semibold text-slate-700">Tài khoản thử nghiệm sẵn có:</div>
-          <div>• <b>Lãnh Đạo / Quản Lý</b> — PIN: <code class="bg-slate-200 px-1 rounded">9999</code></div>
-          <div>• <b>Thành Viên 01</b> — PIN: <code class="bg-slate-200 px-1 rounded">1111</code></div>
-          <div>• <b>Thành Viên 02</b> — PIN: <code class="bg-slate-200 px-1 rounded">2222</code></div>
-        </div>
       </div>
     </div>
   </div>
@@ -74,14 +67,18 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-2 sm:gap-2.5">
       <button onclick="switchRightTab('tasks')" class="relative px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1.5">
         <span>📋 Việc của tôi</span>
         <span id="myPendingBadge" class="bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded-full text-[11px]">0</span>
       </button>
 
-      <button onclick="openUserModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium hidden sm:flex items-center gap-1">
-        👥 Nhân sự & Bot ID
+      <button id="headerBackupBtn" onclick="openBackupModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1">
+        💾 <span class="hidden md:inline">Sao lưu</span>
+      </button>
+
+      <button id="headerUserBtn" onclick="openUserModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium flex items-center gap-1">
+        👥 <span class="hidden sm:inline">Nhân sự & Phân quyền</span>
       </button>
 
       <div class="flex items-center gap-2 pl-2 border-l border-slate-700">
@@ -101,7 +98,7 @@
     <aside id="leftSidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 absolute lg:static inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
       <div class="p-3.5 flex items-center justify-between border-b border-slate-800">
         <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự Án</span>
-        <button onclick="openChannelModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-md font-medium">+ Nhóm mới</button>
+        <button id="createChannelBtn" onclick="openChannelModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded-md font-medium">+ Nhóm mới</button>
       </div>
 
       <div id="channelList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
@@ -123,7 +120,7 @@
           <button onclick="openApprovalModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
             📋 Trình phê duyệt
           </button>
-          <button onclick="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
+          <button id="headerAssignTaskBtn" onclick="openTaskModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
             ✅ Giao việc
           </button>
           <button onclick="toggleMobileRightPanel()" class="xl:hidden bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold px-2.5 py-1.5 rounded-lg">
@@ -146,7 +143,7 @@
             <input id="chatFileInput" type="file" class="hidden" onchange="handleFileSelect(event)" />
           </label>
 
-          <textarea id="chatInput" rows="1" placeholder="Nhập trao đổi nhóm... (Hoặc gõ: Giao @Thành Viên 01 nội dung việc)"
+          <textarea id="chatInput" rows="1" placeholder="Nhập trao đổi nhóm... (Hoặc gõ: Giao @Tên nội dung việc)"
             class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-28"
             onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"></textarea>
 
@@ -177,7 +174,7 @@
             <option value="PENDING">Đang PENDING (Chưa xong)</option>
             <option value="DONE">Đã xác nhận DONE</option>
           </select>
-          <button onclick="openTaskModal()" class="text-blue-600 font-semibold hover:underline">+ Thêm việc</button>
+          <button id="rightAddTaskBtn" onclick="openTaskModal()" class="text-blue-600 font-semibold hover:underline">+ Thêm việc</button>
         </div>
         <div id="taskListContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
       </div>
@@ -316,29 +313,163 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 5: QUẢN LÝ NHÂN SỰ & TELEGRAM CHAT ID ================= -->
+  <!-- ================= MODAL 5: QUẢN LÝ NHÂN SỰ, PHÂN QUYỀN CHI TIẾT & BOT ID ================= -->
   <div id="userModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between border-b pb-3">
-        <h3 class="font-bold text-base text-slate-900">👥 Quản Lý Thành Viên & ID Nhận Thông Báo Telegram</h3>
+        <div>
+          <h3 class="font-bold text-base text-slate-900">👥 Quản Lý Nhân Sự, Phân Quyền & Telegram Bot ID</h3>
+          <p class="text-[11px] text-slate-500">Tạo mới, sửa thông tin, cấp quyền tác vụ (giao việc, duyệt thay...) hoặc xóa thành viên</p>
+        </div>
         <button onclick="closeModal('userModal')" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
-        <input id="newUserName" type="text" placeholder="Họ tên thành viên" class="border rounded-lg px-2.5 py-2" />
-        <input id="newUserRole" type="text" placeholder="Chức danh" class="border rounded-lg px-2.5 py-2" />
-        <select id="newUserPerm" class="border rounded-lg px-2 py-2 bg-white">
-          <option value="MEMBER">Nhân viên</option>
-          <option value="APPROVER">Lãnh đạo duyệt</option>
-        </select>
-        <input id="newUserPin" type="text" maxlength="6" placeholder="Mã PIN (4 số)" class="border rounded-lg px-2.5 py-2" />
-        <input id="newUserTgId" type="text" placeholder="Telegram Chat ID" class="border rounded-lg px-2.5 py-2" />
-        <button onclick="addNewUser()" class="sm:col-span-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg">
-          + Thêm Thành Viên Mới
+      <!-- Form Thêm Mới / Chỉnh Sửa Thành Viên -->
+      <div class="text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="userFormTitle" class="font-bold text-slate-800 uppercase tracking-wide">+ Thêm Thành Viên Mới</span>
+          <button id="cancelEditUserBtn" type="button" onclick="resetUserForm()" class="hidden text-rose-600 font-semibold hover:underline">✕ Hủy chế độ sửa</button>
+        </div>
+
+        <input type="hidden" id="editingUserId" value="" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
+          <input id="newUserName" type="text" placeholder="Họ tên thành viên *" class="border rounded-lg px-2.5 py-2 bg-white" />
+          <input id="newUserRole" type="text" placeholder="Chức danh" class="border rounded-lg px-2.5 py-2 bg-white" />
+          <select id="newUserPerm" onchange="onBasePermChange()" class="border rounded-lg px-2 py-2 bg-white font-medium">
+            <option value="MEMBER">Nhân viên (Tùy chọn quyền)</option>
+            <option value="APPROVER">Lãnh đạo / Quản lý (Full quyền)</option>
+          </select>
+          <input id="newUserPin" type="text" inputmode="numeric" maxlength="6" placeholder="Mã PIN (4-6 số) *" class="border rounded-lg px-2.5 py-2 bg-white" />
+          <input id="newUserTgId" type="text" placeholder="Telegram Chat ID" class="border rounded-lg px-2.5 py-2 bg-white" />
+        </div>
+
+        <!-- Ma trận phân quyền chi tiết -->
+        <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+          <div class="text-[11px] font-bold text-slate-600 mb-1.5">Phân quyền chức năng thực thi trong ứng dụng:</div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="permAssign" class="accent-blue-600 rounded" />
+              <span>✅ Giao việc & lập Checklist</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="permApprove" class="accent-blue-600 rounded" />
+              <span>📋 Phê duyệt thay tờ trình</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="permCreateChannel" class="accent-blue-600 rounded" />
+              <span>➕ Tạo nhóm / dự án mới</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="permManageUsers" class="accent-blue-600 rounded" />
+              <span>👥 Quản lý nhân sự & quyền</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="permBackup" class="accent-blue-600 rounded" />
+              <span>💾 Sao lưu dữ liệu (Backup)</span>
+            </label>
+          </div>
+        </div>
+
+        <button id="saveUserBtn" type="button" onclick="saveUserForm()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition shadow-xs">
+          + Lưu Thành Viên Mới
         </button>
+
+        <div id="userModalFeedback" class="text-xs font-medium hidden px-2.5 py-1.5 rounded-lg"></div>
       </div>
 
+      <!-- Danh sách nhân sự hiện có -->
       <div id="userManagementList" class="flex-1 overflow-y-auto divide-y text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 6: SAO LƯU DỮ LIỆU CÓ CHỌN LỌC & ĐƯỜNG DẪN CLOUD ================= -->
+  <div id="backupModal" class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <h3 class="font-bold text-base text-slate-900">💾 Sao Lưu Dữ Liệu Có Chọn Lọc (Backup)</h3>
+          <p class="text-[11px] text-slate-500">Chọn phạm vi dữ liệu và chỉ định thư mục máy tính, Google Drive hoặc Cloud</p>
+        </div>
+        <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-slate-700">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- 1. Chọn lọc phạm vi dữ liệu -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-700">1. Chọn nhóm dữ liệu cần sao lưu:</div>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="bkUsers" checked class="accent-blue-600" />
+              <span>👥 Danh sách Nhân sự & Phân quyền</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="bkChannels" checked class="accent-blue-600" />
+              <span>📁 Danh sách Nhóm / Dự án</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="bkMessages" checked class="accent-blue-600" />
+              <span>💬 Lịch sử Chat & Phiếu trình duyệt</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="bkTasks" checked class="accent-blue-600" />
+              <span>📌 Toàn bộ Checklist & Tiến độ</span>
+            </label>
+          </div>
+
+          <div class="pt-1.5 border-t border-slate-200">
+            <label class="block font-semibold text-slate-600 mb-1">Lọc theo Nhóm / Dự án cụ thể (áp dụng cho Chat & Checklist):</label>
+            <select id="bkChannelFilter" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-medium">
+              <option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. Chọn định dạng tệp -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-700">2. Định dạng tệp sao lưu:</div>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+              <input type="radio" name="bkFormat" value="JSON" checked class="accent-blue-600" />
+              <div>
+                <div class="font-bold">Gói dữ liệu gốc (.JSON)</div>
+                <div class="text-[10px] text-slate-500">Bảo toàn nguyên vẹn cấu trúc</div>
+              </div>
+            </label>
+            <label class="cursor-pointer border rounded-lg p-2 bg-white flex items-center gap-2 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50">
+              <input type="radio" name="bkFormat" value="CSV" class="accent-blue-600" />
+              <div>
+                <div class="font-bold">Bảng tổng hợp Excel (.CSV)</div>
+                <div class="text-[10px] text-slate-500">Mở xem trực tiếp bằng Excel</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Chọn đường dẫn / Đích lưu trữ -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
+          <div class="font-bold text-slate-700">3. Chọn nơi lưu trữ (Thư mục máy tính / Google Drive / Cloud):</div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button type="button" onclick="executeBackup('LOCAL_PICKER')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-left transition shadow-xs">
+              <div class="font-bold text-xs">💻 Chọn Thư Mục Máy Tính / Drive</div>
+              <div class="text-[10px] text-blue-100 mt-0.5">Mở hộp thoại chọn đúng ổ đĩa hoặc thư mục Google Drive / OneDrive trên máy</div>
+            </button>
+
+            <button type="button" onclick="executeBackup('GOOGLE_DRIVE_CLOUD')" class="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-left transition shadow-xs">
+              <div class="font-bold text-xs">☁️ Đẩy Thẳng Lên Google Drive</div>
+              <div class="text-[10px] text-emerald-100 mt-0.5">Gửi gói sao lưu lên Cloud Google Drive qua Webhook tự động</div>
+            </button>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tên thư mục con trên Google Drive Cloud (tùy chọn):</label>
+            <input id="bkDriveFolderName" type="text" value="TeamWork_Cloud_Backup" placeholder="VD: TeamWork_Cloud_Backup" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white" />
+          </div>
+        </div>
+
+        <div id="backupFeedback" class="hidden p-2.5 rounded-xl text-xs font-medium"></div>
+      </div>
     </div>
   </div>
 
@@ -348,7 +479,6 @@
     const SUPABASE_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
     const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
 
-    // Hàm gọi REST API trực tiếp không qua thư viện ngoài (tránh hoàn toàn lỗi 401 header)
     async function sbFetch(path, options = {}) {
       const headers = {
         'apikey': SUPABASE_KEY,
@@ -377,6 +507,27 @@
     let confirmingTaskId = null;
     let syncTimer = null;
 
+    // Hàm kiểm tra quyền của người dùng hiện tại
+    function hasPerm(permKey) {
+      if (!currentUser) return false;
+      if (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN') return true;
+      const cp = currentUser.custom_perms || {};
+      return Boolean(cp[permKey]);
+    }
+
+    function applyUserPermissionsToUI() {
+      const canAssign = hasPerm('can_assign');
+      const canCreateCh = hasPerm('can_create_channel');
+      const canManageUsers = hasPerm('can_manage_users');
+      const canBackup = hasPerm('can_backup');
+
+      document.getElementById('headerUserBtn').classList.toggle('hidden', !canManageUsers);
+      document.getElementById('headerBackupBtn').classList.toggle('hidden', !canBackup);
+      document.getElementById('createChannelBtn').classList.toggle('hidden', !canCreateCh);
+      document.getElementById('headerAssignTaskBtn').classList.toggle('hidden', !canAssign);
+      document.getElementById('rightAddTaskBtn').classList.toggle('hidden', !canAssign);
+    }
+
     // 1. KHỞI TẠO HỆ THỐNG
     async function initApp() {
       await loadUsers();
@@ -397,9 +548,7 @@
         const data = await sbFetch('team_users?select=*&order=created_at.asc');
         allUsers = data || [];
         if (!allUsers.length) {
-          sel.innerHTML = `<option value="">Chưa có thành viên nào trong bảng team_users</option>`;
-          errEl.textContent = 'Bảng team_users đang trống. Vui lòng chạy lệnh SQL nạp dữ liệu mẫu trên Supabase.';
-          errEl.classList.remove('hidden');
+          sel.innerHTML = `<option value="">Chưa có thành viên nào</option>`;
           return;
         }
         errEl.classList.add('hidden');
@@ -413,7 +562,11 @@
     }
 
     function populateUserDropdowns() {
-      const approvers = allUsers.filter(u => u.permission === 'APPROVER' || u.permission === 'ADMIN');
+      const approvers = allUsers.filter(u =>
+        u.permission === 'APPROVER' ||
+        u.permission === 'ADMIN' ||
+        (u.custom_perms && u.custom_perms.can_approve)
+      );
       const appList = approvers.length ? approvers : allUsers;
       document.getElementById('approvalApproverSelect').innerHTML = appList
         .map(u => `<option value="${u.id}">${escapeHtml(u.display_name)} — ${escapeHtml(u.role_title)}</option>`).join('');
@@ -444,6 +597,7 @@
       document.getElementById('currentUserName').textContent = user.display_name;
       document.getElementById('currentUserRole').textContent = user.role_title;
 
+      applyUserPermissionsToUI();
       await loadChannels();
       startLiveSync();
     }
@@ -490,6 +644,7 @@
     }
 
     async function createChannel() {
+      if (!hasPerm('can_create_channel')) return alert('Bạn chưa được cấp quyền tạo nhóm mới!');
       const name = document.getElementById('newChannelName').value.trim();
       const description = document.getElementById('newChannelDesc').value.trim();
       if (!name) return alert('Vui lòng nhập tên nhóm!');
@@ -526,6 +681,8 @@
         return;
       }
 
+      const canApproveNow = hasPerm('can_approve');
+
       box.innerHTML = channelMessages.map(m => {
         const isMe = currentUser && m.sender_name === currentUser.display_name;
         const timeStr = new Date(m.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -544,7 +701,7 @@
             badgeText = `❌ ĐÃ TỪ CHỐI (${escapeHtml(m.approver_name || 'Lãnh đạo')})`;
           }
 
-          const canApproveOnWeb = currentUser && (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN') && m.approval_status === 'PENDING';
+          const canApproveOnWeb = canApproveNow && m.approval_status === 'PENDING';
 
           return `
             <div class="max-w-xl mx-auto my-2 bg-white border-2 border-indigo-200 rounded-2xl p-4 shadow-sm">
@@ -665,7 +822,9 @@
           }])
         });
 
-        await detectAndCreateTaskFromChat(text);
+        if (hasPerm('can_assign')) {
+          await detectAndCreateTaskFromChat(text);
+        }
 
         input.value = '';
         clearSelectedFile();
@@ -756,6 +915,7 @@
     }
 
     async function approveOnWeb(msgId, status) {
+      if (!hasPerm('can_approve')) return alert('Bạn chưa được cấp quyền phê duyệt!');
       await sbFetch(`team_messages?id=eq.${msgId}`, {
         method: 'PATCH',
         body: JSON.stringify({
@@ -778,6 +938,7 @@
     }
 
     async function submitNewTask() {
+      if (!hasPerm('can_assign')) return alert('Bạn chưa được cấp quyền giao việc!');
       const assigneeId = document.getElementById('taskAssigneeSelect').value;
       const title = document.getElementById('taskTitleInput').value.trim();
       const dueDate = document.getElementById('taskDueInput').value.trim();
@@ -854,7 +1015,7 @@
       box.innerHTML = list.map(t => {
         const isDone = t.status === 'DONE';
         const isMine = currentUser && t.assignee_name === currentUser.display_name;
-        const canConfirm = isMine || (currentUser && (currentUser.permission === 'APPROVER' || currentUser.permission === 'ADMIN'));
+        const canConfirm = isMine || hasPerm('can_approve') || hasPerm('can_assign');
 
         return `
           <div class="border rounded-xl p-3 text-xs space-y-2 ${isDone ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50/40 border-amber-200'}">
@@ -923,7 +1084,7 @@
       await loadTasks();
     }
 
-    // 6. KHO TÀI LIỆU NHÓM & QUẢN LÝ NHÂN SỰ
+    // 6. KHO TÀI LIỆU & QUẢN LÝ NHÂN SỰ + PHÂN QUYỀN CHI TIẾT
     function renderFilesTab() {
       const files = channelMessages.filter(m => m.file_url);
       const box = document.getElementById('rightTabFiles');
@@ -940,59 +1101,327 @@
     }
 
     function openUserModal() {
+      resetUserForm();
+      const fb = document.getElementById('userModalFeedback');
+      if (fb) fb.classList.add('hidden');
       renderUserManagementList();
       openModal('userModal');
     }
 
-    function renderUserManagementList() {
-      const box = document.getElementById('userManagementList');
-      box.innerHTML = allUsers.map(u => `
-        <div class="py-2.5 flex items-center justify-between gap-2">
-          <div>
-            <div class="font-bold text-slate-800">${escapeHtml(u.display_name)} <span class="text-slate-400 font-normal">(${escapeHtml(u.role_title)})</span></div>
-            <div class="text-[11px] text-slate-500">Quyền: <b>${u.permission}</b> • PIN: <code>${u.pin_code}</code> • Telegram ID: <b>${u.telegram_chat_id || 'Chưa gắn'}</b></div>
-          </div>
-          <button onclick="updateUserTelegramId('${u.id}', '${escapeHtml(u.telegram_chat_id || '')}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 font-semibold text-slate-700">
-            Sửa Telegram ID
-          </button>
-        </div>
-      `).join('');
+    function showUserFeedback(msg, isError = false) {
+      const fb = document.getElementById('userModalFeedback');
+      if (!fb) return;
+      fb.textContent = msg;
+      fb.className = `text-xs font-medium px-2.5 py-1.5 rounded-lg ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`;
+      fb.classList.remove('hidden');
     }
 
-    async function addNewUser() {
+    function onBasePermChange() {
+      const base = document.getElementById('newUserPerm').value;
+      const isFull = (base === 'APPROVER');
+      document.getElementById('permAssign').checked = isFull;
+      document.getElementById('permApprove').checked = isFull;
+      document.getElementById('permCreateChannel').checked = isFull;
+      document.getElementById('permManageUsers').checked = isFull;
+      document.getElementById('permBackup').checked = isFull;
+    }
+
+    function resetUserForm() {
+      document.getElementById('editingUserId').value = '';
+      document.getElementById('userFormTitle').textContent = '+ Thêm Thành Viên Mới';
+      document.getElementById('saveUserBtn').textContent = '+ Lưu Thành Viên Mới';
+      document.getElementById('cancelEditUserBtn').classList.add('hidden');
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserRole').value = '';
+      document.getElementById('newUserPerm').value = 'MEMBER';
+      document.getElementById('newUserPin').value = '';
+      document.getElementById('newUserTgId').value = '';
+      onBasePermChange();
+    }
+
+    function editUser(userId) {
+      const u = allUsers.find(x => x.id === userId);
+      if (!u) return;
+      document.getElementById('editingUserId').value = u.id;
+      document.getElementById('userFormTitle').textContent = `✏️ Đang Chỉnh Sửa & Phân Quyền: ${u.display_name}`;
+      document.getElementById('saveUserBtn').textContent = '💾 Cập Nhật Thông Tin & Phân Quyền';
+      document.getElementById('cancelEditUserBtn').classList.remove('hidden');
+
+      document.getElementById('newUserName').value = u.display_name || '';
+      document.getElementById('newUserRole').value = u.role_title || '';
+      document.getElementById('newUserPerm').value = (u.permission === 'APPROVER' || u.permission === 'ADMIN') ? 'APPROVER' : 'MEMBER';
+      document.getElementById('newUserPin').value = u.pin_code || '';
+      document.getElementById('newUserTgId').value = u.telegram_chat_id || '';
+
+      const isFull = (u.permission === 'APPROVER' || u.permission === 'ADMIN');
+      const cp = u.custom_perms || {};
+      document.getElementById('permAssign').checked = isFull || Boolean(cp.can_assign);
+      document.getElementById('permApprove').checked = isFull || Boolean(cp.can_approve);
+      document.getElementById('permCreateChannel').checked = isFull || Boolean(cp.can_create_channel);
+      document.getElementById('permManageUsers').checked = isFull || Boolean(cp.can_manage_users);
+      document.getElementById('permBackup').checked = isFull || Boolean(cp.can_backup);
+    }
+
+    function formatPermBadges(u) {
+      if (u.permission === 'APPROVER' || u.permission === 'ADMIN') {
+        return `<span class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-semibold">Full quyền Lãnh đạo</span>`;
+      }
+      const cp = u.custom_perms || {};
+      const tags = [];
+      if (cp.can_assign) tags.push('Giao việc');
+      if (cp.can_approve) tags.push('Duyệt thay');
+      if (cp.can_create_channel) tags.push('Tạo nhóm');
+      if (cp.can_manage_users) tags.push('Quản lý nhân sự');
+      if (cp.can_backup) tags.push('Sao lưu');
+      if (!tags.length) return `<span class="text-slate-400">Thành viên cơ bản (Chat & Báo cáo việc)</span>`;
+      return tags.map(t => `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-medium">${t}</span>`).join(' ');
+    }
+
+    function renderUserManagementList() {
+      const box = document.getElementById('userManagementList');
+      if (!allUsers.length) {
+        box.innerHTML = `<div class="py-6 text-center text-slate-400">Chưa có thành viên nào trong danh sách.</div>`;
+        return;
+      }
+      box.innerHTML = allUsers.map(u => {
+        const isCurrent = currentUser && currentUser.id === u.id;
+        return `
+          <div class="py-3 flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0 space-y-1">
+              <div class="font-bold text-slate-800">
+                ${escapeHtml(u.display_name)}
+                <span class="text-slate-400 font-normal">(${escapeHtml(u.role_title)})</span>
+                ${isCurrent ? '<span class="ml-1 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Đang đăng nhập</span>' : ''}
+              </div>
+              <div class="text-[11px] text-slate-500">
+                PIN: <code class="bg-slate-100 px-1 rounded font-bold text-slate-700">${escapeHtml(u.pin_code)}</code>
+                • Telegram ID: <b>${escapeHtml(u.telegram_chat_id || 'Chưa gắn')}</b>
+              </div>
+              <div class="flex flex-wrap gap-1 pt-0.5">${formatPermBadges(u)}</div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button type="button" onclick="editUser('${u.id}')" class="px-2.5 py-1.5 rounded bg-blue-100 hover:bg-blue-200 font-semibold text-blue-900 transition">
+                ✏️ Sửa & Phân quyền
+              </button>
+              ${!isCurrent ? `
+                <button type="button" onclick="deleteUser('${u.id}', '${escapeHtml(u.display_name)}')" class="px-2.5 py-1.5 rounded bg-rose-100 hover:bg-rose-200 font-semibold text-rose-700 transition">
+                  🗑️ Xóa
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveUserForm() {
+      const editId = document.getElementById('editingUserId').value;
       const display_name = document.getElementById('newUserName').value.trim();
       const role_title = document.getElementById('newUserRole').value.trim() || 'Chuyên viên';
       const permission = document.getElementById('newUserPerm').value;
       const pin_code = document.getElementById('newUserPin').value.trim();
       const telegram_chat_id = document.getElementById('newUserTgId').value.trim();
 
-      if (!display_name || !pin_code) return alert('Vui lòng nhập Tên và Mã PIN!');
-      await sbFetch('team_users', {
-        method: 'POST',
-        body: JSON.stringify([{ display_name, role_title, permission, pin_code, telegram_chat_id }])
-      });
+      const custom_perms = {
+        can_assign: document.getElementById('permAssign').checked,
+        can_approve: document.getElementById('permApprove').checked,
+        can_create_channel: document.getElementById('permCreateChannel').checked,
+        can_manage_users: document.getElementById('permManageUsers').checked,
+        can_backup: document.getElementById('permBackup').checked
+      };
 
-      document.getElementById('newUserName').value = '';
-      document.getElementById('newUserRole').value = '';
-      document.getElementById('newUserPin').value = '';
-      document.getElementById('newUserTgId').value = '';
+      if (!display_name) {
+        showUserFeedback('Vui lòng nhập Họ tên thành viên!', true);
+        return;
+      }
+      if (!pin_code) {
+        showUserFeedback('Vui lòng nhập Mã PIN (4-6 số)!', true);
+        return;
+      }
 
-      await loadUsers();
-      renderUserManagementList();
+      const btn = document.getElementById('saveUserBtn');
+      btn.disabled = true;
+      btn.textContent = 'Đang lưu dữ liệu...';
+
+      const payload = {
+        display_name,
+        role_title,
+        permission,
+        pin_code,
+        telegram_chat_id: telegram_chat_id || null,
+        custom_perms
+      };
+
+      try {
+        if (editId) {
+          await sbFetch(`team_users?id=eq.${editId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload)
+          });
+          showUserFeedback(`✅ Đã cập nhật thông tin & phân quyền cho "${display_name}"!`, false);
+        } else {
+          await sbFetch('team_users', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=representation' },
+            body: JSON.stringify([payload])
+          });
+          showUserFeedback(`✅ Đã thêm thành viên "${display_name}" và cấp quyền thành công!`, false);
+        }
+
+        await loadUsers();
+        if (currentUser && editId === currentUser.id) {
+          currentUser = allUsers.find(u => u.id === editId) || currentUser;
+          applyUserPermissionsToUI();
+        }
+        resetUserForm();
+        renderUserManagementList();
+      } catch (err) {
+        showUserFeedback('Lỗi lưu thành viên (Nếu báo thiếu cột custom_perms, anh hãy chạy lệnh SQL ALTER TABLE trên Supabase): ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = document.getElementById('editingUserId').value ? '💾 Cập Nhật Thông Tin & Phân Quyền' : '+ Lưu Thành Viên Mới';
+      }
     }
 
-    async function updateUserTelegramId(userId, oldId) {
-      const newId = prompt('Nhập Telegram Chat ID mới cho thành viên này (lấy qua @userinfobot):', oldId);
-      if (newId === null) return;
-      await sbFetch(`team_users?id=eq.${userId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ telegram_chat_id: newId.trim() })
-      });
-      await loadUsers();
-      renderUserManagementList();
+    async function deleteUser(userId, userName) {
+      if (!confirm(`Anh chắc chắn muốn xóa thành viên "${userName}" khỏi hệ thống?`)) return;
+      try {
+        await sbFetch(`team_users?id=eq.${userId}`, { method: 'DELETE' });
+        await loadUsers();
+        renderUserManagementList();
+        showUserFeedback(`🗑️ Đã xóa thành viên "${userName}".`, false);
+      } catch (err) {
+        showUserFeedback('Lỗi xóa thành viên: ' + err.message, true);
+      }
     }
 
-    // 7. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY (MƯỢT & ỔN ĐỊNH TRÊN MỌI TRÌNH DUYỆT)
+    // 7. SAO LƯU DỮ LIỆU CÓ CHỌN LỌC & ĐƯỜNG DẪN LƯU TRỮ
+    function openBackupModal() {
+      const fb = document.getElementById('backupFeedback');
+      fb.classList.add('hidden');
+      const sel = document.getElementById('bkChannelFilter');
+      sel.innerHTML = `<option value="ALL">-- Toàn bộ tất cả Nhóm / Dự án --</option>` +
+        allChannels.map(c => `<option value="${c.id}">Chỉ dự án: # ${escapeHtml(c.name)}</option>`).join('');
+      openModal('backupModal');
+    }
+
+    function showBackupFeedback(msg, isError = false) {
+      const fb = document.getElementById('backupFeedback');
+      fb.textContent = msg;
+      fb.className = `p-2.5 rounded-xl text-xs font-medium ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`;
+      fb.classList.remove('hidden');
+    }
+
+    async function executeBackup(targetMode) {
+      const incUsers = document.getElementById('bkUsers').checked;
+      const incChannels = document.getElementById('bkChannels').checked;
+      const incMessages = document.getElementById('bkMessages').checked;
+      const incTasks = document.getElementById('bkTasks').checked;
+      const chFilter = document.getElementById('bkChannelFilter').value;
+
+      if (!incUsers && !incChannels && !incMessages && !incTasks) {
+        return showBackupFeedback('Vui lòng tích chọn ít nhất 1 nhóm dữ liệu cần sao lưu!', true);
+      }
+
+      let format = 'JSON';
+      document.getElementsByName('bkFormat').forEach(r => { if (r.checked) format = r.value; });
+
+      showBackupFeedback('⏳ Đang trích xuất dữ liệu từ Cloud...', false);
+
+      try {
+        const backupData = {
+          exported_at: new Date().toISOString(),
+          exported_by: currentUser ? currentUser.display_name : 'Admin',
+          filter_channel: chFilter
+        };
+
+        if (incUsers) {
+          backupData.team_users = await sbFetch('team_users?select=*&order=created_at.asc');
+        }
+        if (incChannels) {
+          backupData.team_channels = await sbFetch('team_channels?select=*&order=created_at.asc');
+        }
+        if (incMessages) {
+          const q = chFilter === 'ALL' ? 'team_messages?select=*&order=created_at.asc' : `team_messages?channel_id=eq.${chFilter}&select=*&order=created_at.asc`;
+          backupData.team_messages = await sbFetch(q);
+        }
+        if (incTasks) {
+          const q = chFilter === 'ALL' ? 'team_tasks?select=*&order=created_at.desc' : `team_tasks?channel_id=eq.${chFilter}&select=*&order=created_at.desc`;
+          backupData.team_tasks = await sbFetch(q);
+        }
+
+        const dateTag = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        let fileContent = '';
+        let fileName = `TeamWork_Backup_${dateTag}.${format.toLowerCase()}`;
+        let mimeType = format === 'JSON' ? 'application/json;charset=utf-8' : 'text/csv;charset=utf-8';
+
+        if (format === 'JSON') {
+          fileContent = JSON.stringify(backupData, null, 2);
+        } else {
+          // Xuất CSV tổng hợp Checklist & Tin nhắn trình duyệt
+          const lines = ['\uFEFFLOAI_DU_LIEU,NGUOI_THUC_HIEN,NOI_DUNG,TRANG_THAI,GHI_CHU_HOAC_FILE,THOI_GIAN'];
+          (backupData.team_tasks || []).forEach(t => {
+            lines.push(`"CHECKLIST","${csvEsc(t.assignee_name)}","${csvEsc(t.task_title)}","${csvEsc(t.status)}","${csvEsc(t.progress_note)}","${csvEsc(t.created_at)}"`);
+          });
+          (backupData.team_messages || []).forEach(m => {
+            lines.push(`"${csvEsc(m.msg_type)}","${csvEsc(m.sender_name)}","${csvEsc(m.content)}","${csvEsc(m.approval_status || '')}","${csvEsc(m.file_name || '')}","${csvEsc(m.created_at)}"`);
+          });
+          fileContent = lines.join('\n');
+        }
+
+        if (targetMode === 'LOCAL_PICKER') {
+          // Sử dụng File System Access API cho phép chọn đúng thư mục máy tính / thư mục Google Drive đồng bộ
+          if (window.showSaveFilePicker) {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: fileName,
+              types: [{
+                description: format === 'JSON' ? 'JSON Backup File' : 'CSV Excel Report',
+                accept: format === 'JSON' ? { 'application/json': ['.json'] } : { 'text/csv': ['.csv'] }
+              }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(fileContent);
+            await writable.close();
+            showBackupFeedback(`✅ Đã lưu tệp "${handle.name}" vào đúng thư mục anh đã chọn!`, false);
+          } else {
+            // Fallback cho trình duyệt Safari / Mobile
+            const blob = new Blob([fileContent], { type: mimeType });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+            showBackupFeedback(`✅ Đã tải tệp sao lưu "${fileName}" về thư mục Tải xuống của thiết bị!`, false);
+          }
+        } else if (targetMode === 'GOOGLE_DRIVE_CLOUD') {
+          const folderName = document.getElementById('bkDriveFolderName').value.trim() || 'TeamWork_Cloud_Backup';
+          await fetch(APPS_SCRIPT_WEBHOOK, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'BACKUP_TO_DRIVE',
+              folderName: folderName,
+              fileName: fileName,
+              mimeType: mimeType,
+              content: fileContent
+            })
+          });
+          showBackupFeedback(`☁️ Đã gửi gói sao lưu "${fileName}" lên thư mục "${folderName}" trên Google Drive thành công!`, false);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          showBackupFeedback('Đã hủy chọn thư mục lưu tệp.', true);
+        } else {
+          showBackupFeedback('Lỗi sao lưu dữ liệu: ' + err.message, true);
+        }
+      }
+    }
+
+    function csvEsc(val) {
+      return String(val || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
+    }
+
+    // 8. ĐỒNG BỘ TỰ ĐỘNG MỖI 2 GIÂY
     function startLiveSync() {
       if (syncTimer) clearInterval(syncTimer);
       syncTimer = setInterval(() => {
