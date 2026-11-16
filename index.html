@@ -3,646 +3,539 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeamWork Cloud — Điều Hành Công Việc & Phê Duyệt Telegram</title>
+  <title>TeamWork Cloud — Điều Hành Công Việc & Phê Duyệt</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
     @keyframes spinOnce {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    .animate-spin-once { animation: spinOnce 0.55s ease-in-out; }
+    .animate-spin-once { animation: spinOnce 0.6s ease-in-out; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen overflow-hidden flex flex-col select-none sm:select-auto" onclick="closeAllDropdowns()">
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none sm:select-auto" onclick="closeAllDropdowns()">
 
-  <!-- HỆ THỐNG DIALOG NỘI BỘ -->
-  <div id="customDialogOverlay" class="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 id="customDialogTitle" class="text-sm font-bold text-white flex items-center gap-2">ℹ️ Thông báo hệ thống</h3>
-        <button type="button" onclick="resolveCustomDialog(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
-      </div>
-      <div id="customDialogMessage" class="text-xs text-slate-200 leading-relaxed whitespace-pre-line"></div>
-      <div id="customDialogPromptBox" class="hidden">
-        <textarea id="customDialogInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
-      </div>
-      <div class="flex justify-end gap-2 pt-1">
-        <button id="customDialogCancelBtn" type="button" onclick="resolveCustomDialog(false)" class="hidden px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
-          Hủy bỏ
-        </button>
-        <button id="customDialogOkBtn" type="button" onclick="resolveCustomDialog(true)" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md">
-          Đồng ý
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MÀN HÌNH ĐĂNG NHẬP NHẬP TAY (TÊN TÀI KHOẢN + PASS/PIN CHỮ & SỐ + KHÓA 5 LẦN SAI) -->
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
-      <div class="text-center space-y-1.5">
-        <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto text-2xl font-bold">
-          ⚡
-        </div>
-        <h1 class="text-xl font-bold text-white tracking-tight">TeamWork Cloud</h1>
-        <p class="text-xs text-slate-400">Điều hành dự án • Phân quyền 7 cấp • Phê duyệt Telegram</p>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+      <div class="text-center space-y-1">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-2xl mb-1">⚡</div>
+        <h1 class="text-lg font-bold text-white tracking-wide">TEAMWORK CLOUD</h1>
+        <p class="text-xs text-slate-400">Hệ thống Điều hành Dự án, Checklist & Trình duyệt Telegram</p>
       </div>
 
-      <!-- FORM ĐĂNG NHẬP NHẬP TAY -->
-      <div id="loginFormBox" class="space-y-4">
+      <!-- FORM ĐĂNG NHẬP -->
+      <div id="loginFormBox" class="space-y-3.5 text-xs">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên tài khoản / Họ tên đăng ký</label>
-          <input id="loginUsernameInput" type="text" autocomplete="username"
-            placeholder="Nhập tên tài khoản được cấp..."
-            onkeydown="if(event.key==='Enter') document.getElementById('loginPassword').focus()"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <label class="block text-slate-400 mb-1 font-medium">Tên tài khoản / Họ tên</label>
+          <input id="loginUsernameInput" type="text" placeholder="Ví dụ: Lãnh Đạo / Quản Lý hoặc Thành Viên 01"
+            onkeydown="if(event.key==='Enter') handleLogin()"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500" />
         </div>
-
         <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-medium text-slate-300">Mật khẩu / Mã PIN (4–12 ký tự chữ & số)</label>
-            <button type="button" onclick="toggleForgotPassword(true)" class="text-[11px] font-medium text-blue-400 hover:text-blue-300 underline">
-              Quên mật khẩu / PIN?
-            </button>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-slate-400 font-medium">Mật khẩu / Mã PIN</label>
+            <button type="button" onclick="toggleForgotPassword(true)" class="text-blue-400 hover:underline text-[11px]">Quên mật khẩu / PIN?</button>
           </div>
           <div class="relative">
-            <input id="loginPassword" type="password" autocomplete="current-password"
-              placeholder="Nhập mật khẩu hoặc mã PIN..."
+            <input id="loginPassword" type="password" placeholder="Nhập mật khẩu hoặc mã PIN..."
               onkeydown="if(event.key==='Enter') handleLogin()"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
-            <button type="button" onclick="toggleLoginPasswordVisibility()" title="Hiện/Ẩn mật khẩu"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">
-              👁️
-            </button>
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-white focus:outline-none focus:border-blue-500" />
+            <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-white text-sm">👁️</button>
           </div>
         </div>
-
-        <div class="flex items-center justify-between text-xs">
-          <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-            <input id="rememberLoginCheck" type="checkbox" checked class="rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0" />
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+            <input id="rememberLoginCheck" type="checkbox" checked class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-blue-600" />
             <span>Ghi nhớ đăng nhập trên thiết bị này</span>
           </label>
         </div>
-
-        <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-blue-600/25">
-          Đăng nhập hệ thống
+        <div id="loginError" class="hidden bg-rose-950/70 border border-rose-500/50 text-rose-200 rounded-xl p-3 text-[11px] leading-relaxed"></div>
+        <button onclick="handleLogin()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/25 transition">
+          Đăng Nhập Hệ Thống
         </button>
-
-        <div id="loginError" class="text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 rounded-xl p-3 text-center hidden leading-relaxed"></div>
       </div>
 
-      <!-- FORM KHÔI PHỤC MẬT KHẨU QUA TELEGRAM -->
-      <div id="forgotPasswordBox" class="space-y-4 hidden">
-        <div class="bg-blue-950/40 border border-blue-800/60 rounded-xl p-3 text-xs text-blue-200 leading-relaxed">
-          🔐 Nhập <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ cấp ngẫu nhiên <b>Mã PIN mới (6 ký tự chữ + số)</b> qua Bot Telegram.
-          <br/><span class="text-amber-300 text-[11px]">* Nếu tài khoản đã bị khóa do nhập sai 5 lần, chỉ Quản trị hệ thống mới mở khóa được.</span>
+      <!-- FORM QUÊN MẬT KHẨU -->
+      <div id="forgotPasswordBox" class="hidden space-y-3.5 text-xs">
+        <div class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-3 text-blue-200 text-[11px] leading-relaxed">
+          Nhập đúng <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo mã PIN ngẫu nhiên mới và gửi trực tiếp về Telegram của bạn.
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên tài khoản cần cấp lại PIN</label>
-          <input id="resetUsernameInput" type="text" placeholder="Nhập chính xác tên tài khoản..."
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+          <label class="block text-slate-400 mb-1">Tên tài khoản</label>
+          <input id="resetUsernameInput" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Nhập Telegram Chat ID đã liên kết để xác minh</label>
-          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 522439752"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-emerald-300 font-mono focus:outline-none focus:border-blue-500" />
+          <label class="block text-slate-400 mb-1">Telegram Chat ID đã liên kết</label>
+          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono" />
         </div>
-        <button id="btnResetSubmit" onclick="handleResetPasswordViaTelegram()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">
-          📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram
-        </button>
-        <p id="resetFeedback" class="text-xs text-center hidden leading-relaxed"></p>
-        <button type="button" onclick="toggleForgotPassword(false)" class="w-full text-xs text-slate-400 hover:text-white pt-1">
-          ← Quay lại màn hình đăng nhập
-        </button>
+        <div id="resetFeedback" class="hidden text-[11px] leading-relaxed"></div>
+        <div class="flex gap-2">
+          <button type="button" onclick="toggleForgotPassword(false)" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">← Quay lại</button>
+          <button id="btnResetSubmit" type="button" onclick="handleResetPasswordViaTelegram()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
+            📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- HEADER BAR GỌN GÀNG -->
-  <header class="h-14 bg-slate-900 border-b border-slate-800 px-3 lg:px-4 flex items-center justify-between gap-2 shrink-0 z-20">
+  <!-- HEADER CHÍNH -->
+  <header class="h-14 bg-slate-900 border-b border-slate-800 px-3 sm:px-4 flex items-center justify-between gap-2 shrink-0 z-20">
     <div class="flex items-center gap-2 min-w-0">
-      <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 shrink-0" title="Danh sách Nhóm/Dự án">
-        ☰
-      </button>
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shrink-0">⚡</div>
-      <div class="min-w-0">
-        <div class="font-bold text-sm text-white leading-tight truncate">TeamWork Cloud</div>
-        <div id="syncStatus" class="text-[11px] text-emerald-400 flex items-center gap-1 truncate">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span> Đã kết nối trực tuyến
-        </div>
+      <button onclick="toggleMobileSidebar()" class="lg:hidden w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-white shrink-0">☰</button>
+      <div class="flex items-center gap-2 truncate">
+        <span class="text-lg">⚡</span>
+        <span class="font-bold text-sm sm:text-base text-white truncate">TeamWork Cloud</span>
+      </div>
+      <div id="syncStatus" class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-full ml-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+        <span class="truncate">Đã kết nối Cloud</span>
       </div>
     </div>
 
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <button id="btnManualRefresh" onclick="manualRefreshApp()" title="Làm mới dữ liệu ngay"
-        class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-        <span id="refreshIcon" class="inline-block">🔄</span>
-        <span class="hidden md:inline">Làm mới</span>
+      <button onclick="manualRefreshApp()" title="Làm mới dữ liệu" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-200 transition">
+        <span id="refreshIcon">🔄</span>
       </button>
 
-      <button onclick="openMyTasksModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
+      <button onclick="openMyTasksModal()" class="relative bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
         <span>📋</span>
-        <span class="hidden sm:inline">Việc của tôi</span>
-        <span id="myTaskBadge" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+        <span class="hidden md:inline">Việc của tôi</span>
+        <span id="myTaskBadge" class="bg-amber-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.2 rounded-full">0</span>
       </button>
 
+      <!-- MENU DỮ LIỆU & TÁC VỤ -->
       <div class="relative" onclick="event.stopPropagation()">
-        <button onclick="toggleDropdown('menuDataFiles')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-          <span>📁</span>
-          <span class="hidden sm:inline">Dữ liệu & File</span>
-          <span class="text-[10px] text-slate-400">▾</span>
+        <button onclick="toggleDropdown('menuDataFiles')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
+          <span>⚡ Tác vụ</span>
+          <span class="text-[10px]">▼</span>
         </button>
-        <div id="menuDataFiles" class="hidden absolute right-0 mt-1.5 w-60 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-          <button onclick="closeAllDropdowns(); openMultiFileModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-indigo-300 flex items-center gap-2 font-medium">
-            <span>📤</span><span>Gửi File cho nhiều người</span>
+        <div id="menuDataFiles" class="hidden absolute right-0 mt-2 w-60 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30 text-xs">
+          <button onclick="closeAllDropdowns(); openApprovalModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
+            <span>📋</span> Trình Phê Duyệt Hồ Sơ
           </button>
-          <button onclick="closeAllDropdowns(); openBackupModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-cyan-300 flex items-center gap-2 font-medium">
-            <span>💾</span><span>Backup / Restore & Digest 17:00</span>
+          <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-teal-300 font-semibold flex items-center gap-2">
+            <span>📅</span> Chốt Lịch Họp & Biên Bản
           </button>
-          <button id="menuBtnAuditLog" onclick="closeAllDropdowns(); openAuditLogModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2 font-medium border-t border-slate-800 mt-1 pt-2">
-            <span>📜</span><span>Nhật ký kiểm toán (Audit Log)</span>
+          <button onclick="closeAllDropdowns(); openMultiFileModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2">
+            <span>📤</span> Gửi File Nhiều Thành Viên
+          </button>
+          <div class="border-t border-slate-800 my-1"></div>
+          <button onclick="closeAllDropdowns(); openProgressModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-emerald-300 flex items-center gap-2">
+            <span>📊</span> Bảng Tiến Độ & Xuất Excel/PDF
+          </button>
+          <button onclick="closeAllDropdowns(); openBackupModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2">
+            <span>💾</span> Backup, Restore & Digest 17h
           </button>
         </div>
       </div>
 
+      <!-- MENU TÀI KHOẢN & QUẢN TRỊ -->
       <div class="relative" onclick="event.stopPropagation()">
-        <button onclick="toggleDropdown('menuAccountAdmin')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition">
-          <div class="text-right hidden md:block">
-            <div class="flex items-center justify-end gap-1.5">
-              <span id="currentUserName" class="text-xs font-semibold text-white leading-none">Lãnh Đạo / Quản Lý</span>
-              <span id="currentUserPermBadge" class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">Quản trị hệ thống</span>
-            </div>
-            <div id="currentUserRole" class="text-[10px] text-slate-400 leading-none mt-1">Trưởng Ban / Giám Đốc</div>
-          </div>
+        <button onclick="toggleDropdown('menuAccountAdmin')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1.5 rounded-xl flex items-center gap-2 text-left transition">
           <span id="tgStatusDot" class="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Trạng thái liên kết Telegram"></span>
-          <span class="text-xs text-slate-300">⚙️</span>
+          <div class="hidden sm:block leading-tight max-w-[140px]">
+            <div id="currentUserName" class="text-xs font-bold text-white truncate">Người dùng</div>
+            <div class="flex items-center gap-1">
+              <span id="currentUserPermBadge" class="text-[9px] px-1 rounded bg-slate-700 text-slate-300">Thành viên</span>
+              <span id="currentUserRole" class="text-[10px] text-slate-400 truncate">Chức vụ</span>
+            </div>
+          </div>
+          <span class="text-[10px] text-slate-400">▼</span>
         </button>
 
-        <div id="menuAccountAdmin" class="hidden absolute right-0 mt-1.5 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-          <button onclick="closeAllDropdowns(); openStaffModal('PASS_PIN_ID');" class="w-full text-left px-3.5 py-2.5 hover:bg-slate-800 text-amber-300 flex items-center gap-2 font-medium">
-            <span>👥</span><span>Quản lý Nhân sự - Phân quyền & Pass/PIN/ID</span>
+        <div id="menuAccountAdmin" class="hidden absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30 text-xs">
+          <div class="sm:hidden px-3.5 py-2 border-b border-slate-800">
+            <div id="mobileMenuUserName" class="font-bold text-white">Người dùng</div>
+            <div id="mobileMenuUserRole" class="text-[11px] text-slate-400">Vai trò</div>
+          </div>
+          <button onclick="closeAllDropdowns(); openStaffModal('MY_TELEGRAM')" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2">
+            <span>🤖</span> Liên Kết Telegram & Đổi PIN
           </button>
-          <div class="my-1 border-t border-slate-800"></div>
-          <button onclick="closeAllDropdowns(); handleLogout();" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 flex items-center gap-2 font-medium">
-            <span>🚪</span><span>Thoát đăng nhập</span>
+          <button onclick="closeAllDropdowns(); openStaffModal('PASS_PIN_ID')" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2">
+            <span>🔑</span> Quản Lý Nhân Sự & Phân Quyền
+          </button>
+          <button id="menuBtnAuditLog" onclick="closeAllDropdowns(); openAuditLogModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-cyan-300 flex items-center gap-2">
+            <span>🛡️</span> Nhật Ký Kiểm Toán (Audit Log)
+          </button>
+          <div class="border-t border-slate-800 my-1"></div>
+          <button onclick="closeAllDropdowns(); handleLogout()" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 font-semibold flex items-center gap-2">
+            <span>🚪</span> Đăng Xuất
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- BỐ CỤC CHÍNH 3 CỘT -->
+  <!-- KHUNG NỘI DUNG CHÍNH 3 CỘT -->
   <div class="flex-1 flex overflow-hidden relative">
+    <!-- BACKDROP MOBILE -->
+    <div id="leftSidebarBackdrop" onclick="toggleMobileSidebar(false)" class="hidden fixed inset-0 bg-slate-950/70 z-20 lg:hidden"></div>
 
-    <!-- CỘT 1 (TRÁI): DANH SÁCH NHÓM / DỰ ÁN & TRAO ĐỔI RIÊNG 1-1 -->
-    <aside id="leftSidebar" class="hidden lg:flex w-64 bg-slate-900 border-r border-slate-800 flex-col shrink-0 z-30 absolute lg:static inset-y-0 left-0 shadow-2xl lg:shadow-none">
+    <!-- CỘT TRÁI: NHÓM DỰ ÁN & CHAT 1-1 -->
+    <aside id="leftSidebar" class="hidden lg:flex flex-col w-72 bg-slate-900 border-r border-slate-800 fixed lg:static inset-y-0 left-0 z-30 shrink-0">
       <div class="p-3 border-b border-slate-800 flex items-center justify-between">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự án</span>
-        <button id="btnNewGroupSidebar" onclick="openProjectGroupModal()" class="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 px-2 py-0.5 rounded font-medium">+ Nhóm/Dự án</button>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">📁 Nhóm / Dự Án</span>
+        <button id="btnNewGroupSidebar" onclick="openProjectGroupModal()" class="text-[11px] bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white px-2 py-1 rounded-lg font-semibold transition">
+          + Tạo Nhóm
+        </button>
       </div>
-      <div id="channelList" class="p-2 space-y-1 overflow-y-auto flex-1"></div>
+      <div id="channelList" class="p-2 space-y-1 overflow-y-auto max-h-[50%] border-b border-slate-800"></div>
 
-      <div class="p-3 border-t border-slate-800 bg-slate-950/50 space-y-2 max-h-56 overflow-y-auto">
-        <div class="text-[10px] font-bold uppercase text-slate-400 flex items-center justify-between">
-          <span>💬 Trao đổi & Gửi file riêng 1-1</span>
-        </div>
-        <div id="dmUserList" class="space-y-1"></div>
+      <div class="p-3 pb-1 flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">🔒 Trao Đổi Kín 1-1</span>
       </div>
+      <div id="dmUserList" class="p-2 space-y-1 overflow-y-auto flex-1"></div>
     </aside>
 
-    <!-- CỘT 2 (GIỮA): KHUNG TRAO ĐỔI TRUNG TÂM & GHIM CHỈ ĐẠO -->
-    <main class="flex-1 flex flex-col bg-slate-950 min-w-0">
-      <div class="h-14 border-b border-slate-800 px-3 sm:px-4 flex items-center justify-between gap-2 bg-slate-900/40 shrink-0">
-        <div class="min-w-0 flex-1">
+    <!-- CỘT GIỮA: KHUNG THẢO LUẬN & PHÊ DUYỆT -->
+    <main id="centerChatPanel" class="flex-1 flex flex-col bg-slate-950 min-w-0 overflow-hidden">
+      <!-- THANH TIÊU ĐỀ KÊNH -->
+      <div class="px-3 sm:px-4 py-2.5 bg-slate-900/70 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0">
+        <div class="min-w-0">
           <div class="flex items-center gap-2">
             <h2 id="activeChannelTitle" class="text-sm font-bold text-white truncate"># Phòng Điều Hành Chung</h2>
-            <span id="channelMemberBadge" class="hidden sm:inline-block text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-full shrink-0">👥 3 thành viên</span>
-            <span id="dmBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0">Kênh riêng 1-1</span>
+            <span id="channelMemberBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full shrink-0">👥 3 thành viên</span>
+            <span id="dmBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full shrink-0">🔒 Kênh riêng 1-1</span>
           </div>
-          <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate">Trao đổi công việc hàng ngày & thông báo chung của tập thể</p>
+          <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate mt-0.5">Trao đổi công việc hàng ngày & thông báo chung của tập thể</p>
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
-          <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Thông tin Nhóm/Dự án, Thành viên & Tài nguyên"
-            class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
-            ⚙️ <span class="hidden xl:inline">Nhóm/Dự án</span>
+          <button id="btnAssignTaskTop" onclick="openAssignModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition">
+            ✅ Giao Việc
           </button>
-
-          <button id="btnAssignTaskTop" onclick="openAssignModal()"
-            class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
-            ✅ Giao việc
+          <button onclick="openApprovalModal()" class="bg-indigo-600/25 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition">
+            📋 Trình Duyệt
           </button>
-
-          <div class="relative" onclick="event.stopPropagation()">
-            <button onclick="toggleDropdown('menuChannelActions')"
-              class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-              <span>⚡ Tác vụ</span>
-              <span class="text-[10px]">▾</span>
-            </button>
-            <div id="menuChannelActions" class="hidden absolute right-0 mt-1.5 w-60 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-              <button onclick="closeAllDropdowns(); openApprovalModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-indigo-300 flex items-center gap-2 font-medium">
-                <span>📋</span><span>Trình phê duyệt Telegram</span>
-              </button>
-              <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-teal-300 flex items-center gap-2 font-medium">
-                <span>📅</span><span>Chốt lịch họp & Xuất biên bản</span>
-              </button>
-              <button onclick="closeAllDropdowns(); openProgressModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2 font-medium">
-                <span>📊</span><span>Bảng tiến độ & Xuất Excel/PDF</span>
-              </button>
-            </div>
-          </div>
+          <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Cấu hình Nhóm/Dự án" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs">
+            ⚙️
+          </button>
         </div>
       </div>
 
-      <!-- THANH GHIM CHỈ ĐẠO TRỌNG TÂM ĐẦU KÊNH -->
-      <div id="pinnedDirectivesBar" class="hidden bg-amber-950/40 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between gap-3 shrink-0">
-        <div class="min-w-0 flex-1 cursor-pointer" onclick="scrollToPinnedMessage()">
-          <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase text-amber-400">
-            <span>📌 CHỈ ĐẠO TRỌNG TÂM ĐÃ GHIM</span>
-            <span id="pinnedByLabel" class="font-normal text-amber-200/70"></span>
+      <!-- THANH GHIM CHỈ ĐẠO ĐẦU KÊNH -->
+      <div id="pinnedDirectivesBar" class="hidden px-3 sm:px-4 py-2 bg-amber-950/40 border-b border-amber-500/30 flex items-center justify-between gap-2 text-xs shrink-0">
+        <div onclick="scrollToPinnedMessage()" class="min-w-0 cursor-pointer flex-1">
+          <div class="flex items-center gap-1.5 text-[10px] font-bold text-amber-400">
+            <span>📌 CHỈ ĐẠO GHIM ĐẦU KÊNH</span>
+            <span>•</span>
+            <span id="pinnedByLabel" class="font-normal text-amber-300/80"></span>
           </div>
-          <div id="pinnedContentText" class="text-xs text-amber-100 truncate mt-0.5"></div>
+          <div id="pinnedContentText" class="text-amber-100 truncate font-medium"></div>
         </div>
-        <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" title="Bỏ ghim chỉ đạo này" class="text-[11px] bg-slate-900/80 hover:bg-rose-950 text-slate-300 hover:text-rose-300 px-2 py-1 rounded-lg border border-slate-700 shrink-0">
-          Bỏ ghim ✕
+        <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" class="text-[11px] text-amber-300 hover:text-white bg-amber-900/50 px-2 py-1 rounded-lg shrink-0">
+          Bỏ ghim
         </button>
       </div>
 
-      <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      <!-- DANH SÁCH TIN NHẮN -->
+      <div id="messageFeed" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3"></div>
 
-      <div id="chatActionBanner" class="hidden px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
+      <!-- BANNER TRẢ LỜI / CHỈNH SỬA TIN NHẮN -->
+      <div id="chatActionBanner" class="hidden px-3 sm:px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
         <div class="flex items-center gap-2 min-w-0">
-          <span id="chatActionIcon" class="text-blue-400 font-bold">↩️</span>
-          <div class="truncate">
-            <div id="chatActionTitle" class="font-bold text-blue-300 text-[11px]">Đang trả lời tin nhắn</div>
-            <div id="chatActionPreview" class="text-slate-400 truncate text-[11px]"></div>
+          <span id="chatActionIcon">↩️</span>
+          <div class="min-w-0">
+            <div id="chatActionTitle" class="font-bold text-blue-400">Đang trả lời</div>
+            <div id="chatActionPreview" class="text-[11px] text-slate-400 truncate"></div>
           </div>
         </div>
-        <button onclick="cancelChatActionBanner()" class="text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 shrink-0">✕ Hủy</button>
+        <button onclick="cancelChatActionBanner()" class="text-slate-400 hover:text-white px-2 py-1">✕</button>
       </div>
 
-      <div class="p-3 border-t border-slate-800 bg-slate-900/60 shrink-0">
-        <div class="flex items-center gap-2">
-          <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl border border-slate-700 transition shrink-0" title="Đính kèm file trực tiếp">
-            📎
-            <input id="quickChatFileInput" type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
-          </label>
-          <button type="button" onclick="insertQuickEmoji()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl border border-slate-700 transition shrink-0" title="Chèn biểu tượng cảm xúc">
-            😊
-          </button>
-          <input id="chatInput" type="text" placeholder="Nhập trao đổi, địa chỉ/tọa độ dự án... (Chuột phải tin nhắn để Ghim/Sửa/Xóa/Trả lời/Dịch)"
-            onkeydown="if(event.key==='Enter') sendChatMessage()"
-            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 min-w-0" />
-          <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition shrink-0">
-            Gửi
-          </button>
-        </div>
+      <!-- KHUNG NHẬP TIN NHẮN -->
+      <div class="p-2.5 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
+        <label class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 cursor-pointer shrink-0" title="Đính kèm tệp (< 3MB)">
+          <span>📎</span>
+          <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
+        </label>
+        <button type="button" onclick="insertQuickEmoji()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 shrink-0" title="Chèn biểu tượng">😊</button>
+        <input id="chatInput" type="text" placeholder="Nhập nội dung trao đổi, báo cáo tiến độ hoặc tọa độ GPS..."
+          onkeydown="if(event.key==='Enter') sendChatMessage()"
+          class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500" />
+        <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs shrink-0 transition">
+          Gửi
+        </button>
       </div>
     </main>
 
-    <!-- CỘT 3 (PHẢI): CHECKLIST CÔNG VIỆC & KHO TÀI NGUYÊN / FILE -->
-    <aside class="w-80 bg-slate-900 border-l border-slate-800 hidden xl:flex flex-col shrink-0">
-      <div class="p-2.5 border-b border-slate-800 grid grid-cols-2 gap-1.5 bg-slate-950/40">
+    <!-- CỘT PHẢI: CHECKLIST & TÀI NGUYÊN NHÓM -->
+    <aside id="rightSidebarPanel" class="hidden xl:flex flex-col w-80 2xl:w-96 bg-slate-900 border-l border-slate-800 shrink-0 overflow-hidden">
+      <div class="p-2.5 border-b border-slate-800 grid grid-cols-2 gap-1.5 shrink-0">
         <button id="tabBtnChecklist" onclick="switchRightPanelTab('CHECKLIST')" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1">
           <span>✅ Checklist</span>
           <span id="channelTaskCount" class="bg-blue-600 text-white text-[10px] px-1.5 rounded-full">0</span>
         </button>
         <button id="tabBtnFiles" onclick="switchRightPanelTab('FILES')" class="py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1">
-          <span>📁 Tài nguyên</span>
+          <span>📂 Tài nguyên</span>
           <span id="channelFileCount" class="bg-slate-700 text-slate-200 text-[10px] px-1.5 rounded-full">0</span>
         </button>
       </div>
 
+      <!-- TAB CHECKLIST -->
       <div id="rightTabChecklist" class="flex-1 flex flex-col overflow-hidden">
-        <div class="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <label class="flex items-center gap-1.5 cursor-pointer">
-            <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="rounded bg-slate-800 border-slate-600 text-blue-500" />
+        <div class="px-3 py-2 bg-slate-950/50 border-b border-slate-800 flex items-center justify-between text-[11px] shrink-0">
+          <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+            <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="w-3.5 h-3.5 rounded bg-slate-800 border-slate-600 text-blue-500" />
             <span>Ẩn việc đã xong</span>
           </label>
-          <button onclick="openProgressModal()" class="text-blue-400 hover:text-blue-300 font-semibold">Mở bảng lớn ↗</button>
+          <button onclick="openProgressModal()" class="text-blue-400 hover:underline font-semibold">📊 Bảng chi tiết</button>
         </div>
-        <div id="checklistContainer" class="p-3 space-y-2.5 overflow-y-auto flex-1"></div>
+        <div id="checklistContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
       </div>
 
-      <div id="rightTabFiles" class="hidden flex-1 flex-col overflow-hidden">
-        <div class="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <span>Tài nguyên & File đính kèm</span>
-          <div class="flex items-center gap-2">
-            <button id="btnAddResourceRightTab" onclick="openProjectGroupModal(activeChannelId)" class="text-emerald-400 hover:text-emerald-300 font-semibold">+ Thêm</button>
-            <button onclick="openMultiFileModal()" class="text-indigo-400 hover:text-indigo-300 font-semibold">Gửi nhiều người</button>
-          </div>
+      <!-- TAB TÀI NGUYÊN -->
+      <div id="rightTabFiles" class="hidden flex-1 flex flex-col overflow-hidden">
+        <div class="px-3 py-2 bg-slate-950/50 border-b border-slate-800 flex items-center justify-between text-[11px] shrink-0">
+          <span class="text-slate-400">Hồ sơ & Liên kết chung</span>
+          <button id="btnAddResourceRightTab" onclick="openProjectGroupModal(activeChannelId)" class="text-blue-400 hover:underline font-semibold">+ Thêm tài nguyên</button>
         </div>
-        <div id="channelFilesContainer" class="p-3 space-y-2 overflow-y-auto flex-1"></div>
+        <div id="channelFilesContainer" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
       </div>
     </aside>
   </div>
 
-  <!-- CONTEXT MENU CHUỘT PHẢI CHO TỪNG TIN NHẮN -->
+  <!-- THANH ĐIỀU HƯỚNG DƯỚI CÙNG CHO MOBILE / TABLET -->
+  <nav class="xl:hidden grid grid-cols-3 bg-slate-900 border-t border-slate-800 text-[11px] shrink-0">
+    <button id="mobNavBtn_CHAT" onclick="switchMobileView('CHAT')" class="py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-blue-400 font-bold border-t-2 border-blue-500 bg-blue-950/20">
+      <span>💬 Thảo luận</span>
+    </button>
+    <button id="mobNavBtn_CHECKLIST" onclick="switchMobileView('CHECKLIST')" class="py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 font-medium border-t-2 border-transparent">
+      <span>✅ Checklist (<span id="mobTaskBadge">0</span>)</span>
+    </button>
+    <button id="mobNavBtn_FILES" onclick="switchMobileView('FILES')" class="py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 font-medium border-t-2 border-transparent">
+      <span>📂 Tài nguyên (<span id="mobFileBadge">0</span>)</span>
+    </button>
+  </nav>
+
+  <!-- CONTEXT MENU TIN NHẮN -->
   <div id="msgContextMenu" onclick="event.stopPropagation()" class="hidden fixed z-50 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 text-xs">
-    <button id="ctxBtnPin" onclick="ctxActionPin()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2.5 font-semibold">
-      <span>📌</span><span>Ghim chỉ đạo đầu kênh</span>
-    </button>
-    <button onclick="ctxActionReply()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2.5">
-      <span>↩️</span><span>Trả lời tin nhắn</span>
-    </button>
-    <button onclick="ctxActionForward()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2.5">
-      <span>➡️</span><span>Chuyển tiếp tin nhắn</span>
-    </button>
-    <button onclick="ctxActionTranslate()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-emerald-300 flex items-center gap-2.5">
-      <span>🌐</span><span>Dịch sang Tiếng Việt</span>
-    </button>
-    <div id="ctxOwnerDivider" class="my-1 border-t border-slate-800"></div>
-    <button id="ctxBtnEdit" onclick="ctxActionEdit()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2.5">
-      <span>✏️</span><span>Sửa nội dung</span>
-    </button>
-    <button id="ctxBtnRecall" onclick="ctxActionRecall()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2.5">
-      <span>🚫</span><span>Thu hồi với mọi người</span>
-    </button>
-    <button id="ctxBtnDelete" onclick="ctxActionDelete()" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 flex items-center gap-2.5">
-      <span>🗑️</span><span>Xóa tin nhắn</span>
-    </button>
+    <button onclick="ctxActionReply()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">↩️ Trả lời tin nhắn</button>
+    <button onclick="ctxActionForward()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">➡️ Chuyển tiếp</button>
+    <button onclick="ctxActionTranslate()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-emerald-300 flex items-center gap-2">🌐 Dịch sang Tiếng Việt</button>
+    <button id="ctxBtnPin" onclick="ctxActionPin()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2">📌 Ghim chỉ đạo đầu kênh</button>
+    <div id="ctxOwnerDivider" class="border-t border-slate-800 my-1"></div>
+    <button id="ctxBtnEdit" onclick="ctxActionEdit()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2">✏️ Chỉnh sửa nội dung</button>
+    <button id="ctxBtnRecall" onclick="ctxActionRecall()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-400 flex items-center gap-2">🚫 Thu hồi tin nhắn</button>
+    <button id="ctxBtnDelete" onclick="ctxActionDelete()" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 flex items-center gap-2">🗑️ Xóa vĩnh viễn</button>
   </div>
 
-  <!-- MODAL NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG) -->
-  <div id="auditLogModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <div>
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">📜 Nhật Ký Kiểm Toán Hệ Thống (Audit Log)</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Ghi nhận khóa/mở khóa tài khoản, cấp đổi PIN chữ+số, phân quyền, duyệt/sửa/xóa tờ trình và xóa tài nguyên</p>
-        </div>
-        <button onclick="closeModal('auditLogModal')" class="text-slate-400 hover:text-white">✕</button>
+  <!-- HỘP THOẠI DIALOG NỘI BỘ -->
+  <div id="customDialogOverlay" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <h3 id="customDialogTitle" class="text-sm font-bold text-white">ℹ️ Thông báo</h3>
+      <p id="customDialogMessage" class="text-xs text-slate-300 whitespace-pre-line leading-relaxed"></p>
+      <div id="customDialogPromptBox" class="hidden">
+        <input id="customDialogInput" type="text" onkeydown="if(event.key==='Enter') resolveCustomDialog(true)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" />
       </div>
-      <div id="auditLogListContainer" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1"></div>
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
-        <button onclick="closeModal('auditLogModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs font-medium">Đóng cửa sổ</button>
+      <div class="flex justify-end gap-2 pt-1">
+        <button id="customDialogCancelBtn" onclick="resolveCustomDialog(false)" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button id="customDialogOkBtn" onclick="resolveCustomDialog(true)" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">Đồng ý</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL QUẢN LÝ NHÂN SỰ, PHÂN QUYỀN & TELEGRAM -->
+  <div id="staffModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl p-4 sm:p-5 shadow-2xl max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
+        <h3 class="text-sm font-bold text-white">👥 Quản Lý Nhân Sự, Phân Quyền & Liên Kết Telegram</h3>
+        <button onclick="closeStaffModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 text-xs shrink-0">
+        <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')" class="py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2">🔑 Cấp Đổi Pass/PIN & Telegram ID</button>
+        <button id="staffTabBtn_STAFF_ROLE" onclick="switchStaffModalTab('STAFF_ROLE')" class="py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2">🛡️ Danh Sách & Phân Quyền</button>
+        <button id="staffTabBtn_MY_TELEGRAM" onclick="switchStaffModalTab('MY_TELEGRAM')" class="py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2">🤖 Liên Kết Telegram Cá Nhân</button>
+      </div>
+
+      <div class="overflow-y-auto flex-1 space-y-4 text-xs pr-1">
+        <!-- TAB 1: CẤP ĐỔI PASS/PIN -->
+        <div id="staffSection_PASS_PIN_ID" class="space-y-2.5">
+          <div id="passPinIdListContainer" class="space-y-2.5"></div>
+        </div>
+
+        <!-- TAB 2: DANH SÁCH & PHÂN QUYỀN -->
+        <div id="staffSection_STAFF_ROLE" class="hidden space-y-4">
+          <div id="addStaffFormBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
+            <div class="font-bold text-purple-300">+ Thêm Thành Viên Mới Vào Hệ Thống</div>
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <input id="newStaffName" type="text" placeholder="Tên tài khoản / Họ tên..." class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
+              <input id="newStaffRole" type="text" placeholder="Chức vụ (VD: Chuyên viên)..." class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
+              <input id="newStaffPin" type="text" maxlength="12" placeholder="Mã PIN chữ+số (VD: tv03ab)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono" />
+              <select id="newStaffPerm" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white">
+                <option value="MEMBER">Thành viên</option>
+                <option value="ASSISTANT">Trợ lý</option>
+                <option value="APPROVER">Chủ trì / Phê duyệt</option>
+                <option value="MANAGER">Quản trị Nhóm/Dự án</option>
+                <option value="RESOURCE_LEAD">Điều phối Tài nguyên</option>
+                <option value="AUDITOR">Giám sát / Thanh tra</option>
+                <option value="FULL">Quản trị hệ thống (Full)</option>
+              </select>
+            </div>
+            <div class="flex justify-end">
+              <button type="button" onclick="addNewStaffMember()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-4 py-2 rounded-lg">+ Tạo Tài Khoản</button>
+            </div>
+          </div>
+          <div id="staffRoleListContainer" class="space-y-2"></div>
+        </div>
+
+        <!-- TAB 3: TELEGRAM CÁ NHÂN -->
+        <div id="staffSection_MY_TELEGRAM" class="hidden space-y-3">
+          <div class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-3.5 space-y-2">
+            <div class="font-bold text-blue-300">Liên kết tự động 1 chạm với Telegram Bot</div>
+            <p class="text-[11px] text-slate-300 leading-relaxed">Bấm nút bên dưới để mở Telegram và nhấn <b>START</b>. Hệ thống sẽ tự động nhận diện Chat ID của bạn để gửi thông báo giao việc & duyệt hồ sơ.</p>
+            <a id="telegramAutoLinkBtn" href="#" target="_blank" onclick="startTelegramAutoLinkListener()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl">
+              🚀 Mở Telegram & Bấm START Ngay
+            </a>
+            <div id="tgAutoLinkStatus" class="hidden text-[11px] pt-1"></div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-800/60 border border-slate-700 rounded-xl p-3.5">
+            <div>
+              <label class="block text-slate-400 mb-1">Chức vụ hiển thị</label>
+              <input id="profileRoleTitle" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
+              <input id="profileTelegramId" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Đổi Mật khẩu / PIN (4–12 chữ+số)</label>
+              <input id="profileNewPass" type="text" maxlength="12" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono" />
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" onclick="saveProfileSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl">💾 Lưu Hồ Sơ Cá Nhân</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL KHỞI TẠO & CHỈNH SỬA NHÓM / DỰ ÁN -->
-  <div id="projectGroupModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
+  <div id="projectGroupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-4 sm:p-5 shadow-2xl max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <div>
-          <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white flex items-center gap-2">🏗️ Khởi tạo Nhóm/Dự án mới</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Thiết lập thông tin chung, thành viên tham gia & kho tài nguyên dự án</p>
-        </div>
-        <button onclick="closeModal('projectGroupModal')" class="text-slate-400 hover:text-white">✕</button>
+        <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white">🏗️ Khởi tạo Nhóm/Dự án mới</h3>
+        <button onclick="closeModal('projectGroupModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
-
       <input type="hidden" id="pgEditId" value="" />
-
-      <div class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-3">
-          <div class="font-bold text-blue-400">1. Thông tin Nhóm / Dự án</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-slate-400 mb-1">Tên Nhóm / Dự án <span class="text-rose-400">*</span></label>
-              <input id="pgNameInput" type="text" placeholder="Ví dụ: Dự án Khu Đô Thị Mới..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">Mô tả mục tiêu / Phạm vi công việc</label>
-              <input id="pgDescInput" type="text" placeholder="Ví dụ: Theo dõi pháp lý, GPMB & tiến độ thi công" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
-            </div>
+      <div class="overflow-y-auto flex-1 space-y-3.5 text-xs pr-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Tên Nhóm / Dự án</label>
+            <input id="pgNameInput" type="text" placeholder="Ví dụ: Dự án Trạm dừng nghỉ KM47..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Mô tả ngắn</label>
+            <input id="pgDescInput" type="text" placeholder="Mục tiêu, phạm vi triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
           </div>
         </div>
 
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-emerald-400">2. Thành viên tham gia Nhóm/Dự án</span>
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-slate-400 font-semibold">Thành viên tham gia Nhóm / Dự án:</label>
             <div id="pgMemberBulkBtns" class="flex gap-2">
-              <button type="button" onclick="pgSelectAllMembers(true)" class="text-[11px] text-blue-400 hover:underline">Chọn tất cả</button>
-              <span class="text-slate-600">|</span>
-              <button type="button" onclick="pgSelectAllMembers(false)" class="text-[11px] text-slate-400 hover:underline">Bỏ chọn</button>
+              <button type="button" onclick="pgSelectAllMembers(true)" class="text-blue-400 hover:underline">Chọn tất cả</button>
+              <button type="button" onclick="pgSelectAllMembers(false)" class="text-slate-400 hover:underline">Bỏ chọn</button>
             </div>
           </div>
-          <div id="pgMembersChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto bg-slate-950/70 p-2.5 rounded-xl border border-slate-800"></div>
+          <div id="pgMembersChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto bg-slate-950/60 p-2.5 rounded-xl border border-slate-800"></div>
         </div>
 
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-3">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <span class="font-bold text-amber-400">3. Kho Tài nguyên & Tài liệu dự án</span>
-            <div class="flex items-center gap-2">
-              <label id="pgAddFileLabel" class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
-                <span>📎 + Add File</span>
-                <input id="pgResourceFileInput" type="file" multiple class="hidden" onchange="handlePgAddFiles(event)" />
-              </label>
-            </div>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-slate-400 font-semibold">Tài nguyên & Hồ sơ đính kèm của Nhóm:</label>
+            <label id="pgAddFileLabel" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1 rounded-lg cursor-pointer font-semibold">
+              + Tải tệp (&lt;3MB)
+              <input id="pgResourceFileInput" type="file" multiple class="hidden" onchange="handlePgAddFiles(event)" />
+            </label>
           </div>
-
-          <div id="pgAddLinkRow" class="flex flex-col sm:flex-row gap-2">
-            <input id="pgLinkNameInput" type="text" placeholder="Tên tài liệu / Bản vẽ..." class="sm:w-1/3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500" />
-            <input id="pgLinkUrlInput" type="text" placeholder="Dán đường dẫn Google Drive / Link tài nguyên..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500" />
-            <button type="button" onclick="handlePgAddLink()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg shrink-0">
-              🔗 + Add Link
-            </button>
+          <div id="pgAddLinkRow" class="flex flex-col sm:flex-row gap-1.5">
+            <input id="pgLinkNameInput" type="text" placeholder="Tên tài liệu (VD: Bản đồ quy hoạch)..." class="sm:w-1/3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            <input id="pgLinkUrlInput" type="text" placeholder="Dán link Google Drive / URL..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            <button type="button" onclick="handlePgAddLink()" class="bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white px-3 py-1.5 rounded-lg font-semibold shrink-0">+ Add Link</button>
           </div>
-
-          <div id="pgResourcesList" class="space-y-1.5 max-h-40 overflow-y-auto bg-slate-950/70 p-2.5 rounded-xl border border-slate-800"></div>
+          <div id="pgResourcesList" class="space-y-1.5 max-h-36 overflow-y-auto"></div>
         </div>
       </div>
 
-      <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
-        <button id="btnDeleteProjectGroup" type="button" onclick="deleteProjectGroup()" class="hidden px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-semibold transition">
+      <div class="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
+        <button id="btnDeleteProjectGroup" type="button" onclick="deleteProjectGroup()" class="hidden px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-semibold">
           🗑️ Xóa Nhóm/Dự án
         </button>
-        <div class="flex items-center gap-2 ml-auto">
-          <button type="button" onclick="closeModal('projectGroupModal')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Đóng</button>
-          <button id="btnSaveProjectGroup" type="button" onclick="saveProjectGroup()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25">
-            💾 Lưu Nhóm / Dự án
-          </button>
+        <div class="flex gap-2 ml-auto">
+          <button onclick="closeModal('projectGroupModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Đóng</button>
+          <button id="btnSaveProjectGroup" onclick="saveProjectGroup()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">💾 Lưu Nhóm / Dự Án</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL TÍCH HỢP: QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN & PASS / PIN (CHỮ+SỐ) / MỞ KHÓA -->
-  <div id="staffModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
+  <!-- MODAL NHẬT KÝ KIỂM TOÁN (AUDIT LOG) -->
+  <div id="auditLogModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-4 sm:p-5 shadow-2xl max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <div>
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
-            👥 Quản Lý Nhân Sự - Phân Quyền & Pass / PIN / ID
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Chuẩn Pass/PIN 4–12 ký tự (Chữ + Số) • Mở khóa tài khoản nhập sai 5 lần</p>
-        </div>
-        <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white">✕</button>
+        <h3 class="text-sm font-bold text-white">🛡️ Nhật Ký Kiểm Toán Hệ Thống (Audit Log)</h3>
+        <button onclick="closeModal('auditLogModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 shrink-0 text-xs">
-        <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')"
-          class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40">
-          <span class="text-base">🔑</span>
-          <div>
-            <div>1. Pass / PIN / ID & Mở Khóa</div>
-            <div class="text-[10px] font-normal opacity-80">Cấp đổi PIN chữ+số & mở khóa tài khoản</div>
-          </div>
-        </button>
-
-        <button id="staffTabBtn_STAFF_ROLE" onclick="switchStaffModalTab('STAFF_ROLE')"
-          class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800">
-          <span class="text-base">🛡️</span>
-          <div>
-            <div>2. Nhân sự & Phân quyền</div>
-            <div class="text-[10px] font-normal opacity-80">Thêm/Sửa/Xóa & gán 7 cấp quyền</div>
-          </div>
-        </button>
-
-        <button id="staffTabBtn_MY_TELEGRAM" onclick="switchStaffModalTab('MY_TELEGRAM')"
-          class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800">
-          <span class="text-base">✈️</span>
-          <div>
-            <div>3. Liên kết Bot & Cá nhân</div>
-            <div class="text-[10px] font-normal opacity-80">Gắn Telegram 1 chạm & PIN riêng</div>
-          </div>
-        </button>
-      </div>
-
-      <!-- MỤC 1: PASS / PIN (CHỮ+SỐ) / ID TELEGRAM & MỞ KHÓA -->
-      <div id="staffSection_PASS_PIN_ID" class="space-y-3 overflow-y-auto flex-1 text-xs pr-1">
-        <div class="bg-amber-950/30 border border-amber-600/30 rounded-xl p-3 text-amber-200 leading-relaxed">
-          🔑 <b>Quy tắc bảo mật Pass / PIN:</b> Mật khẩu / Mã PIN bắt buộc dài <b>4 đến 12 ký tự, bao gồm cả chữ cái và chữ số</b> (VD: <code class="text-white">tv01ab</code>). Nếu tài khoản bị khóa do nhập sai 5 lần liên tiếp, Quản trị hệ thống bấm nút <b>🔓 Mở khóa</b> ngay tại danh sách bên dưới.
-        </div>
-
-        <div id="passPinIdListContainer" class="space-y-2"></div>
-      </div>
-
-      <!-- MỤC 2: QUẢN LÝ NHÂN SỰ & PHÂN QUYỀN -->
-      <div id="staffSection_STAFF_ROLE" class="hidden space-y-3 overflow-y-auto flex-1 text-xs pr-1">
-        <details class="bg-purple-950/30 border border-purple-500/30 rounded-xl p-3 text-purple-200">
-          <summary class="cursor-pointer font-bold text-purple-300">📖 Xem ma trận giải thích 7 cấp phân quyền hệ thống</summary>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 text-[11px] text-slate-300">
-            <div>• <b class="text-amber-300">1. Quản trị hệ thống (Full):</b> Toàn quyền hệ thống, mở khóa tài khoản, thêm/xóa nhân sự, sửa/xóa mọi phiếu trình, xem Audit Log.</div>
-            <div>• <b class="text-blue-300">2. Quản trị:</b> Quản lý nhân sự trong Nhóm/Dự án, giao việc, phê duyệt nội bộ.</div>
-            <div>• <b class="text-teal-300">3. Trợ lý:</b> Điều phối lịch họp, lập checklist sau họp, nhắc việc & xuất báo cáo.</div>
-            <div>• <b class="text-emerald-300">4. Chủ trì / Phê duyệt:</b> Ký duyệt / từ chối tờ trình, hồ sơ đề xuất qua Web & Telegram.</div>
-            <div>• <b class="text-indigo-300">5. Điều phối Tài nguyên:</b> Quản lý kho tài liệu, bản vẽ, link dữ liệu của Nhóm/Dự án.</div>
-            <div>• <b class="text-cyan-300">6. Giám sát / Thanh tra:</b> Theo dõi toàn bộ tiến độ, lịch sử và xuất báo cáo kiểm tra.</div>
-            <div class="sm:col-span-2">• <b class="text-slate-300">7. Thành viên:</b> Thực hiện công việc được giao, báo cáo tiến độ, trình hồ sơ và trao đổi nghiệp vụ.</div>
-          </div>
-        </details>
-
-        <div id="addStaffFormBox" class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 space-y-2">
-          <div class="font-bold text-emerald-400">+ Thêm Nhân Sự / Thành Viên Mới & Gán Quyền</div>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <input id="newStaffName" type="text" placeholder="Tên tài khoản / Họ tên..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
-            <input id="newStaffRole" type="text" placeholder="Chức vụ / Phòng ban..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
-            <input id="newStaffPin" type="text" maxlength="12" placeholder="PIN chữ+số (VD: tv01ab)" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500" />
-            <select id="newStaffPerm" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-white focus:outline-none focus:border-purple-500">
-              <option value="MEMBER">Thành viên</option>
-              <option value="ASSISTANT">Trợ lý</option>
-              <option value="APPROVER">Chủ trì / Phê duyệt</option>
-              <option value="MANAGER">Quản trị</option>
-              <option value="RESOURCE_LEAD">Điều phối Tài nguyên</option>
-              <option value="AUDITOR">Giám sát / Thanh tra</option>
-              <option value="FULL">Quản trị hệ thống (Full)</option>
-            </select>
-            <button type="button" onclick="addNewStaffMember()" class="sm:col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg py-2 transition">+ Thêm Mới</button>
-          </div>
-        </div>
-
-        <div id="staffRoleListContainer" class="space-y-2"></div>
-      </div>
-
-      <!-- MỤC 3: LIÊN KẾT BOT TELEGRAM 1 CHẠM & 3 TRƯỜNG BẢO MẬT CÁ NHÂN -->
-      <div id="staffSection_MY_TELEGRAM" class="hidden space-y-4 overflow-y-auto flex-1 text-xs pr-1">
-        <div class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-4 space-y-3">
-          <div class="font-bold text-blue-300 text-sm">Kết nối tự động với Bot @TeamWork_Duyet_Bot</div>
-          <p class="text-slate-300 leading-relaxed">
-            Bấm nút bên dưới để mở Telegram và bấm <b>START</b>. Hệ thống sẽ tự động nhận diện và lưu <b>Telegram Chat ID</b> cho tài khoản đang đăng nhập mà không cần nhập thủ công.
-          </p>
-          <div class="flex flex-wrap items-center gap-2">
-            <a id="telegramAutoLinkBtn" href="https://t.me/TeamWork_Duyet_Bot" target="_blank" rel="noopener noreferrer"
-               onclick="startTelegramAutoLinkListener()"
-               class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl transition shadow-md shadow-blue-600/25">
-              <span>✈️ Liên kết 1 chạm qua @TeamWork_Duyet_Bot</span>
-            </a>
-          </div>
-          <div id="tgAutoLinkStatus" class="hidden text-[11px] bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-amber-300">
-            ⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự điền ID ngay khi nhận tín hiệu.
-          </div>
-        </div>
-
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-4 space-y-3">
-          <div class="font-bold text-white">3 Trường bảo mật tài khoản đang đăng nhập</div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block text-slate-400 mb-1">1. Chức vụ / Vị trí</label>
-              <input id="profileRoleTitle" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">2. Telegram Chat ID cá nhân</label>
-              <input id="profileTelegramId" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">3. Mật khẩu / PIN (4–12 ký tự chữ+số)</label>
-              <input id="profileNewPass" type="text" maxlength="12" placeholder="VD: tv01ab" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono focus:outline-none focus:border-blue-500" />
-            </div>
-          </div>
-          <div class="flex justify-end">
-            <button onclick="saveProfileSettings()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold">
-              💾 Lưu 3 Trường Cá Nhân
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
-        <button onclick="closeStaffModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium">Đóng cửa sổ</button>
+      <div id="auditLogListContainer" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1"></div>
+      <div class="mt-3 pt-3 border-t border-slate-800 flex justify-end shrink-0">
+        <button onclick="closeModal('auditLogModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs">Đóng</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL CHUYỂN TIẾP TIN NHẮN -->
-  <div id="forwardModal" class="fixed inset-0 z-50 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-        <h3 class="text-sm font-bold text-white">➡️ Chuyển Tiếp Tin Nhắn</h3>
-        <button onclick="closeModal('forwardModal')" class="text-slate-400 hover:text-white">✕</button>
+  <div id="forwardModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-white">➡️ Chuyển Tiếp Tin Nhắn / Tài Liệu</h3>
+        <button onclick="closeModal('forwardModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
       <div class="space-y-3 text-xs">
-        <div id="forwardPreviewBox" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-300 max-h-24 overflow-y-auto whitespace-pre-line"></div>
+        <div id="forwardPreviewBox" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-slate-300 max-h-28 overflow-y-auto whitespace-pre-line"></div>
         <div>
-          <label class="block text-slate-400 mb-1.5 font-medium">Chọn Nhóm / Dự án hoặc Thành viên nhận:</label>
+          <label class="block text-slate-400 mb-1.5">Chọn Nhóm/Dự án hoặc Thành viên nhận:</label>
           <select id="forwardTargetSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></select>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('forwardModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-          <button onclick="submitForwardMessage()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold">Chuyển Tiếp Ngay</button>
+          <button onclick="closeModal('forwardModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
+          <button onclick="submitForwardMessage()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold">Chuyển Tiếp Ngay</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST & XUẤT EXCEL / PDF -->
-  <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-wrap gap-2">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">📊 Bảng Theo Dõi Tiến Độ Checklist & Xuất Báo Cáo</h3>
-          <p id="progressModalSubtitle" class="text-xs text-slate-500 mt-0.5">Nhóm / Dự án: Phòng Điều Hành Chung</p>
+  <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-2 sm:p-4">
+    <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-4 sm:px-6 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-wrap gap-2">
+        <div class="min-w-0">
+          <h3 class="text-sm sm:text-base font-bold text-slate-900 truncate">📊 Bảng Theo Dõi Tiến Độ Checklist</h3>
+          <p id="progressModalSubtitle" class="text-xs text-slate-500 mt-0.5 truncate">Nhóm / Dự án: Phòng Điều Hành Chung</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="exportChecklistToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
-            📥 Xuất Excel (.xls)
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button onclick="exportChecklistToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
+            📥 Xuất Excel
           </button>
-          <button onclick="exportChecklistToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
-            🖨️ Xuất PDF / In trình ký
+          <button onclick="exportChecklistToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
+            🖨️ Xuất PDF
           </button>
           <button onclick="closeModal('progressModal')" class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">✕</button>
         </div>
       </div>
 
       <div class="overflow-auto flex-1">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left border-collapse min-w-[760px]">
           <thead class="bg-slate-100 sticky top-0 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
             <tr>
               <th class="py-3 px-4">Thành viên</th>
@@ -658,19 +551,19 @@
         </table>
       </div>
 
-      <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-        <span class="text-xs text-slate-500">* Trợ lý & Quản lý có thể bấm 🔔 Nhắc việc qua Telegram hoặc xuất file Excel/PDF lưu hồ sơ.</span>
-        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">Đóng bảng</button>
+      <div class="px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+        <span class="text-[11px] sm:text-xs text-slate-500">* Trợ lý & Quản lý có thể bấm 🔔 Nhắc việc qua Telegram hoặc xuất file Excel/PDF.</span>
+        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shrink-0">Đóng</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL GIAO VIỆC MỚI -->
-  <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
+  <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-white">✅ Giao Công Việc Mới</h3>
-        <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeModal('assignModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
       <div class="space-y-3.5 text-xs">
         <div>
@@ -692,49 +585,49 @@
           </div>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('assignModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">Hủy</button>
-          <button onclick="submitNewTask()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-600/25">Giao Việc & Gửi Telegram</button>
+          <button onclick="closeModal('assignModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">Hủy</button>
+          <button onclick="submitNewTask()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-600/25">Giao Việc & Gửi Telegram</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL TRÌNH PHÊ DUYỆT & SỬA PHIẾU TRÌNH -->
-  <div id="approvalModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
+  <div id="approvalModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 id="approvalModalTitle" class="text-sm font-bold text-white">📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình</h3>
-        <button onclick="closeModal('approvalModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeModal('approvalModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
       <input type="hidden" id="editingApprovalId" value="" />
       <div class="space-y-3 text-xs">
         <div id="approvalApproverBox">
           <label class="block text-slate-400 mb-1">Lãnh đạo / Chủ trì phê duyệt</label>
-          <select id="approvalApprover" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></select>
+          <select id="approvalApprover" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
         </div>
         <div>
           <label class="block text-slate-400 mb-1">Nội dung trình phê duyệt</label>
-          <textarea id="approvalContent" rows="4" placeholder="Ví dụ: Tờ trình phê duyệt phương án đền bù đợt 2..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
+          <textarea id="approvalContent" rows="4" placeholder="Ví dụ: Tờ trình phê duyệt phương án đền bù đợt 2..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></textarea>
         </div>
         <div>
           <label class="block text-slate-400 mb-1">Link tài liệu / File đính kèm (tùy chọn)</label>
-          <input id="approvalFileUrl" type="text" placeholder="Dán link Google Drive hoặc chọn tệp bên dưới..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white mb-1.5" />
-          <input id="approvalFileInput" type="file" class="text-[11px] text-slate-400" />
+          <input id="approvalFileUrl" type="text" placeholder="Dán link Google Drive hoặc chọn tệp bên dưới..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white mb-1.5" />
+          <input id="approvalFileInput" type="file" class="text-xs text-slate-400 w-full" />
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('approvalModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-          <button id="btnSubmitApproval" onclick="submitApprovalRequest()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">Gửi Trình Duyệt & Báo Telegram</button>
+          <button onclick="closeModal('approvalModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
+          <button id="btnSubmitApproval" onclick="submitApprovalRequest()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">Gửi Trình Duyệt & Báo Telegram</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL CHỐT LỊCH HỌP & XUẤT BIÊN BẢN -->
-  <div id="meetingModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+  <div id="meetingModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-white">📅 Chốt Lịch Họp, Phân Công & Xuất Biên Bản</h3>
-        <button onclick="closeModal('meetingModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeModal('meetingModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
       <div class="space-y-3 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -756,7 +649,7 @@
           <div class="flex items-center justify-between">
             <span class="font-bold text-teal-300">⚡ Tự động tạo Checklist công việc sau họp</span>
             <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
-              <input id="meetingAutoTasksCheck" type="checkbox" checked class="rounded bg-slate-900 border-slate-600 text-teal-500" />
+              <input id="meetingAutoTasksCheck" type="checkbox" checked class="w-4 h-4 rounded bg-slate-900 border-slate-600 text-teal-500" />
               <span>Kích hoạt</span>
             </label>
           </div>
@@ -771,12 +664,12 @@
         </div>
 
         <div class="pt-2 flex items-center justify-between flex-wrap gap-2">
-          <button type="button" onclick="exportMeetingMinutesPDF()" class="px-3.5 py-2 rounded-xl bg-amber-600/25 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 font-semibold">
-            🖨️ Xuất Biên Bản Họp (PDF/In)
+          <button type="button" onclick="exportMeetingMinutesPDF()" class="px-3.5 py-2.5 rounded-xl bg-amber-600/25 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 font-semibold">
+            🖨️ Xuất Biên Bản (PDF)
           </button>
-          <div class="flex gap-2">
-            <button onclick="closeModal('meetingModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-            <button onclick="submitMeetingNotice()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold">📅 Chốt Lịch & Giao Việc</button>
+          <div class="flex gap-2 ml-auto">
+            <button onclick="closeModal('meetingModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
+            <button onclick="submitMeetingNotice()" class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold">📅 Chốt Lịch & Giao Việc</button>
           </div>
         </div>
       </div>
@@ -784,11 +677,11 @@
   </div>
 
   <!-- MODAL GỬI FILE NHIỀU NGƯỜI -->
-  <div id="multiFileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl">
+  <div id="multiFileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-white">📤 Gửi File & Tài Liệu Cho Nhiều Thành Viên</h3>
-        <button onclick="closeModal('multiFileModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeModal('multiFileModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
@@ -811,19 +704,19 @@
           <textarea id="multiFileNoteInput" rows="2" placeholder="Nhập ghi chú gửi các thành viên được chọn..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('multiFileModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Đóng</button>
-          <button onclick="submitMultiFileSend()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">📤 Gửi File & Báo Telegram</button>
+          <button onclick="closeModal('multiFileModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Đóng</button>
+          <button onclick="submitMultiFileSend()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">📤 Gửi File & Báo Telegram</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL BACKUP & RESTORE + DAILY DIGEST 17:00 -->
-  <div id="backupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+  <div id="backupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-white">💾 Backup, Restore & Báo Cáo Tự Động 17:00</h3>
-        <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeModal('backupModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
 
       <div class="space-y-4 text-xs">
@@ -834,10 +727,10 @@
             <select id="backupScopeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
           </div>
           <div class="flex flex-wrap gap-2 pt-1">
-            <button onclick="downloadBackupNow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2 rounded-lg transition">
+            <button onclick="downloadBackupNow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2.5 rounded-lg transition">
               ⬇️ Tải file JSON về máy
             </button>
-            <button onclick="backupToGoogleDriveNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2 rounded-lg transition">
+            <button onclick="backupToGoogleDriveNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2.5 rounded-lg transition">
               ☁️ Đẩy Backup lên Google Drive
             </button>
           </div>
@@ -851,7 +744,7 @@
             Hệ thống tự động tổng hợp công việc trễ hạn, sắp đến hạn và tờ trình chờ duyệt lúc <b>17:00 hàng ngày</b> gửi 1 bản tóm tắt về Telegram của Lãnh đạo và Trợ lý.
           </p>
           <div class="flex flex-wrap gap-2">
-            <button onclick="triggerDailyDigestNow()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3.5 py-2 rounded-lg">
+            <button onclick="triggerDailyDigestNow()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3.5 py-2.5 rounded-lg">
               📩 Gửi thử Báo cáo Daily Digest ngay
             </button>
           </div>
@@ -859,9 +752,9 @@
 
         <div id="systemRestoreBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2">
           <div class="font-bold text-amber-400">3. Khôi phục dữ liệu toàn hệ thống từ bản sao lưu (Restore)</div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input id="restoreFileInput" type="file" accept=".json" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-300" />
-            <button onclick="restoreFromJsonFile()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3.5 py-2 rounded-lg shrink-0">
+            <button onclick="restoreFromJsonFile()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-lg shrink-0">
               ♻️ Khôi Phục
             </button>
           </div>
@@ -871,14 +764,14 @@
   </div>
 
   <!-- MODAL VIỆC CỦA TÔI -->
-  <div id="myTasksModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+  <div id="myTasksModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-4 sm:p-5 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4 shrink-0">
         <h3 class="text-sm font-bold text-white">📋 Danh Sách Công Việc Được Giao Cho Tôi</h3>
-        <button onclick="closeModal('myTasksModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeModal('myTasksModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
       </div>
       <div id="myTasksListContainer" class="space-y-2.5 overflow-y-auto flex-1 text-xs"></div>
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
         <button onclick="closeModal('myTasksModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs">Đóng</button>
       </div>
     </div>
@@ -994,11 +887,12 @@
     let dbAuditLogs = [];
     let dbPinnedMap = {};
     let dbApprovalHistoryMap = {};
-    let dbAccountLocksMap = {}; // Lưu trạng thái sai & khóa: { [userId]: { fails: 0, locked: false, lockedAt: '' } }
+    let dbAccountLocksMap = {};
 
     let currentUser = null;
     let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || 'c_general';
     let activeDmPeer = null;
+    let mobileActiveView = 'CHAT';
     let tgPollTimer = null;
     let tempPgResources = [];
 
@@ -1160,7 +1054,7 @@
     }
 
     // =========================================================================
-    // 5. TIỆN ÍCH DROPDOWN, REFRESH & GIAO DIỆN
+    // 5. TIỆN ÍCH DROPDOWN, REFRESH & TỐI ƯU GIAO DIỆN MOBILE
     // =========================================================================
     function toggleDropdown(menuId) {
       const target = document.getElementById(menuId);
@@ -1185,18 +1079,77 @@
         icon.classList.add('animate-spin-once');
       }
       if (statusEl) {
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Đang đồng bộ mới...`;
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span> <span class="truncate">Đang đồng bộ...</span>`;
       }
       await syncAllFromSupabase(false);
       if (statusEl) {
-        const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã cập nhật ${nowTime}`;
+        const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span> <span class="truncate">Cập nhật ${nowTime}</span>`;
       }
     }
 
-    function toggleMobileSidebar() {
-      document.getElementById('leftSidebar').classList.toggle('hidden');
+    function toggleMobileSidebar(forceState = null) {
+      const sbEl = document.getElementById('leftSidebar');
+      const bdEl = document.getElementById('leftSidebarBackdrop');
+      const shouldOpen = forceState !== null ? forceState : sbEl.classList.contains('hidden');
+      if (shouldOpen) {
+        sbEl.classList.remove('hidden');
+        sbEl.classList.add('flex');
+        if (bdEl) bdEl.classList.remove('hidden');
+      } else {
+        sbEl.classList.add('hidden');
+        sbEl.classList.remove('flex');
+        if (bdEl) bdEl.classList.add('hidden');
+      }
     }
+
+    function switchMobileView(view) {
+      mobileActiveView = view;
+      const centerEl = document.getElementById('centerChatPanel');
+      const rightEl = document.getElementById('rightSidebarPanel');
+
+      ['CHAT', 'CHECKLIST', 'FILES'].forEach(v => {
+        const btn = document.getElementById('mobNavBtn_' + v);
+        if (!btn) return;
+        if (v === view) {
+          btn.className = 'py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-blue-400 font-bold border-t-2 border-blue-500 bg-blue-950/20';
+        } else {
+          btn.className = 'py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 font-medium border-t-2 border-transparent';
+        }
+      });
+
+      if (window.innerWidth < 1280) {
+        if (view === 'CHAT') {
+          centerEl.classList.remove('hidden');
+          centerEl.classList.add('flex');
+          rightEl.classList.add('hidden');
+          rightEl.classList.remove('flex');
+        } else {
+          centerEl.classList.add('hidden');
+          centerEl.classList.remove('flex');
+          rightEl.classList.remove('hidden');
+          rightEl.classList.add('flex');
+          switchRightPanelTab(view);
+        }
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      const centerEl = document.getElementById('centerChatPanel');
+      const rightEl = document.getElementById('rightSidebarPanel');
+      const bdEl = document.getElementById('leftSidebarBackdrop');
+      if (window.innerWidth >= 1024 && bdEl) {
+        bdEl.classList.add('hidden');
+      }
+      if (window.innerWidth >= 1280) {
+        centerEl.classList.remove('hidden');
+        centerEl.classList.add('flex');
+        rightEl.classList.remove('hidden');
+        rightEl.classList.add('flex');
+      } else {
+        switchMobileView(mobileActiveView);
+      }
+    });
 
     function switchRightPanelTab(tab) {
       const btnC = document.getElementById('tabBtnChecklist');
@@ -1205,13 +1158,13 @@
       const boxF = document.getElementById('rightTabFiles');
 
       if (tab === 'CHECKLIST') {
-        btnC.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
-        btnF.className = 'py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
+        btnC.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
+        btnF.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
         boxC.classList.remove('hidden');
         boxF.classList.add('hidden');
       } else {
-        btnF.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
-        btnC.className = 'py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
+        btnF.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
+        btnC.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
         boxF.classList.remove('hidden');
         boxC.classList.add('hidden');
       }
@@ -1290,12 +1243,12 @@
       return `
         <div class="mt-2.5 rounded-xl overflow-hidden border border-slate-700/90 bg-slate-950">
           <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
-            <span class="text-emerald-400 font-semibold truncate">📍 Bản đồ vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
+            <span class="text-emerald-400 font-semibold truncate">📍 Vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
             <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">
-              Mở Google Maps ↗
+              Mở Maps ↗
             </a>
           </div>
-          <iframe src="${embedUrl}" class="w-full h-44 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe src="${embedUrl}" class="w-full h-40 sm:h-44 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
       `;
     }
@@ -1419,6 +1372,11 @@
       document.getElementById('currentUserName').textContent = currentUser.display_name;
       document.getElementById('currentUserRole').textContent = currentUser.role_title || 'Thành viên';
 
+      const mobName = document.getElementById('mobileMenuUserName');
+      const mobRole = document.getElementById('mobileMenuUserRole');
+      if (mobName) mobName.textContent = currentUser.display_name;
+      if (mobRole) mobRole.textContent = `${pDef.label} • ${currentUser.role_title || 'Thành viên'}`;
+
       const badgeEl = document.getElementById('currentUserPermBadge');
       badgeEl.textContent = pDef.label;
       badgeEl.className = `text-[9px] px-1.5 py-0.2 rounded font-bold ${pDef.badgeClass}`;
@@ -1502,7 +1460,6 @@
         return;
       }
 
-      // 1. Kiểm tra tài khoản đã bị khóa (LOCKED) hay chưa
       if (isAccountLocked(user.id)) {
         errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA (LOCKED)!</b><br/>Tài khoản <b>${escapeHtmlSafe(user.display_name)}</b> đã nhập sai mật khẩu liên tục ${MAX_FAILED_ATTEMPTS} lần.<br/>Chỉ <b>Quản trị hệ thống</b> mới có quyền mở khóa tài khoản này.`;
         errEl.classList.remove('hidden');
@@ -1511,7 +1468,6 @@
 
       const isValid = (pass === String(user.pin_code || ''));
 
-      // 2. Xử lý khi nhập SAI Pass/PIN -> Tăng bộ đếm & khóa ngay ở lần thứ 5
       if (!isValid) {
         const prevFails = getAccountFailCount(user.id);
         const newFails = prevFails + 1;
@@ -1531,7 +1487,6 @@
             'Hệ thống Bảo mật'
           );
 
-          // Cảnh báo qua Telegram cho Quản trị hệ thống gốc
           await callGasWebhook({
             action: 'SECURITY_ALERT',
             chatId: DEFAULT_APPROVER_CHAT_ID,
@@ -1547,7 +1502,6 @@
         return;
       }
 
-      // 3. Đăng nhập thành công -> Xóa bộ đếm sai (nếu có)
       if (dbAccountLocksMap[String(user.id)]) {
         delete dbAccountLocksMap[String(user.id)];
         await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
@@ -1557,7 +1511,6 @@
       document.getElementById('loginPassword').value = '';
       applyLoggedInUI(user, rememberMe);
 
-      // Vừa đăng nhập xong, nếu chưa liên kết Telegram -> Tự động bật hộp thoại link Telegram để cấp ID
       if (!user.telegram_chat_id) {
         setTimeout(() => openStaffModal('MY_TELEGRAM', true), 300);
       }
@@ -1593,7 +1546,6 @@
         return;
       }
 
-      // Nếu đã bị khóa do nhập sai 5 lần -> Không cho tự reset, bắt buộc Quản trị hệ thống mở khóa
       if (isAccountLocked(user.id)) {
         fbEl.innerHTML = '🔒 Tài khoản này đã bị <b>KHÓA</b> do nhập sai 5 lần liên tiếp. Chỉ <b>Quản trị hệ thống</b> mới có thể mở khóa!';
         fbEl.classList.add('text-rose-400');
@@ -1692,7 +1644,7 @@
         const pDef = getUserPermDef(u);
         return `
           <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 ${canMembers ? 'cursor-pointer hover:border-slate-700' : 'opacity-75'}">
-            <input type="checkbox" name="pgMemberCheck" value="${u.id}" ${checked} ${canMembers ? '' : 'disabled'} class="rounded bg-slate-800 border-slate-600 text-blue-500" />
+            <input type="checkbox" name="pgMemberCheck" value="${u.id}" ${checked} ${canMembers ? '' : 'disabled'} class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-blue-500" />
             <div class="truncate">
               <div class="font-semibold text-white truncate">${escapeHtmlSafe(u.display_name)} <span class="text-[9px] text-slate-400">[${pDef.label}]</span></div>
             </div>
@@ -1896,6 +1848,7 @@
     }
 
     function scrollToPinnedMessage() {
+      switchMobileView('CHAT');
       const convKey = getCurrentConversationChannelKey();
       const pinObj = dbPinnedMap[convKey];
       if (!pinObj) return;
@@ -1929,13 +1882,13 @@
 
         return `
           <div class="group relative flex items-center rounded-xl transition ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800/80'}">
-            <button onclick="selectChannel('${c.id}')" class="flex-1 text-left px-3 py-2 min-w-0 pr-8">
+            <button onclick="selectChannel('${c.id}')" class="flex-1 text-left px-3 py-2.5 min-w-0 pr-9">
               <div class="text-xs font-semibold truncate"># ${escapeHtmlSafe(c.name)}</div>
               <div class="text-[10px] ${active ? 'text-blue-100' : 'text-slate-500'} truncate">
                 ${escapeHtmlSafe(c.description || '')} • 👥${memCount}${resCount ? ' • 📎' + resCount : ''}
               </div>
             </button>
-            <button onclick="event.stopPropagation(); openProjectGroupModal('${c.id}')" title="Thông tin / Sửa Nhóm/Dự án" class="absolute right-1.5 w-6 h-6 rounded-lg flex items-center justify-center text-[11px] ${active ? 'text-blue-100 hover:bg-blue-500' : 'text-slate-400 opacity-70 group-hover:opacity-100 hover:bg-slate-700 hover:text-white'} transition">
+            <button onclick="event.stopPropagation(); openProjectGroupModal('${c.id}')" title="Thông tin / Sửa Nhóm/Dự án" class="absolute right-1.5 w-7 h-7 rounded-lg flex items-center justify-center text-xs ${active ? 'text-blue-100 hover:bg-blue-500' : 'text-slate-400 opacity-80 group-hover:opacity-100 hover:bg-slate-700 hover:text-white'} transition">
               ⚙️
             </button>
           </div>
@@ -1962,7 +1915,7 @@
 
       if (activeDmPeer) {
         const peerPerm = getUserPermDef(activeDmPeer);
-        document.getElementById('activeChannelTitle').textContent = `👤 Trao đổi riêng: ${activeDmPeer.display_name} (${peerPerm.label})`;
+        document.getElementById('activeChannelTitle').textContent = `👤 ${activeDmPeer.display_name} (${peerPerm.label})`;
         document.getElementById('activeChannelDesc').textContent = `Kênh trao đổi & gửi file kín 1-1`;
         dmBadge.classList.remove('hidden');
         memBadge.classList.add('hidden');
@@ -1988,7 +1941,8 @@
       activeDmPeer = null;
       activeChannelId = id;
       localStorage.setItem(CHANNEL_STORAGE_KEY, id);
-      document.getElementById('leftSidebar').classList.add('hidden');
+      toggleMobileSidebar(false);
+      switchMobileView('CHAT');
       cancelChatActionBanner();
       renderAll();
     }
@@ -1997,7 +1951,8 @@
       const peer = dbUsers.find(u => String(u.id) === String(peerId));
       if (!peer) return;
       activeDmPeer = peer;
-      document.getElementById('leftSidebar').classList.add('hidden');
+      toggleMobileSidebar(false);
+      switchMobileView('CHAT');
       cancelChatActionBanner();
       renderAll();
     }
@@ -2038,8 +1993,8 @@
 
       const menu = document.getElementById('msgContextMenu');
       menu.classList.remove('hidden');
-      const posX = Math.min(event.clientX || 120, window.innerWidth - 235);
-      const posY = Math.min(event.clientY || 200, window.innerHeight - 275);
+      const posX = Math.min(event.clientX || (window.innerWidth / 2 - 120), window.innerWidth - 250);
+      const posY = Math.min(event.clientY || (window.innerHeight / 2 - 130), window.innerHeight - 290);
       menu.style.left = Math.max(10, posX) + 'px';
       menu.style.top = Math.max(10, posY) + 'px';
     }
@@ -2241,7 +2196,7 @@
 
           const editHist = dbApprovalHistoryMap[String(m.id)];
           const editLogBadgeHtml = (editHist && editHist.count > 0) ? `
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[11px] font-medium">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[11px] font-medium flex-wrap">
               <span>📝 Đã sửa lần <b>${editHist.count}</b></span>
               <span>•</span>
               <span>${formatDateTimeVN(editHist.lastEditedAt)}</span>
@@ -2253,33 +2208,33 @@
           const canDeleteThisApproval = canDeleteApprovalItem(m);
 
           return `
-            <div id="msg_card_${m.id}" ${ctxAttr} class="bg-slate-900 border border-indigo-500/40 rounded-2xl p-4 max-w-2xl shadow-md space-y-2.5 cursor-context-menu">
+            <div id="msg_card_${m.id}" ${ctxAttr} class="bg-slate-900 border border-indigo-500/40 rounded-2xl p-3.5 sm:p-4 max-w-2xl shadow-md space-y-2.5 cursor-context-menu">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-[11px] font-bold text-indigo-300 uppercase">📋 PHIẾU TRÌNH PHÊ DUYỆT</span>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <span class="text-[10px] text-slate-500">${m.created_at ? formatDateTimeVN(m.created_at) : timeStr}</span>
-                  <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn phiếu trình" class="text-slate-400 hover:text-white text-xs px-1">⋮</button>
+                  <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn phiếu trình" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                 </div>
               </div>
               <div class="text-xs text-slate-400">Người trình: <b class="text-white">${escapeHtmlSafe(m.sender_name)}</b> (${escapeHtmlSafe(m.sender_role || '')})</div>
               <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">${escapeHtmlSafe(m.content)}</div>
-              ${m.file_url ? `<div><a href="${m.file_url}" target="_blank" class="text-xs text-blue-400 underline">📎 ${escapeHtmlSafe(m.file_name || 'Xem tài liệu đính kèm')}</a></div>` : ''}
+              ${m.file_url ? `<div><a href="${m.file_url}" target="_blank" class="text-xs text-blue-400 underline break-all">📎 ${escapeHtmlSafe(m.file_name || 'Xem tài liệu đính kèm')}</a></div>` : ''}
               ${editLogBadgeHtml ? `<div>${editLogBadgeHtml}</div>` : ''}
               ${transHtml}
-              <div class="pt-1 flex items-center justify-between flex-wrap gap-2 border-t border-slate-800/80">
+              <div class="pt-1.5 flex items-center justify-between flex-wrap gap-2 border-t border-slate-800/80">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   ${badgeHtml}
                 </div>
                 <div class="flex items-center gap-1.5 flex-wrap">
                   ${(canApproveItems(currentUser) && m.approval_status === 'PENDING') ? `
-                    <button onclick="quickApproveOnWeb('${m.id}', 'APPROVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold">✅ Duyệt</button>
-                    <button onclick="quickApproveOnWeb('${m.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold">❌ Từ chối</button>
+                    <button onclick="quickApproveOnWeb('${m.id}', 'APPROVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">✅ Duyệt</button>
+                    <button onclick="quickApproveOnWeb('${m.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">❌ Từ chối</button>
                   ` : ''}
                   ${canEditThisApproval ? `
-                    <button onclick="openEditApprovalModal('${m.id}')" class="bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold">✏️ Sửa nội dung</button>
+                    <button onclick="openEditApprovalModal('${m.id}')" class="bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">✏️ Sửa</button>
                   ` : ''}
                   ${canDeleteThisApproval ? `
-                    <button onclick="deleteApprovalItem('${m.id}')" class="bg-rose-600/25 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition">🗑️ Xóa phiếu</button>
+                    <button onclick="deleteApprovalItem('${m.id}')" class="bg-rose-600/25 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">🗑️ Xóa</button>
                   ` : ''}
                 </div>
               </div>
@@ -2304,17 +2259,17 @@
         return `
           <div id="msg_card_${m.id}" ${ctxAttr} class="group bg-slate-900/90 hover:border-slate-700 border border-slate-800 rounded-xl p-3 max-w-2xl transition cursor-context-menu relative">
             <div class="flex items-center justify-between mb-1 gap-2">
-              <span class="text-xs font-bold text-blue-400">${m.sender_name} <span class="font-normal text-slate-500 text-[10px]">${m.sender_role ? '• ' + m.sender_role : ''}</span></span>
-              <div class="flex items-center gap-2">
-                <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn tin nhắn" class="opacity-60 hover:opacity-100 text-slate-400 hover:text-white text-xs px-1">⋮</button>
+              <span class="text-xs font-bold text-blue-400 truncate">${m.sender_name} <span class="font-normal text-slate-500 text-[10px]">${m.sender_role ? '• ' + m.sender_role : ''}</span></span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn tin nhắn" class="w-7 h-7 flex items-center justify-center rounded-lg opacity-80 sm:opacity-60 hover:opacity-100 text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                 <span class="text-[10px] text-slate-500">${timeStr}</span>
               </div>
             </div>
-            <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line">${m.content}</div>
+            <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line break-words">${m.content}</div>
             ${m.file_url ? `
               <div class="mt-2 pt-2 border-t border-slate-800">
-                <a href="${m.file_url}" download="${m.file_name || 'tai_lieu'}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs">
-                  <span>📎</span><span>${m.file_name || 'Tệp đính kèm'}</span>
+                <a href="${m.file_url}" download="${m.file_name || 'tai_lieu'}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
+                  <span>📎</span><span class="truncate">${m.file_name || 'Tệp đính kèm'}</span>
                 </a>
               </div>
             ` : ''}
@@ -2405,6 +2360,8 @@
 
       const totalCount = chatFiles.length + groupResources.length;
       document.getElementById('channelFileCount').textContent = totalCount;
+      const mobFileBadge = document.getElementById('mobFileBadge');
+      if (mobFileBadge) mobFileBadge.textContent = totalCount;
 
       if (totalCount === 0) {
         container.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Chưa có tài nguyên nào trong Nhóm/Dự án này.</div>`;
@@ -2438,6 +2395,9 @@
       let tasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
 
       document.getElementById('channelTaskCount').textContent = tasks.length;
+      const mobTaskBadge = document.getElementById('mobTaskBadge');
+      if (mobTaskBadge) mobTaskBadge.textContent = tasks.length;
+
       const myPending = dbTasks.filter(t => currentUser && t.assignee_name === currentUser.display_name && t.status !== 'DONE').length;
       document.getElementById('myTaskBadge').textContent = myPending;
 
@@ -2461,16 +2421,19 @@
               <div class="text-xs font-bold text-blue-300 truncate">👤 ${t.assignee_name}</div>
               <div class="flex items-center gap-1 shrink-0">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${isDone ? 'DONE' : 'ĐANG LÀM'}</span>
-                ${(!isDone && canManageTasks) ? `<button onclick="sendTaskReminder('${t.id}')" title="Gửi nhắc việc qua Telegram" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 px-1.5 py-0.5 rounded text-[11px] transition">🔔</button>` : ''}
-                ${canDelete ? `<button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-1.5 py-0.5 rounded text-[11px] transition">🗑️</button>` : ''}
+                ${(!isDone && canManageTasks) ? `<button onclick="sendTaskReminder('${t.id}')" title="Gửi nhắc việc qua Telegram" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[11px] transition">🔔</button>` : ''}
+                ${canDelete ? `<button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2 py-0.5 rounded text-[11px] transition">🗑️</button>` : ''}
               </div>
             </div>
             <div class="text-xs text-white font-medium leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${t.task_title}</div>
-            <div class="text-[11px] text-slate-400 space-y-0.5 pt-1.5 border-t border-slate-700/70">
+            <div class="text-[11px] text-slate-400 space-y-1 pt-1.5 border-t border-slate-700/70">
               <div class="text-emerald-400/90">🟢 BĐ: ${startStr}</div>
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between gap-2">
                 <span class="text-rose-400/90">🔴 KT: ${dueStr}</span>
-                ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-semibold">✓ Xong</button>` : ''}
+                <div class="flex items-center gap-1.5">
+                  <button onclick="replyTask('${t.id}')" class="bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white px-2 py-1 rounded text-[10px] font-semibold">Hồi đáp</button>
+                  ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded text-[10px] font-semibold">✓ Xong</button>` : ''}
+                </div>
               </div>
             </div>
             ${(t.delay_reason || t.progress_note) ? `<div class="text-[11px] text-slate-300 bg-slate-900/70 px-2 py-1 rounded">💬 ${t.delay_reason || t.progress_note}</div>` : ''}
@@ -2783,14 +2746,14 @@
         box.innerHTML = `<div class="text-center text-slate-400 py-8">Hiện tại bạn không có công việc nào được giao.</div>`;
       } else {
         box.innerHTML = myTasks.map(t => `
-          <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <div class="font-bold text-white">${t.task_title}</div>
               <div class="text-[11px] text-slate-400 mt-0.5">Giao bởi: ${t.assigned_by} • Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              ${t.status !== 'DONE' ? `<button onclick="markTaskDone('${t.id}'); openMyTasksModal();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg font-semibold">✓ Xong</button>` : `<span class="text-emerald-400 font-bold">✓ DONE</span>`}
-              <button onclick="replyTask('${t.id}'); openMyTasksModal();" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg font-semibold">Hồi đáp</button>
+              ${t.status !== 'DONE' ? `<button onclick="markTaskDone('${t.id}'); openMyTasksModal();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-semibold">✓ Xong</button>` : `<span class="text-emerald-400 font-bold">✓ DONE</span>`}
+              <button onclick="replyTask('${t.id}'); openMyTasksModal();" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-semibold">Hồi đáp</button>
             </div>
           </div>
         `).join('');
@@ -3073,7 +3036,7 @@
       const box = document.getElementById('multiFileRecipientsList');
       box.innerHTML = dbUsers.map(u => `
         <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 cursor-pointer hover:border-slate-700">
-          <input type="checkbox" name="multiFileTarget" value="${u.id}" class="rounded bg-slate-800 border-slate-600 text-indigo-500" />
+          <input type="checkbox" name="multiFileTarget" value="${u.id}" class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-indigo-500" />
           <div class="truncate">
             <div class="font-semibold text-white truncate">${u.display_name}</div>
             <div class="text-[10px] text-slate-400 truncate">${getUserPermDef(u).label}</div>
@@ -3286,12 +3249,12 @@
         const sec = document.getElementById('staffSection_' + t);
         if (t === tabKey) {
           sec.classList.remove('hidden');
-          if (t === 'PASS_PIN_ID') btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40';
-          else if (t === 'STAFF_ROLE') btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-purple-500/20 text-purple-300 border-purple-500/40';
-          else btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-blue-500/20 text-blue-300 border-blue-500/40';
+          if (t === 'PASS_PIN_ID') btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40';
+          else if (t === 'STAFF_ROLE') btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-purple-500/20 text-purple-300 border-purple-500/40';
+          else btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-blue-500/20 text-blue-300 border-blue-500/40';
         } else {
           sec.classList.add('hidden');
-          btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800';
+          btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800';
         }
       });
     }
@@ -3320,7 +3283,7 @@
         }
 
         return `
-          <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : (isSelf ? 'border-blue-500/40' : 'border-slate-700')} rounded-xl p-3 space-y-2">
+          <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : (isSelf ? 'border-blue-500/40' : 'border-slate-700')} rounded-xl p-3 space-y-2.5">
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-bold text-white">${escapeHtmlSafe(u.display_name)}</span>
@@ -3330,7 +3293,7 @@
               </div>
 
               ${(callerIsFull && locked) ? `
-                <button type="button" onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow-md transition">
+                <button type="button" onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow-md transition">
                   🔓 Mở khóa & Cấp lại PIN mới
                 </button>
               ` : ''}
@@ -3340,27 +3303,27 @@
               <div class="sm:col-span-4">
                 <label class="block text-[10px] text-slate-400 mb-0.5">1. Chức vụ / Vị trí</label>
                 <input id="editRoleInput_${u.id}" type="text" value="${escapeHtmlSafe(u.role_title || '')}"
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-blue-500" />
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-blue-500" />
               </div>
 
               <div class="sm:col-span-3">
                 <label class="block text-[10px] text-slate-400 mb-0.5">2. Mật khẩu / PIN (4–12 chữ+số)</label>
                 <input id="editPinInput_${u.id}" type="text" maxlength="12" value="${escapeHtmlSafe(u.pin_code || '')}" placeholder="VD: tv01ab"
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500" />
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500" />
               </div>
 
               <div class="sm:col-span-3">
                 <label class="block text-[10px] text-slate-400 mb-0.5">3. Telegram Chat ID</label>
                 <div class="flex gap-1">
-                  <input id="editTgInput_${u.id}" type="text" value="${escapeHtmlSafe(u.telegram_chat_id || '')}" placeholder="Chưa gắn ID"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500" />
-                  ${u.telegram_chat_id ? `<button type="button" onclick="clearUserTelegramId('${u.id}')" title="Xóa Telegram ID" class="bg-slate-900 hover:bg-rose-950 text-rose-400 border border-slate-700 px-2 rounded-lg text-[11px]">✕</button>` : ''}
+                  <input id="editTgInput_${u.id}" type="text" inputmode="numeric" value="${escapeHtmlSafe(u.telegram_chat_id || '')}" placeholder="Chưa gắn ID"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500" />
+                  ${u.telegram_chat_id ? `<button type="button" onclick="clearUserTelegramId('${u.id}')" title="Xóa Telegram ID" class="bg-slate-900 hover:bg-rose-950 text-rose-400 border border-slate-700 px-2.5 rounded-lg text-xs">✕</button>` : ''}
                 </div>
               </div>
 
               <div class="sm:col-span-2 flex justify-end">
-                <button type="button" onclick="saveUserPassPinAndTelegram('${u.id}')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-1.5 rounded-lg text-xs transition">
-                  💾 Lưu / Cấp đổi
+                <button type="button" onclick="saveUserPassPinAndTelegram('${u.id}')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition">
+                  💾 Lưu
                 </button>
               </div>
             </div>
@@ -3503,7 +3466,7 @@
                   </span>
                 ` : `
                   <div class="flex items-center gap-1 bg-slate-900 border border-purple-500/40 rounded-lg px-2 py-1">
-                    <span class="text-[10px] text-purple-300 font-semibold">🛡️ Phân quyền:</span>
+                    <span class="text-[10px] text-purple-300 font-semibold">🛡️ Quyền:</span>
                     <select id="permSelect_${u.id}" onchange="adminSetUserPermission('${u.id}', this.value)" class="bg-slate-900 text-white text-[11px] font-semibold focus:outline-none">
                       ${permOptionsHtml}
                     </select>
@@ -3758,7 +3721,11 @@
         .on('postgres_changes', { event: '*', schema: 'public', table: 'team_channels' }, () => syncAllFromSupabase(true))
         .subscribe();
 
-      setInterval(() => syncAllFromSupabase(true), 20000);
+      setInterval(() => {
+        if (currentUser && !isAnyModalCurrentlyOpen()) {
+          syncAllFromSupabase(true);
+        }
+      }, 20000);
     });
   </script>
 </body>
