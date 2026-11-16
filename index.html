@@ -2,17 +2,119 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>TeamWork Cloud — Điều Hành & Quản Trị Tiến Độ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>TeamWork Cloud</title>
+
+  <!-- CẤU HÌNH BIẾN WEB THÀNH APP ĐỘC LẬP NHƯ FINCAFE (PWA / iOS / ANDROID) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TeamWork" />
+  <meta name="application-name" content="TeamWork" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <!-- KHAI BÁO ICON MẶC ĐỊNH & TỰ ĐỘNG RENDER ICON PNG 512x512 CHO MÀN HÌNH CHÍNH -->
+  <link id="appAppleIcon" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%230ea5e9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23g)'/%3E%3Cpath d='M368 296H156c-37.5 0-68-30.5-68-68 0-34.8 26.2-63.5 60-67.5C161.5 117.5 201.8 88 248 88c53.5 0 97.6 39.8 103.3 91.5 34.4 5.2 60.7 34.9 60.7 70.5 0 25.4-20.6 46-44 46z' fill='%23ffffff' fill-opacity='0.22'/%3E%3Ctext x='256' y='305' font-family='Arial,sans-serif' font-weight='900' font-size='175' fill='%23ffffff' text-anchor='middle' letter-spacing='-6'%3ETW%3C/text%3E%3Ccircle cx='392' cy='132' r='26' fill='%2310b981' stroke='%23ffffff' stroke-width='8'/%3E%3C/svg%3E" />
+  <link id="appFavicon" rel="icon" type="image/png" href="" />
+  <link id="appManifest" rel="manifest" href="" />
+
+  <script>
+    // Tự động vẽ Icon PNG 512x512 chuẩn Apple Touch Icon & Manifest ngay khi tải trang
+    (function setupAppIconAndManifest() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // 1. Nền Gradient Xanh Cobalt - Cyan hiện đại
+        const grad = ctx.createLinearGradient(0, 0, 512, 512);
+        grad.addColorStop(0, '#1d4ed8');
+        grad.addColorStop(0.55, '#2563eb');
+        grad.addColorStop(1, '#06b6d4');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // 2. Vòng sáng trang trí góc trên
+        const glow = ctx.createRadialGradient(130, 110, 20, 130, 110, 320);
+        glow.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+        glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // 3. Khung viền kính mờ bên trong
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.roundRect(36, 36, 440, 440, 88);
+        ctx.stroke();
+
+        // 4. Chữ TW đậm nét, đổ bóng nổi khối 3D
+        ctx.shadowColor = 'rgba(15, 23, 42, 0.35)';
+        ctx.shadowBlur = 24;
+        ctx.shadowOffsetY = 12;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 185px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('TW', 250, 258);
+
+        // 5. Chấm xanh trạng thái Online (đặc trưng Cloud Sync)
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 4;
+        ctx.beginPath();
+        ctx.arc(395, 125, 30, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981';
+        ctx.fill();
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // 6. Nhãn nhỏ CLOUD bên dưới
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+        ctx.font = '700 34px Inter, -apple-system, sans-serif';
+        ctx.fillText('CLOUD', 256, 392);
+
+        const pngDataUrl = canvas.toDataURL('image/png');
+
+        // Gắn ảnh PNG 512x512 vào apple-touch-icon & favicon
+        document.getElementById('appAppleIcon').setAttribute('href', pngDataUrl);
+        document.getElementById('appFavicon').setAttribute('href', pngDataUrl);
+
+        // Tạo Web App Manifest động cho Android & Desktop PWA
+        const manifestObj = {
+          name: 'TeamWork Cloud',
+          short_name: 'TeamWork',
+          start_url: '/',
+          display: 'standalone',
+          background_color: '#0b1120',
+          theme_color: '#0f172a',
+          icons: [
+            { src: pngDataUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+            { src: pngDataUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        document.getElementById('appManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+      } catch (e) {
+        console.warn('Icon init:', e);
+      }
+    })();
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
     html, body {
       font-family: 'Inter', sans-serif;
       background-color: #0b1120;
       color: #e2e8f0;
       overscroll-behavior-y: contain;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
     }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
@@ -20,6 +122,7 @@
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
+
 <body class="h-screen flex flex-col overflow-hidden select-none sm:select-auto">
 
   <!-- MÀN HÌNH ĐĂNG NHẬP -->
