@@ -2,13 +2,18 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TeamWork Cloud — Điều Hành & Quản Trị Tiến Độ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #0b1120; color: #e2e8f0; }
+    html, body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b1120;
+      color: #e2e8f0;
+      overscroll-behavior-y: contain;
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -65,7 +70,7 @@
 
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1.5">Nhập Telegram Chat ID xác thực</label>
-          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 5182940123" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') handleResetPasswordViaTelegram()" />
+          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') handleResetPasswordViaTelegram()" />
         </div>
 
         <button id="btnResetSubmit" onclick="handleResetPasswordViaTelegram()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/25">
@@ -156,7 +161,7 @@
         </div>
       </div>
 
-      <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3 overscroll-contain"></div>
 
       <div class="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
         <input id="chatInput" type="text" placeholder="Nhập nội dung trao đổi hoặc cập nhật tiến độ..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendChatMessage()" />
@@ -186,7 +191,7 @@
         </label>
       </div>
 
-      <div id="checklistContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
+      <div id="checklistContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5 overscroll-contain"></div>
     </aside>
   </div>
 
@@ -270,7 +275,7 @@
         </p>
         <div>
           <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
-          <input id="profileTelegramId" type="text" placeholder="Ví dụ: 5182940123" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+          <input id="profileTelegramId" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
         </div>
         <div>
           <label class="block text-slate-400 mb-1">Mật khẩu / Mã PIN mới (để trống nếu giữ nguyên)</label>
@@ -304,8 +309,11 @@
     // =========================================================================
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3Z2cmlpcWdrc2hrcHFuYWhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4ODc1NDYsImV4cCI6MjA1ODQ2MzU0Nn0.23uW0h7d-fE6Q8x_aY1s6hZ9pQ0w8vR4kL2mN5bV7cX';
-    const GAS_WEBHOOK_URL = ''; // Dán URL Google Apps Script Web App nếu dùng trung gian
-    const TELEGRAM_BOT_TOKEN = ''; // Hoặc dán trực tiếp Token Bot Telegram (dạng 123456:ABC-DEF...) để gửi thẳng
+    const GAS_WEBHOOK_URL = ''; // Dán URL Google Apps Script Web App (/exec) nếu dùng trung gian
+    const TELEGRAM_BOT_TOKEN = ''; // Hoặc dán Token Bot Telegram để gửi trực tiếp
+
+    const SESSION_STORAGE_KEY = 'tw_cloud_session_uid';
+    const CHANNEL_STORAGE_KEY = 'tw_cloud_active_channel';
 
     let sb = null;
     try {
@@ -336,11 +344,32 @@
 
     let appState = JSON.parse(localStorage.getItem('tw_cloud_state_v2')) || DEFAULT_STATE;
     let currentUser = null;
-    let activeChannelId = 'c_general';
+    let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || 'c_general';
 
     // =========================================================================
-    // 3. ĐỒNG BỘ SUPABASE & LƯU TRỮ
+    // 3. KHÔI PHỤC PHIÊN ĐĂNG NHẬP & ĐỒNG BỘ SUPABASE
     // =========================================================================
+    function applyLoggedInUI(user) {
+      currentUser = user;
+      localStorage.setItem(SESSION_STORAGE_KEY, user.id);
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('currentUserName').textContent = user.name;
+      document.getElementById('currentUserRole').textContent = user.role;
+      updateTelegramIndicator();
+      renderAll();
+    }
+
+    function restoreSavedSession() {
+      const savedUid = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!savedUid) return;
+      const foundUser = appState.users.find(u => u.id === savedUid);
+      if (foundUser) {
+        applyLoggedInUI(foundUser);
+      } else {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+    }
+
     async function loadCloudState() {
       if (!sb) return;
       try {
@@ -349,7 +378,14 @@
           appState = { ...DEFAULT_STATE, ...data.payload };
           localStorage.setItem('tw_cloud_state_v2', JSON.stringify(appState));
           initLoginOptions();
-          if (currentUser) renderAll();
+
+          const savedUid = localStorage.getItem(SESSION_STORAGE_KEY);
+          if (savedUid) {
+            const refreshedUser = appState.users.find(u => u.id === savedUid);
+            if (refreshedUser) applyLoggedInUI(refreshedUser);
+          } else if (currentUser) {
+            renderAll();
+          }
         }
       } catch (err) {
         console.log('Dùng dữ liệu bộ nhớ đệm cục bộ.');
@@ -400,7 +436,6 @@
       if (!chatId) return false;
       let sent = false;
 
-      // Ưu tiên 1: Gửi qua Google Apps Script Webhook nếu có cấu hình
       if (GAS_WEBHOOK_URL) {
         try {
           await fetch(GAS_WEBHOOK_URL, {
@@ -419,7 +454,6 @@
         }
       }
 
-      // Ưu tiên 2: Gửi trực tiếp qua Telegram Bot API nếu có Token
       if (TELEGRAM_BOT_TOKEN) {
         try {
           const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -469,7 +503,6 @@
         return;
       }
 
-      // Sinh ngẫu nhiên chuỗi 6 chữ số (từ 100000 đến 999999)
       const randomPin = String(Math.floor(100000 + Math.random() * 900000));
       user.pass = randomPin;
 
@@ -506,7 +539,6 @@
       const user = appState.users.find(u => u.id === userId);
       const errEl = document.getElementById('loginError');
 
-      // Hỗ trợ mật khẩu cá nhân, mật khẩu mặc định 123456, hoặc mã cứu hộ ADMIN999 cho quản trị viên
       const isMasterRecovery = user && user.isAdmin && pass === 'ADMIN999';
       const isValid = user && (pass === user.pass || (!user.pass && pass === '123456') || isMasterRecovery);
 
@@ -521,17 +553,13 @@
         saveCloudState();
       }
 
-      currentUser = user;
       errEl.classList.add('hidden');
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('currentUserName').textContent = user.name;
-      document.getElementById('currentUserRole').textContent = user.role;
-      updateTelegramIndicator();
-      renderAll();
+      applyLoggedInUI(user);
     }
 
     function handleLogout() {
       currentUser = null;
+      localStorage.removeItem(SESSION_STORAGE_KEY);
       document.getElementById('loginPassword').value = '';
       toggleForgotPassword(false);
       document.getElementById('loginScreen').classList.remove('hidden');
@@ -559,6 +587,10 @@
     }
 
     function renderChannels() {
+      if (!appState.channels.some(c => c.id === activeChannelId) && appState.channels.length > 0) {
+        activeChannelId = appState.channels[0].id;
+      }
+
       const list = document.getElementById('channelList');
       list.innerHTML = appState.channels.map(c => {
         const active = c.id === activeChannelId;
@@ -588,6 +620,7 @@
 
     function selectChannel(id) {
       activeChannelId = id;
+      localStorage.setItem(CHANNEL_STORAGE_KEY, id);
       renderAll();
     }
 
@@ -597,9 +630,8 @@
       const desc = prompt('Mô tả ngắn gọn mục tiêu nhóm:') || 'Kênh điều hành dự án';
       const newChan = { id: 'c_' + Date.now(), name: name.trim(), desc: desc.trim() };
       appState.channels.push(newChan);
-      activeChannelId = newChan.id;
+      selectChannel(newChan.id);
       saveCloudState();
-      renderAll();
     }
 
     function renderMessages() {
@@ -918,7 +950,11 @@
       openModal('progressModal');
     }
 
+    // =========================================================================
+    // 8. KHỞI CHẠY ỨNG DỤNG & TỰ ĐỘNG KHÔI PHỤC PHIÊN ĐĂNG NHẬP
+    // =========================================================================
     initLoginOptions();
+    restoreSavedSession();
     loadCloudState();
   </script>
 </body>
