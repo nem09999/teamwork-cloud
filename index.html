@@ -22,7 +22,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden flex flex-col select-none sm:select-auto" onclick="closeAllDropdowns()">
 
-  <!-- HỆ THỐNG DIALOG NỘI BỘ (THAY THẾ HOÀN TOÀN HỘP THOẠI TÊN MIỀN TRÌNH DUYỆT) -->
+  <!-- HỆ THỐNG DIALOG NỘI BỘ -->
   <div id="customDialogOverlay" class="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -44,7 +44,7 @@
     </div>
   </div>
 
-  <!-- MÀN HÌNH ĐĂNG NHẬP & KHÔI PHỤC MẬT KHẨU QUA TELEGRAM -->
+  <!-- MÀN HÌNH ĐĂNG NHẬP NHẬP TAY (TÊN TÀI KHOẢN + PASS/PIN CHỮ & SỐ + KHÓA 5 LẦN SAI) -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1.5">
@@ -55,47 +55,67 @@
         <p class="text-xs text-slate-400">Điều hành dự án • Phân quyền 7 cấp • Phê duyệt Telegram</p>
       </div>
 
-      <!-- FORM ĐĂNG NHẬP -->
+      <!-- FORM ĐĂNG NHẬP NHẬP TAY -->
       <div id="loginFormBox" class="space-y-4">
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Chọn tài khoản thành viên</label>
-          <select id="loginUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên tài khoản / Họ tên đăng ký</label>
+          <input id="loginUsernameInput" type="text" autocomplete="username"
+            placeholder="Nhập tên tài khoản được cấp..."
+            onkeydown="if(event.key==='Enter') document.getElementById('loginPassword').focus()"
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-medium text-slate-400">Mật khẩu / Mã PIN truy cập</label>
+            <label class="text-xs font-medium text-slate-300">Mật khẩu / Mã PIN (4–12 ký tự chữ & số)</label>
             <button type="button" onclick="toggleForgotPassword(true)" class="text-[11px] font-medium text-blue-400 hover:text-blue-300 underline">
               Quên mật khẩu / PIN?
             </button>
           </div>
-          <input id="loginPassword" type="password" value="123456" placeholder="Nhập mật khẩu hoặc mã PIN..."
-            onkeydown="if(event.key==='Enter') handleLogin()"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+          <div class="relative">
+            <input id="loginPassword" type="password" autocomplete="current-password"
+              placeholder="Nhập mật khẩu hoặc mã PIN..."
+              onkeydown="if(event.key==='Enter') handleLogin()"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+            <button type="button" onclick="toggleLoginPasswordVisibility()" title="Hiện/Ẩn mật khẩu"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
+            <input id="rememberLoginCheck" type="checkbox" checked class="rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0" />
+            <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+          </label>
         </div>
 
         <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-blue-600/25">
           Đăng nhập hệ thống
         </button>
-        <p id="loginError" class="text-xs text-rose-400 text-center hidden"></p>
+
+        <div id="loginError" class="text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 rounded-xl p-3 text-center hidden leading-relaxed"></div>
       </div>
 
       <!-- FORM KHÔI PHỤC MẬT KHẨU QUA TELEGRAM -->
       <div id="forgotPasswordBox" class="space-y-4 hidden">
         <div class="bg-blue-950/40 border border-blue-800/60 rounded-xl p-3 text-xs text-blue-200 leading-relaxed">
-          🔐 Hệ thống sẽ xác minh <b>Telegram Chat ID</b> đã đăng ký của tài khoản và gửi <b>Mã PIN mới (6 số)</b> trực tiếp qua Bot Telegram.
+          🔐 Nhập <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ cấp ngẫu nhiên <b>Mã PIN mới (6 ký tự chữ + số)</b> qua Bot Telegram.
+          <br/><span class="text-amber-300 text-[11px]">* Nếu tài khoản đã bị khóa do nhập sai 5 lần, chỉ Quản trị hệ thống mới mở khóa được.</span>
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Tài khoản cần cấp lại mã PIN</label>
-          <select id="resetUserSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên tài khoản cần cấp lại PIN</label>
+          <input id="resetUsernameInput" type="text" placeholder="Nhập chính xác tên tài khoản..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Nhập Telegram Chat ID của bạn để xác minh</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Nhập Telegram Chat ID đã liên kết để xác minh</label>
           <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 522439752"
             class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-emerald-300 font-mono focus:outline-none focus:border-blue-500" />
         </div>
         <button id="btnResetSubmit" onclick="handleResetPasswordViaTelegram()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">
-          📩 Cấp Mã PIN Mới & Gửi Qua Telegram
+          📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram
         </button>
         <p id="resetFeedback" class="text-xs text-center hidden leading-relaxed"></p>
         <button type="button" onclick="toggleForgotPassword(false)" class="w-full text-xs text-slate-400 hover:text-white pt-1">
@@ -105,9 +125,8 @@
     </div>
   </div>
 
-  <!-- HEADER BAR GỌN GÀNG, CHỐNG TRÀN & CHỐNG NHẢY DÒNG -->
+  <!-- HEADER BAR GỌN GÀNG -->
   <header class="h-14 bg-slate-900 border-b border-slate-800 px-3 lg:px-4 flex items-center justify-between gap-2 shrink-0 z-20">
-    <!-- Trái: Nút menu mobile + Thương hiệu -->
     <div class="flex items-center gap-2 min-w-0">
       <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 shrink-0" title="Danh sách Nhóm/Dự án">
         ☰
@@ -121,23 +140,19 @@
       </div>
     </div>
 
-    <!-- Phải: Các nút điều hướng chính gọn gàng -->
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <!-- Nút Làm mới -->
-      <button id="btnManualRefresh" onclick="manualRefreshApp()" title="Làm mới dữ liệu ngay (giữ nguyên phiên đăng nhập)"
+      <button id="btnManualRefresh" onclick="manualRefreshApp()" title="Làm mới dữ liệu ngay"
         class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
         <span id="refreshIcon" class="inline-block">🔄</span>
         <span class="hidden md:inline">Làm mới</span>
       </button>
 
-      <!-- Nút Việc của tôi -->
       <button onclick="openMyTasksModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
         <span>📋</span>
         <span class="hidden sm:inline">Việc của tôi</span>
         <span id="myTaskBadge" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
       </button>
 
-      <!-- Dropdown 1: Dữ liệu & File -->
       <div class="relative" onclick="event.stopPropagation()">
         <button onclick="toggleDropdown('menuDataFiles')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
           <span>📁</span>
@@ -157,7 +172,6 @@
         </div>
       </div>
 
-      <!-- Dropdown 2: Tài khoản & Phân quyền (Đã gộp gọn, không lặp menu) -->
       <div class="relative" onclick="event.stopPropagation()">
         <button onclick="toggleDropdown('menuAccountAdmin')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition">
           <div class="text-right hidden md:block">
@@ -205,7 +219,6 @@
 
     <!-- CỘT 2 (GIỮA): KHUNG TRAO ĐỔI TRUNG TÂM & GHIM CHỈ ĐẠO -->
     <main class="flex-1 flex flex-col bg-slate-950 min-w-0">
-      <!-- Tiêu đề kênh & Thanh công cụ thao tác -->
       <div class="h-14 border-b border-slate-800 px-3 sm:px-4 flex items-center justify-between gap-2 bg-slate-900/40 shrink-0">
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
@@ -216,7 +229,6 @@
           <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate">Trao đổi công việc hàng ngày & thông báo chung của tập thể</p>
         </div>
 
-        <!-- Nhóm nút thao tác kênh -->
         <div class="flex items-center gap-1.5 shrink-0">
           <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Thông tin Nhóm/Dự án, Thành viên & Tài nguyên"
             class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
@@ -228,7 +240,6 @@
             ✅ Giao việc
           </button>
 
-          <!-- Menu gom các thao tác phụ -->
           <div class="relative" onclick="event.stopPropagation()">
             <button onclick="toggleDropdown('menuChannelActions')"
               class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
@@ -250,7 +261,7 @@
         </div>
       </div>
 
-      <!-- TÍNH NĂNG 3: THANH GHIM CHỈ ĐẠO TRỌNG TÂM ĐẦU KÊNH (PINNED DIRECTIVES) -->
+      <!-- THANH GHIM CHỈ ĐẠO TRỌNG TÂM ĐẦU KÊNH -->
       <div id="pinnedDirectivesBar" class="hidden bg-amber-950/40 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between gap-3 shrink-0">
         <div class="min-w-0 flex-1 cursor-pointer" onclick="scrollToPinnedMessage()">
           <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase text-amber-400">
@@ -264,10 +275,8 @@
         </button>
       </div>
 
-      <!-- Danh sách tin nhắn & phiếu trình duyệt -->
       <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
 
-      <!-- Thanh trạng thái Trả lời (Reply) hoặc Chỉnh sửa (Edit) tin nhắn -->
       <div id="chatActionBanner" class="hidden px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
         <div class="flex items-center gap-2 min-w-0">
           <span id="chatActionIcon" class="text-blue-400 font-bold">↩️</span>
@@ -279,7 +288,6 @@
         <button onclick="cancelChatActionBanner()" class="text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 shrink-0">✕ Hủy</button>
       </div>
 
-      <!-- Ô nhập chat, đính kèm file trực tiếp & nút biểu tượng cảm xúc -->
       <div class="p-3 border-t border-slate-800 bg-slate-900/60 shrink-0">
         <div class="flex items-center gap-2">
           <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl border border-slate-700 transition shrink-0" title="Đính kèm file trực tiếp">
@@ -312,7 +320,6 @@
         </button>
       </div>
 
-      <!-- Tab 1: Checklist công việc -->
       <div id="rightTabChecklist" class="flex-1 flex flex-col overflow-hidden">
         <div class="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
           <label class="flex items-center gap-1.5 cursor-pointer">
@@ -324,7 +331,6 @@
         <div id="checklistContainer" class="p-3 space-y-2.5 overflow-y-auto flex-1"></div>
       </div>
 
-      <!-- Tab 2: Kho Tài nguyên & File -->
       <div id="rightTabFiles" class="hidden flex-1 flex-col overflow-hidden">
         <div class="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
           <span>Tài nguyên & File đính kèm</span>
@@ -364,13 +370,13 @@
     </button>
   </div>
 
-  <!-- MODAL NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG - TÍNH NĂNG 1) -->
+  <!-- MODAL NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG) -->
   <div id="auditLogModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
         <div>
           <h3 class="text-sm font-bold text-white flex items-center gap-2">📜 Nhật Ký Kiểm Toán Hệ Thống (Audit Log)</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Tự động ghi nhận cấp đổi PIN, phân quyền, duyệt/sửa/xóa tờ trình và xóa tài nguyên</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ghi nhận khóa/mở khóa tài khoản, cấp đổi PIN chữ+số, phân quyền, duyệt/sửa/xóa tờ trình và xóa tài nguyên</p>
         </div>
         <button onclick="closeModal('auditLogModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
@@ -386,9 +392,7 @@
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
         <div>
-          <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white flex items-center gap-2">
-            🏗️ Khởi tạo Nhóm/Dự án mới
-          </h3>
+          <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white flex items-center gap-2">🏗️ Khởi tạo Nhóm/Dự án mới</h3>
           <p class="text-[11px] text-slate-400 mt-0.5">Thiết lập thông tin chung, thành viên tham gia & kho tài nguyên dự án</p>
         </div>
         <button onclick="closeModal('projectGroupModal')" class="text-slate-400 hover:text-white">✕</button>
@@ -460,7 +464,7 @@
     </div>
   </div>
 
-  <!-- MODAL TÍCH HỢP: QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN & PASS / PIN / ID TELEGRAM -->
+  <!-- MODAL TÍCH HỢP: QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN & PASS / PIN (CHỮ+SỐ) / MỞ KHÓA -->
   <div id="staffModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
@@ -468,19 +472,18 @@
           <h3 class="text-sm font-bold text-white flex items-center gap-2">
             👥 Quản Lý Nhân Sự - Phân Quyền & Pass / PIN / ID
           </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Phân quyền 7 cấp độ thực thi • Bảo mật tuyệt đối 3 trường mật của thành viên</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Chuẩn Pass/PIN 4–12 ký tự (Chữ + Số) • Mở khóa tài khoản nhập sai 5 lần</p>
         </div>
         <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
 
-      <!-- Thanh chuyển 3 mục chức năng tách bạch rõ ràng -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 shrink-0 text-xs">
         <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')"
           class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40">
           <span class="text-base">🔑</span>
           <div>
-            <div>1. Pass / PIN / ID Telegram</div>
-            <div class="text-[10px] font-normal opacity-80">Xem, sửa, xóa Pass/PIN & ID</div>
+            <div>1. Pass / PIN / ID & Mở Khóa</div>
+            <div class="text-[10px] font-normal opacity-80">Cấp đổi PIN chữ+số & mở khóa tài khoản</div>
           </div>
         </button>
 
@@ -503,21 +506,21 @@
         </button>
       </div>
 
-      <!-- MỤC 1: CHỈ ĐỔI / SỬA / XÓA PASS / PIN / ID TELEGRAM (KHÔNG CÓ FORM THÊM NHÂN SỰ) -->
+      <!-- MỤC 1: PASS / PIN (CHỮ+SỐ) / ID TELEGRAM & MỞ KHÓA -->
       <div id="staffSection_PASS_PIN_ID" class="space-y-3 overflow-y-auto flex-1 text-xs pr-1">
         <div class="bg-amber-950/30 border border-amber-600/30 rounded-xl p-3 text-amber-200 leading-relaxed">
-          🔑 <b>Bảo mật Pass / PIN & Telegram ID:</b> Chỉ quyền <b>Quản trị hệ thống (Full)</b> mới được xem, sửa đổi và xóa Pass/PIN & Telegram ID của tất cả thành viên. Các thành viên khác chỉ xem được 3 trường mật của chính mình.
+          🔑 <b>Quy tắc bảo mật Pass / PIN:</b> Mật khẩu / Mã PIN bắt buộc dài <b>4 đến 12 ký tự, bao gồm cả chữ cái và chữ số</b> (VD: <code class="text-white">tv01ab</code>). Nếu tài khoản bị khóa do nhập sai 5 lần liên tiếp, Quản trị hệ thống bấm nút <b>🔓 Mở khóa</b> ngay tại danh sách bên dưới.
         </div>
 
         <div id="passPinIdListContainer" class="space-y-2"></div>
       </div>
 
-      <!-- MỤC 2: QUẢN LÝ NHÂN SỰ & PHÂN QUYỀN (THÊM / SỬA / XÓA & GÁN 7 CẤP QUYỀN) -->
+      <!-- MỤC 2: QUẢN LÝ NHÂN SỰ & PHÂN QUYỀN -->
       <div id="staffSection_STAFF_ROLE" class="hidden space-y-3 overflow-y-auto flex-1 text-xs pr-1">
         <details class="bg-purple-950/30 border border-purple-500/30 rounded-xl p-3 text-purple-200">
           <summary class="cursor-pointer font-bold text-purple-300">📖 Xem ma trận giải thích 7 cấp phân quyền hệ thống</summary>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 text-[11px] text-slate-300">
-            <div>• <b class="text-amber-300">1. Quản trị hệ thống (Full):</b> Toàn quyền hệ thống, thêm/xóa nhân sự, sửa/xóa mọi phiếu trình, xem Audit Log.</div>
+            <div>• <b class="text-amber-300">1. Quản trị hệ thống (Full):</b> Toàn quyền hệ thống, mở khóa tài khoản, thêm/xóa nhân sự, sửa/xóa mọi phiếu trình, xem Audit Log.</div>
             <div>• <b class="text-blue-300">2. Quản trị:</b> Quản lý nhân sự trong Nhóm/Dự án, giao việc, phê duyệt nội bộ.</div>
             <div>• <b class="text-teal-300">3. Trợ lý:</b> Điều phối lịch họp, lập checklist sau họp, nhắc việc & xuất báo cáo.</div>
             <div>• <b class="text-emerald-300">4. Chủ trì / Phê duyệt:</b> Ký duyệt / từ chối tờ trình, hồ sơ đề xuất qua Web & Telegram.</div>
@@ -527,13 +530,12 @@
           </div>
         </details>
 
-        <!-- Form thêm mới thành viên & gán quyền -->
         <div id="addStaffFormBox" class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 space-y-2">
           <div class="font-bold text-emerald-400">+ Thêm Nhân Sự / Thành Viên Mới & Gán Quyền</div>
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <input id="newStaffName" type="text" placeholder="Họ và tên..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
+            <input id="newStaffName" type="text" placeholder="Tên tài khoản / Họ tên..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
             <input id="newStaffRole" type="text" placeholder="Chức vụ / Phòng ban..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
-            <input id="newStaffPin" type="text" placeholder="Mã PIN (VD: 123456)" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500" />
+            <input id="newStaffPin" type="text" maxlength="12" placeholder="PIN chữ+số (VD: tv01ab)" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500" />
             <select id="newStaffPerm" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-white focus:outline-none focus:border-purple-500">
               <option value="MEMBER">Thành viên</option>
               <option value="ASSISTANT">Trợ lý</option>
@@ -581,8 +583,8 @@
               <input id="profileTelegramId" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono focus:outline-none focus:border-blue-500" />
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">3. Mật khẩu / Mã PIN cá nhân</label>
-              <input id="profileNewPass" type="text" placeholder="Nhập Pass / PIN" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono focus:outline-none focus:border-blue-500" />
+              <label class="block text-slate-400 mb-1">3. Mật khẩu / PIN (4–12 ký tự chữ+số)</label>
+              <input id="profileNewPass" type="text" maxlength="12" placeholder="VD: tv01ab" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono focus:outline-none focus:border-blue-500" />
             </div>
           </div>
           <div class="flex justify-end">
@@ -599,7 +601,7 @@
     </div>
   </div>
 
-  <!-- MODAL CHUYỂN TIẾP TIN NHẮN (FORWARD) -->
+  <!-- MODAL CHUYỂN TIẾP TIN NHẮN -->
   <div id="forwardModal" class="fixed inset-0 z-50 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
@@ -620,14 +622,12 @@
     </div>
   </div>
 
-  <!-- MODAL 1: BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST & XUẤT EXCEL / PDF -->
+  <!-- MODAL BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST & XUẤT EXCEL / PDF -->
   <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-wrap gap-2">
         <div>
-          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            📊 Bảng Theo Dõi Tiến Độ Checklist & Xuất Báo Cáo
-          </h3>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">📊 Bảng Theo Dõi Tiến Độ Checklist & Xuất Báo Cáo</h3>
           <p id="progressModalSubtitle" class="text-xs text-slate-500 mt-0.5">Nhóm / Dự án: Phòng Điều Hành Chung</p>
         </div>
         <div class="flex items-center gap-2">
@@ -660,14 +660,12 @@
 
       <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
         <span class="text-xs text-slate-500">* Trợ lý & Quản lý có thể bấm 🔔 Nhắc việc qua Telegram hoặc xuất file Excel/PDF lưu hồ sơ.</span>
-        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">
-          Đóng bảng
-        </button>
+        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">Đóng bảng</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL 2: GIAO VIỆC MỚI -->
+  <!-- MODAL GIAO VIỆC MỚI -->
   <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -701,7 +699,7 @@
     </div>
   </div>
 
-  <!-- MODAL 3: TRÌNH PHÊ DUYỆT HỒ SƠ / TỜ TRÌNH QUA TELEGRAM (HỖ TRỢ TẠO MỚI & SỬA PHIẾU TRÌNH) -->
+  <!-- MODAL TRÌNH PHÊ DUYỆT & SỬA PHIẾU TRÌNH -->
   <div id="approvalModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -731,7 +729,7 @@
     </div>
   </div>
 
-  <!-- MODAL 4: CHỐT LỊCH HỌP, PHÂN CÔNG TỰ ĐỘNG & XUẤT BIÊN BẢN HỌP 1 CHẠM -->
+  <!-- MODAL CHỐT LỊCH HỌP & XUẤT BIÊN BẢN -->
   <div id="meetingModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -785,7 +783,7 @@
     </div>
   </div>
 
-  <!-- MODAL 5: GỬI FILE NHIỀU NGƯỜI -->
+  <!-- MODAL GỬI FILE NHIỀU NGƯỜI -->
   <div id="multiFileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -820,7 +818,7 @@
     </div>
   </div>
 
-  <!-- MODAL 6: BACKUP & RESTORE + DAILY DIGEST 17:00 -->
+  <!-- MODAL BACKUP & RESTORE + DAILY DIGEST 17:00 -->
   <div id="backupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -872,7 +870,7 @@
     </div>
   </div>
 
-  <!-- MODAL 9: VIỆC CỦA TÔI -->
+  <!-- MODAL VIỆC CỦA TÔI -->
   <div id="myTasksModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -896,12 +894,13 @@
     const TELEGRAM_BOT_USERNAME = 'TeamWork_Duyet_Bot';
     const DEFAULT_APPROVER_CHAT_ID = '522439752';
 
-    const SESSION_STORAGE_KEY = 'tw_cloud_session_uid_v6';
-    const CHANNEL_STORAGE_KEY = 'tw_cloud_active_channel_v6';
+    const SESSION_STORAGE_KEY = 'tw_cloud_session_uid_v7';
+    const CHANNEL_STORAGE_KEY = 'tw_cloud_active_channel_v7';
+    const MAX_FAILED_ATTEMPTS = 5;
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // HỆ THỐNG DIALOG NỘI BỘ (KHÔNG BAO GIỜ HIỆN TIÊU ĐỀ TÊN MIỀN TRÌNH DUYỆT)
+    // HỆ THỐNG DIALOG NỘI BỘ
     let customDialogResolver = null;
     let customDialogMode = 'ALERT';
 
@@ -979,8 +978,8 @@
 
     let dbUsers = [
       { id: 'u_admin', display_name: 'Lãnh Đạo / Quản Lý', role_title: 'Trưởng Ban / Giám Đốc', is_admin: true, pin_code: '123456', telegram_chat_id: '522439752' },
-      { id: 'u_tv1', display_name: 'Thành Viên 01', role_title: 'Chuyên viên Dự án', is_admin: false, pin_code: '123456', telegram_chat_id: '' },
-      { id: 'u_tv2', display_name: 'Thành Viên 02', role_title: 'Chuyên viên Hồ sơ', is_admin: false, pin_code: '123456', telegram_chat_id: '' }
+      { id: 'u_tv1', display_name: 'Thành Viên 01', role_title: 'Chuyên viên Dự án', is_admin: false, pin_code: 'tv01ab', telegram_chat_id: '' },
+      { id: 'u_tv2', display_name: 'Thành Viên 02', role_title: 'Chuyên viên Hồ sơ', is_admin: false, pin_code: 'tv02ab', telegram_chat_id: '' }
     ];
     let dbChannels = [
       { id: 'c_general', name: 'Phòng Điều Hành Chung', description: 'Trao đổi công việc hàng ngày & thông báo chung của tập thể' },
@@ -994,7 +993,8 @@
     let dbUserPermsMap = {};
     let dbAuditLogs = [];
     let dbPinnedMap = {};
-    let dbApprovalHistoryMap = {}; // Lưu lịch sử sửa phiếu trình: { [msgId]: { count, lastEditedAt, lastEditedBy } }
+    let dbApprovalHistoryMap = {};
+    let dbAccountLocksMap = {}; // Lưu trạng thái sai & khóa: { [userId]: { fails: 0, locked: false, lockedAt: '' } }
 
     let currentUser = null;
     let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || 'c_general';
@@ -1009,7 +1009,52 @@
     let translatedCache = {};
 
     // =========================================================================
-    // 2. PHÂN QUYỀN & KHÓA CỨNG QUYỀN QUẢN TRỊ HỆ THỐNG CHO TÀI KHOẢN GỐC
+    // 2. KIỂM TRA ĐỊNH DẠNG PASS/PIN CHỮ + SỐ (4 - 12 KÝ TỰ) & SINH MÃ NGẪU NHIÊN
+    // =========================================================================
+    function validateAlphanumericPin(pinStr) {
+      const val = String(pinStr || '').trim();
+      if (val.length < 4 || val.length > 12) {
+        return { ok: false, msg: 'Mật khẩu / Mã PIN phải có độ dài từ 4 đến 12 ký tự!' };
+      }
+      if (!/^[A-Za-z0-9]+$/.test(val)) {
+        return { ok: false, msg: 'Mật khẩu / Mã PIN chỉ được chứa chữ cái không dấu (A-Z, a-z) và chữ số (0-9)!' };
+      }
+      if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) {
+        return { ok: false, msg: 'Mật khẩu / Mã PIN bắt buộc phải bao gồm CẢ CHỮ CÁI VÀ CHỮ SỐ (Ví dụ: tv01ab, ql2026)!' };
+      }
+      return { ok: true, value: val };
+    }
+
+    function generateRandomAlphanumericPin(length = 6) {
+      const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
+      const digits = '23456789';
+      const all = letters + digits;
+      let chars = [
+        letters.charAt(Math.floor(Math.random() * letters.length)),
+        digits.charAt(Math.floor(Math.random() * digits.length))
+      ];
+      for (let i = 2; i < length; i++) {
+        chars.push(all.charAt(Math.floor(Math.random() * all.length)));
+      }
+      for (let i = chars.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [chars[i], chars[j]] = [chars[j], chars[i]];
+      }
+      return chars.join('');
+    }
+
+    function isAccountLocked(userId) {
+      const info = dbAccountLocksMap[String(userId)];
+      return Boolean(info && info.locked === true);
+    }
+
+    function getAccountFailCount(userId) {
+      const info = dbAccountLocksMap[String(userId)];
+      return info ? (Number(info.fails) || 0) : 0;
+    }
+
+    // =========================================================================
+    // 3. PHÂN QUYỀN & KHÓA CỨNG QUYỀN QUẢN TRỊ HỆ THỐNG CHO TÀI KHOẢN GỐC
     // =========================================================================
     function isPrimarySystemOwner(user) {
       if (!user) return false;
@@ -1060,28 +1105,27 @@
       return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
     }
 
-    // Kiểm tra quyền Sửa / Xóa Phiếu trình phê duyệt theo đúng quy tắc chỉ thị
     function canEditApprovalItem(msg) {
       if (!currentUser || !msg) return false;
-      if (isSystemFullAdmin(currentUser)) return true; // Quản trị hệ thống sửa bất kỳ lúc nào
+      if (isSystemFullAdmin(currentUser)) return true;
       const isSubmitter = String(currentUser.display_name || '').trim() === String(msg.sender_name || '').trim();
-      return isSubmitter && msg.approval_status === 'PENDING'; // Người trình chỉ sửa khi chưa duyệt
+      return isSubmitter && msg.approval_status === 'PENDING';
     }
 
     function canDeleteApprovalItem(msg) {
       if (!currentUser || !msg) return false;
-      return isSystemFullAdmin(currentUser); // Duy nhất Quản trị hệ thống được xóa phiếu trình (kể cả chưa duyệt)
+      return isSystemFullAdmin(currentUser);
     }
 
     // =========================================================================
-    // 3. NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG - TÍNH NĂNG 1)
+    // 4. NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG)
     // =========================================================================
-    async function recordAuditLog(actionType, detailText) {
+    async function recordAuditLog(actionType, detailText, customActor = null) {
       try {
         const entry = {
           id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 999),
           at: new Date().toISOString(),
-          actor: currentUser ? `${currentUser.display_name} [${getUserPermDef(currentUser).label}]` : 'Hệ thống',
+          actor: customActor || (currentUser ? `${currentUser.display_name} [${getUserPermDef(currentUser).label}]` : 'Hệ thống bảo mật'),
           action: actionType,
           detail: detailText
         };
@@ -1097,7 +1141,7 @@
       }
       const box = document.getElementById('auditLogListContainer');
       if (!dbAuditLogs.length) {
-        box.innerHTML = `<div class="text-center text-slate-400 py-8">Chưa có bản ghi kiểm toán nào. Mọi thao tác đổi PIN, phân quyền, duyệt/sửa/xóa tờ trình và xóa tài nguyên sẽ tự động lưu tại đây.</div>`;
+        box.innerHTML = `<div class="text-center text-slate-400 py-8">Chưa có bản ghi kiểm toán nào.</div>`;
       } else {
         box.innerHTML = dbAuditLogs.map(log => `
           <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1116,7 +1160,7 @@
     }
 
     // =========================================================================
-    // 4. TIỆN ÍCH DROPDOWN, REFRESH KHÔNG THOÁT ĐĂNG NHẬP & GIAO DIỆN
+    // 5. TIỆN ÍCH DROPDOWN, REFRESH & GIAO DIỆN
     // =========================================================================
     function toggleDropdown(menuId) {
       const target = document.getElementById(menuId);
@@ -1204,14 +1248,12 @@
     }
 
     // =========================================================================
-    // 5. NHẬN DIỆN CHÍNH XÁC TỌA ĐỘ / ĐỊA CHỈ CỤ THỂ CHO GOOGLE MAPS
-    // (Tuyệt đối không bật nhầm với tin nhắn thường hoặc sau khi xóa/sửa)
+    // 6. NHẬN DIỆN CHÍNH XÁC TỌA ĐỘ / ĐỊA CHỈ CỤ THỂ CHO GOOGLE MAPS
     // =========================================================================
     function extractLocationForMap(text) {
       if (!text || text.includes('Tin nhắn đã được thu hồi') || text.startsWith('⚙️') || text.startsWith('🏗️')) return null;
       const clean = String(text).replace(/<[^>]*>/g, ' ').trim();
 
-      // 1. Tọa độ GPS thực (VD: 10.7769, 106.7009)
       const coordRegex = /(?:^|[\s:(])(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})(?:$|[\s),.;])/;
       const coordMatch = clean.match(coordRegex);
       if (coordMatch) {
@@ -1222,7 +1264,6 @@
         }
       }
 
-      // 2. Địa chỉ có tiền tố rõ ràng (Địa chỉ:, Tọa độ:, Vị trí thực địa:)
       const strictAddressRegex = /(?:địa chỉ|tọa độ|vị trí thực địa)\s*:\s*([^\n.;!?]{8,80})/i;
       const explicitMatch = clean.match(strictAddressRegex);
       if (explicitMatch && explicitMatch[1].trim().length >= 8) {
@@ -1230,7 +1271,6 @@
         return { query: loc, label: loc };
       }
 
-      // 3. Địa chỉ hành chính thực tế (Số nhà + Đường/QL hoặc Phường/Xã + Quận/Huyện/TP/Tỉnh)
       const adminUnitRegex = /(?:số\s+\d+[a-z0-9\/\-]*\s+(?:đường|quốc lộ|ql|tỉnh lộ|tl)|(?:quốc lộ|ql)\s*\d+[a-z]?|(?:phường|xã|thị trấn)\s+[A-ZÀ-Ỹ0-9][a-zà-ỹ0-9\s]{1,25},\s*(?:quận|huyện|thị xã|tp\.?|thành phố|tỉnh)\s+[A-ZÀ-Ỹ0-9][a-zà-ỹ0-9\s]{1,25})/i;
       const adminMatch = clean.match(adminUnitRegex);
       if (adminMatch) {
@@ -1261,7 +1301,7 @@
     }
 
     // =========================================================================
-    // 6. ĐỒNG BỘ DỮ LIỆU TỪ SUPABASE (KHÔNG LÀM NHẢY MODAL KHI ĐANG NHẬP)
+    // 7. ĐỒNG BỘ DỮ LIỆU TỪ SUPABASE & KHÔI PHỤC PHIÊN GHI NHỚ
     // =========================================================================
     function isAnyModalCurrentlyOpen() {
       const modalIds = ['staffModal', 'projectGroupModal', 'assignModal', 'approvalModal', 'meetingModal', 'multiFileModal', 'backupModal', 'forwardModal', 'auditLogModal'];
@@ -1282,7 +1322,7 @@
 
         if (uRes.data && uRes.data.length > 0) dbUsers = uRes.data;
         if (cRes.data && cRes.data.length > 0) {
-          const systemNames = ['__BACKUP_SCHEDULE__', '__GROUP_META__', '__USER_PERMS__', '__AUDIT_LOGS__', '__PINNED_DIRECTIVES__', '__APPROVAL_HISTORY__'];
+          const systemNames = ['__BACKUP_SCHEDULE__', '__GROUP_META__', '__USER_PERMS__', '__AUDIT_LOGS__', '__PINNED_DIRECTIVES__', '__APPROVAL_HISTORY__', '__ACCOUNT_LOCKS__'];
           dbChannels = cRes.data.filter(c => !systemNames.includes(c.name));
 
           const metaRow = cRes.data.find(c => c.name === '__GROUP_META__');
@@ -1309,17 +1349,30 @@
           if (appHistRow && appHistRow.description) {
             try { dbApprovalHistoryMap = JSON.parse(appHistRow.description) || {}; } catch (e) {}
           }
+
+          const lockRow = cRes.data.find(c => c.name === '__ACCOUNT_LOCKS__');
+          if (lockRow && lockRow.description) {
+            try { dbAccountLocksMap = JSON.parse(lockRow.description) || {}; } catch (e) {}
+          }
         }
         if (mRes.data) dbMessages = mRes.data;
         if (tRes.data) dbTasks = tRes.data;
 
-        initLoginOptions();
-
-        const savedUid = localStorage.getItem(SESSION_STORAGE_KEY);
+        const savedUid = localStorage.getItem(SESSION_STORAGE_KEY) || sessionStorage.getItem(SESSION_STORAGE_KEY);
         if (savedUid && !currentUser) {
           const found = dbUsers.find(u => String(u.id) === String(savedUid));
-          if (found) applyLoggedInUI(found);
+          if (found && !isAccountLocked(found.id)) {
+            applyLoggedInUI(found, Boolean(localStorage.getItem(SESSION_STORAGE_KEY)));
+          } else if (found && isAccountLocked(found.id)) {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+          }
         } else if (currentUser) {
+          if (isAccountLocked(currentUser.id)) {
+            handleLogout();
+            showAppNotice('Tài khoản của bạn vừa bị khóa bảo mật. Vui lòng liên hệ Quản trị hệ thống để mở khóa.', '🔒 Tài khoản đã khóa');
+            return;
+          }
           const refreshed = dbUsers.find(u => String(u.id) === String(currentUser.id));
           if (refreshed) currentUser = refreshed;
           applyPermissionUI();
@@ -1345,20 +1398,15 @@
       }
     }
 
-    function initLoginOptions() {
-      const html = dbUsers.map(u => {
-        const pDef = getUserPermDef(u);
-        return `<option value="${u.id}">${u.display_name} — [${pDef.label}] (${u.role_title || 'Thành viên'})</option>`;
-      }).join('');
-      const s1 = document.getElementById('loginUserSelect');
-      const s2 = document.getElementById('resetUserSelect');
-      if (s1) s1.innerHTML = html;
-      if (s2) s2.innerHTML = html;
-    }
-
-    function applyLoggedInUI(user) {
+    function applyLoggedInUI(user, rememberMe = true) {
       currentUser = user;
-      localStorage.setItem(SESSION_STORAGE_KEY, user.id);
+      if (rememberMe) {
+        localStorage.setItem(SESSION_STORAGE_KEY, user.id);
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      } else {
+        sessionStorage.setItem(SESSION_STORAGE_KEY, user.id);
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      }
       document.getElementById('loginScreen').classList.add('hidden');
       applyPermissionUI();
       updateTelegramIndicator();
@@ -1400,8 +1448,13 @@
     }
 
     // =========================================================================
-    // 7. ĐĂNG NHẬP & QUÊN MẬT KHẨU CẤP MÃ PIN 6 SỐ QUA TELEGRAM
+    // 8. ĐĂNG NHẬP NHẬP TAY, ĐẾM SAI 5 LẦN KHÓA TÀI KHOẢN & QUÊN MẬT KHẨU
     // =========================================================================
+    function toggleLoginPasswordVisibility() {
+      const inp = document.getElementById('loginPassword');
+      inp.type = (inp.type === 'password') ? 'text' : 'password';
+    }
+
     function toggleForgotPassword(showForgot) {
       const loginBox = document.getElementById('loginFormBox');
       const forgotBox = document.getElementById('forgotPasswordBox');
@@ -1409,7 +1462,7 @@
       document.getElementById('resetFeedback').classList.add('hidden');
 
       if (showForgot) {
-        document.getElementById('resetUserSelect').value = document.getElementById('loginUserSelect').value;
+        document.getElementById('resetUsernameInput').value = document.getElementById('loginUsernameInput').value.trim();
         document.getElementById('resetTelegramIdInput').value = '';
         loginBox.classList.add('hidden');
         forgotBox.classList.remove('hidden');
@@ -1419,79 +1472,162 @@
       }
     }
 
+    function findUserByLoginName(rawName) {
+      const q = String(rawName || '').trim().toLowerCase();
+      if (!q) return null;
+      return dbUsers.find(u =>
+        String(u.display_name || '').trim().toLowerCase() === q ||
+        String(u.id || '').trim().toLowerCase() === q
+      ) || null;
+    }
+
     async function handleLogin() {
-      const userId = document.getElementById('loginUserSelect').value;
+      const rawUsername = document.getElementById('loginUsernameInput').value.trim();
       const pass = document.getElementById('loginPassword').value.trim();
-      const user = dbUsers.find(u => String(u.id) === String(userId));
+      const rememberMe = document.getElementById('rememberLoginCheck').checked;
       const errEl = document.getElementById('loginError');
 
-      const isMasterRecovery = user && isSystemFullAdmin(user) && pass === 'ADMIN999';
-      const isValid = user && (pass === String(user.pin_code || '') || (!user.pin_code && pass === '123456') || isMasterRecovery);
+      errEl.classList.add('hidden');
 
-      if (!isValid) {
-        errEl.textContent = 'Mật khẩu / Mã PIN chưa đúng. Bấm "Quên mật khẩu / PIN?" phía trên để nhận mã PIN mới qua Telegram.';
+      if (!rawUsername || !pass) {
+        errEl.innerHTML = '⚠️ Vui lòng nhập đầy đủ <b>Tên tài khoản</b> và <b>Mật khẩu / Mã PIN</b>!';
         errEl.classList.remove('hidden');
         return;
       }
 
-      if (isMasterRecovery) {
-        await sb.from('team_users').update({ pin_code: '123456', is_admin: true }).eq('id', user.id);
-        user.pin_code = '123456';
-        user.is_admin = true;
+      const user = findUserByLoginName(rawUsername);
+      if (!user) {
+        errEl.innerHTML = '❌ Tên tài khoản không tồn tại trong hệ thống. Vui lòng kiểm tra lại chính xác tên tài khoản được cấp.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      // 1. Kiểm tra tài khoản đã bị khóa (LOCKED) hay chưa
+      if (isAccountLocked(user.id)) {
+        errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA (LOCKED)!</b><br/>Tài khoản <b>${escapeHtmlSafe(user.display_name)}</b> đã nhập sai mật khẩu liên tục ${MAX_FAILED_ATTEMPTS} lần.<br/>Chỉ <b>Quản trị hệ thống</b> mới có quyền mở khóa tài khoản này.`;
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const isValid = (pass === String(user.pin_code || ''));
+
+      // 2. Xử lý khi nhập SAI Pass/PIN -> Tăng bộ đếm & khóa ngay ở lần thứ 5
+      if (!isValid) {
+        const prevFails = getAccountFailCount(user.id);
+        const newFails = prevFails + 1;
+        const shouldLock = newFails >= MAX_FAILED_ATTEMPTS;
+
+        dbAccountLocksMap[String(user.id)] = {
+          fails: newFails,
+          locked: shouldLock,
+          lockedAt: shouldLock ? new Date().toISOString() : ''
+        };
+        await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
+
+        if (shouldLock) {
+          await recordAuditLog(
+            'KHÓA TÀI KHOẢN TỰ ĐỘNG',
+            `Tài khoản "${user.display_name}" bị khóa (LOCKED) do nhập sai mật khẩu liên tiếp ${MAX_FAILED_ATTEMPTS} lần.`,
+            'Hệ thống Bảo mật'
+          );
+
+          // Cảnh báo qua Telegram cho Quản trị hệ thống gốc
+          await callGasWebhook({
+            action: 'SECURITY_ALERT',
+            chatId: DEFAULT_APPROVER_CHAT_ID,
+            message: `🚨 <b>CẢNH BÁO BẢO MẬT — KHÓA TÀI KHOẢN</b>\n\n• Tài khoản: <b>${user.display_name}</b>\n• Lý do: Nhập sai mật khẩu liên tiếp <b>${MAX_FAILED_ATTEMPTS} lần</b>.\n• Trạng thái: <b>ĐÃ KHÓA (LOCKED)</b>. Vào mục Quản lý Nhân sự trên Web App để mở khóa.`
+          });
+
+          errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA!</b><br/>Bạn đã nhập sai mật khẩu <b>5/5 lần</b>. Hệ thống đã khóa tài khoản <b>${escapeHtmlSafe(user.display_name)}</b>.<br/>Vui lòng liên hệ <b>Quản trị hệ thống</b> để mở khóa và cấp lại mã PIN.`;
+        } else {
+          const remain = MAX_FAILED_ATTEMPTS - newFails;
+          errEl.innerHTML = `❌ Sai Mật khẩu / Mã PIN (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).<br/>Còn <b>${remain} lần thử</b> trước khi tài khoản bị khóa tự động. Nếu quên, hãy bấm <b>"Quên mật khẩu / PIN?"</b> phía trên.`;
+        }
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      // 3. Đăng nhập thành công -> Xóa bộ đếm sai (nếu có)
+      if (dbAccountLocksMap[String(user.id)]) {
+        delete dbAccountLocksMap[String(user.id)];
+        await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
       }
 
       errEl.classList.add('hidden');
-      applyLoggedInUI(user);
+      document.getElementById('loginPassword').value = '';
+      applyLoggedInUI(user, rememberMe);
 
+      // Vừa đăng nhập xong, nếu chưa liên kết Telegram -> Tự động bật hộp thoại link Telegram để cấp ID
       if (!user.telegram_chat_id) {
-        setTimeout(() => openStaffModal('MY_TELEGRAM', true), 350);
+        setTimeout(() => openStaffModal('MY_TELEGRAM', true), 300);
       }
     }
 
     function handleLogout() {
       currentUser = null;
       localStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
       document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').classList.add('hidden');
       toggleForgotPassword(false);
       document.getElementById('loginScreen').classList.remove('hidden');
     }
 
     async function handleResetPasswordViaTelegram() {
-      const userId = document.getElementById('resetUserSelect').value;
+      const rawUsername = document.getElementById('resetUsernameInput').value.trim();
       const inputTgId = document.getElementById('resetTelegramIdInput').value.trim();
       const fbEl = document.getElementById('resetFeedback');
       const btn = document.getElementById('btnResetSubmit');
 
       fbEl.classList.remove('hidden', 'text-rose-400', 'text-emerald-400');
-      if (!inputTgId) {
-        fbEl.textContent = '⚠️ Vui lòng nhập Telegram Chat ID của bạn!';
-        fbEl.classList.add('text-rose-400');
-        return;
-      }
-      const user = dbUsers.find(u => String(u.id) === String(userId));
-      if (!user) return;
-      if (!user.telegram_chat_id || String(user.telegram_chat_id).trim() !== inputTgId) {
-        fbEl.textContent = '❌ Telegram Chat ID không khớp với hồ sơ đã đăng ký!';
+      if (!rawUsername || !inputTgId) {
+        fbEl.textContent = '⚠️ Vui lòng nhập đầy đủ Tên tài khoản và Telegram Chat ID!';
         fbEl.classList.add('text-rose-400');
         return;
       }
 
-      const newPin = String(Math.floor(100000 + Math.random() * 900000));
+      const user = findUserByLoginName(rawUsername);
+      if (!user) {
+        fbEl.textContent = '❌ Không tìm thấy tên tài khoản này trong hệ thống!';
+        fbEl.classList.add('text-rose-400');
+        return;
+      }
+
+      // Nếu đã bị khóa do nhập sai 5 lần -> Không cho tự reset, bắt buộc Quản trị hệ thống mở khóa
+      if (isAccountLocked(user.id)) {
+        fbEl.innerHTML = '🔒 Tài khoản này đã bị <b>KHÓA</b> do nhập sai 5 lần liên tiếp. Chỉ <b>Quản trị hệ thống</b> mới có thể mở khóa!';
+        fbEl.classList.add('text-rose-400');
+        return;
+      }
+
+      if (!user.telegram_chat_id || String(user.telegram_chat_id).trim() !== inputTgId) {
+        fbEl.textContent = '❌ Telegram Chat ID không khớp với hồ sơ đã liên kết!';
+        fbEl.classList.add('text-rose-400');
+        return;
+      }
+
+      const newPin = generateRandomAlphanumericPin(6);
       btn.disabled = true;
       btn.textContent = 'Đang cấp mã PIN mới...';
 
       await sb.from('team_users').update({ pin_code: newPin }).eq('id', user.id);
       user.pin_code = newPin;
+      if (dbAccountLocksMap[String(user.id)]) {
+        delete dbAccountLocksMap[String(user.id)];
+        await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
+      }
+
+      await recordAuditLog('CẤP LẠI PIN QUA TELEGRAM', `Thành viên "${user.display_name}" tự yêu cầu cấp lại mã PIN ngẫu nhiên qua Telegram.`, user.display_name);
 
       await callGasWebhook({
         action: 'RESET_PIN',
         chatId: String(user.telegram_chat_id),
-        message: `🔐 <b>TEAMWORK CLOUD — KHÔI PHỤC MẬT KHẨU</b>\n\n👤 Tài khoản: <b>${user.display_name}</b>\n🔑 Mã PIN mới: <code>${newPin}</code>`
+        message: `🔐 <b>TEAMWORK CLOUD — CẤP LẠI MÃ PIN MỚI</b>\n\n👤 Tên tài khoản: <b>${user.display_name}</b>\n🔑 Mã PIN mới (Chữ + Số): <code>${newPin}</code>\n\nHãy dùng tên tài khoản và mã PIN trên để đăng nhập lại.`
       });
 
       btn.disabled = false;
-      btn.textContent = '📩 Cấp Mã PIN Mới & Gửi Qua Telegram';
-      fbEl.innerHTML = `✅ Đã gửi mã PIN 6 số mới tới Telegram ID <b>${inputTgId}</b>.`;
+      btn.textContent = '📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram';
+      fbEl.innerHTML = `✅ Đã gửi mã PIN ngẫu nhiên (chữ + số) tới Telegram ID <b>${inputTgId}</b>. Hãy kiểm tra Telegram và quay lại đăng nhập.`;
       fbEl.classList.add('text-emerald-400');
     }
 
@@ -1507,7 +1643,7 @@
     }
 
     // =========================================================================
-    // 8. KHỞI TẠO & CHỈNH SỬA / XÓA NHÓM / DỰ ÁN
+    // 9. KHỞI TẠO & CHỈNH SỬA / XÓA NHÓM / DỰ ÁN
     // =========================================================================
     async function openProjectGroupModal(editChannelId = null) {
       const isEdit = Boolean(editChannelId);
@@ -1712,7 +1848,7 @@
     }
 
     // =========================================================================
-    // 9. GHIM CHỈ ĐẠO ĐẦU KÊNH (TÍNH NĂNG 3), HIỂN THỊ TIN NHẮN & PHIẾU TRÌNH
+    // 10. GHIM CHỈ ĐẠO ĐẦU KÊNH, HIỂN THỊ TIN NHẮN & PHIẾU TRÌNH
     // =========================================================================
     function renderPinnedDirectiveBar() {
       const bar = document.getElementById('pinnedDirectivesBar');
@@ -1929,7 +2065,6 @@
       closeAllDropdowns();
       if (!msg) return;
 
-      // Nếu là Phiếu trình phê duyệt -> Mở modal sửa chuyên biệt cho phiếu trình
       if (msg.msg_type === 'APPROVAL') {
         openEditApprovalModal(msg.id);
         return;
@@ -2104,7 +2239,6 @@
             badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30">❌ ĐÃ TỪ CHỐI (${m.approver_name || 'Chủ trì'})</span>`;
           }
 
-          // Nhãn trạng thái nhật ký chỉnh sửa phiếu trình (Ngày/tháng/năm, giờ sửa, số lần sửa)
           const editHist = dbApprovalHistoryMap[String(m.id)];
           const editLogBadgeHtml = (editHist && editHist.count > 0) ? `
             <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/30 text-[11px] font-medium">
@@ -2296,7 +2430,7 @@
     }
 
     // =========================================================================
-    // 10. CHECKLIST, BẢNG TIẾN ĐỘ & XUẤT EXCEL / PDF 1 CHẠM (TÍNH NĂNG 4)
+    // 11. CHECKLIST, BẢNG TIẾN ĐỘ & XUẤT EXCEL / PDF
     // =========================================================================
     function renderTasks() {
       const container = document.getElementById('checklistContainer');
@@ -2665,7 +2799,7 @@
     }
 
     // =========================================================================
-    // 11. TRÌNH PHÊ DUYỆT, SỬA/XÓA PHIẾU TRÌNH (CÓ NHẬT KÝ), CHỐT LỊCH HỌP
+    // 12. TRÌNH PHÊ DUYỆT, SỬA/XÓA PHIẾU TRÌNH, CHỐT LỊCH HỌP
     // =========================================================================
     function openApprovalModal() {
       document.getElementById('editingApprovalId').value = '';
@@ -2735,7 +2869,6 @@
 
       if (!content) return showAppNotice('Vui lòng nhập nội dung trình phê duyệt!', '⚠️ Thiếu nội dung');
 
-      // CHẾ ĐỘ CHỈNH SỬA PHIẾU TRÌNH ĐÃ CÓ
       if (editId) {
         const existingMsg = dbMessages.find(m => String(m.id) === String(editId));
         if (!existingMsg || !canEditApprovalItem(existingMsg)) return;
@@ -2754,7 +2887,6 @@
             existingMsg.file_name = updateFields.file_name;
           }
 
-          // Ghi nhận nhật ký sửa: Số lần sửa + Ngày/tháng/năm + Giờ sửa
           const prevHist = dbApprovalHistoryMap[String(editId)] || { count: 0 };
           const newCount = (Number(prevHist.count) || 0) + 1;
           const nowIso = new Date().toISOString();
@@ -2783,7 +2915,6 @@
         return;
       }
 
-      // CHẾ ĐỘ TẠO MỚI PHIẾU TRÌNH
       const approverId = document.getElementById('approvalApprover').value;
       const approver = dbUsers.find(u => String(u.id) === String(approverId));
       const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
@@ -3028,7 +3159,7 @@
     }
 
     // =========================================================================
-    // 12. BACKUP & RESTORE + DAILY DIGEST 17:00
+    // 13. BACKUP & RESTORE + DAILY DIGEST 17:00
     // =========================================================================
     function openBackupModal() {
       const isFull = isSystemFullAdmin(currentUser);
@@ -3131,7 +3262,7 @@
     }
 
     // =========================================================================
-    // 13. QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN & ĐỔI PASS / PIN / ID (BẢO MẬT TUYỆT ĐỐI)
+    // 14. QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN, ĐỔI PASS/PIN CHỮ+SỐ & MỞ KHÓA TÀI KHOẢN
     // =========================================================================
     function openStaffModal(defaultTab = 'PASS_PIN_ID', autoListenTg = false) {
       renderStaffPassPinIdTab();
@@ -3173,6 +3304,8 @@
         const targetPerm = getUserPermDef(u);
         const isSelf = currentUser && String(currentUser.id) === String(u.id);
         const canAccess3Fields = callerIsFull || isSelf;
+        const locked = isAccountLocked(u.id);
+        const failCount = getAccountFailCount(u.id);
 
         if (!canAccess3Fields) {
           return `
@@ -3187,13 +3320,20 @@
         }
 
         return `
-          <div class="bg-slate-800/90 border ${isSelf ? 'border-blue-500/40' : 'border-slate-700'} rounded-xl p-3 space-y-2">
+          <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : (isSelf ? 'border-blue-500/40' : 'border-slate-700')} rounded-xl p-3 space-y-2">
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-bold text-white">${escapeHtmlSafe(u.display_name)}</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
                 ${isSelf ? '<span class="text-[10px] text-blue-400 font-semibold">(Tài khoản của bạn)</span>' : ''}
+                ${locked ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white">🔒 ĐANG BỊ KHÓA (SAI 5 LẦN)</span>' : (failCount > 0 ? `<span class="text-[10px] text-amber-400">(Đã nhập sai ${failCount}/5 lần)</span>` : '')}
               </div>
+
+              ${(callerIsFull && locked) ? `
+                <button type="button" onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow-md transition">
+                  🔓 Mở khóa & Cấp lại PIN mới
+                </button>
+              ` : ''}
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
@@ -3204,8 +3344,8 @@
               </div>
 
               <div class="sm:col-span-3">
-                <label class="block text-[10px] text-slate-400 mb-0.5">2. Mật khẩu / Mã PIN</label>
-                <input id="editPinInput_${u.id}" type="text" value="${escapeHtmlSafe(u.pin_code || '123456')}"
+                <label class="block text-[10px] text-slate-400 mb-0.5">2. Mật khẩu / PIN (4–12 chữ+số)</label>
+                <input id="editPinInput_${u.id}" type="text" maxlength="12" value="${escapeHtmlSafe(u.pin_code || '')}" placeholder="VD: tv01ab"
                   class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500" />
               </div>
 
@@ -3227,6 +3367,32 @@
           </div>
         `;
       }).join('');
+    }
+
+    async function adminUnlockUserAccount(userId) {
+      if (!isSystemFullAdmin(currentUser)) return;
+      const u = dbUsers.find(x => String(x.id) === String(userId));
+      if (!u) return;
+
+      const freshPin = generateRandomAlphanumericPin(6);
+      await sb.from('team_users').update({ pin_code: freshPin }).eq('id', userId);
+      u.pin_code = freshPin;
+
+      delete dbAccountLocksMap[String(userId)];
+      await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
+      await recordAuditLog('MỞ KHÓA TÀI KHOẢN', `Quản trị hệ thống mở khóa cho "${u.display_name}" và cấp lại PIN mới "${freshPin}".`);
+
+      if (u.telegram_chat_id) {
+        await callGasWebhook({
+          action: 'SECURITY_ALERT',
+          chatId: String(u.telegram_chat_id),
+          message: `🔓 <b>TÀI KHOẢN ĐÃ ĐƯỢC MỞ KHÓA</b>\n\n• Tên tài khoản: <b>${u.display_name}</b>\n• Mã PIN mới được cấp (Chữ + Số): <code>${freshPin}</code>\n• Người mở khóa: ${currentUser.display_name}`
+        });
+      }
+
+      renderStaffPassPinIdTab();
+      renderStaffRoleTab();
+      showAppNotice(`Đã mở khóa thành công cho tài khoản "${u.display_name}"!\nMã PIN mới (chữ + số) được cấp là: ${freshPin}`, '🔓 Mở khóa tài khoản thành công');
     }
 
     async function clearUserTelegramId(userId) {
@@ -3253,28 +3419,32 @@
       }
 
       const newRole = document.getElementById(`editRoleInput_${userId}`).value.trim() || 'Thành viên';
-      const newPin = document.getElementById(`editPinInput_${userId}`).value.trim();
+      const rawPin = document.getElementById(`editPinInput_${userId}`).value.trim();
       const newTgId = document.getElementById(`editTgInput_${userId}`).value.trim();
-      if (!newPin) return showAppNotice('Mật khẩu / Mã PIN không được để trống!', '⚠️ Thiếu mã PIN');
 
-      await sb.from('team_users').update({ role_title: newRole, pin_code: newPin, telegram_chat_id: newTgId }).eq('id', userId);
+      const checkPin = validateAlphanumericPin(rawPin);
+      if (!checkPin.ok) {
+        return showAppNotice(checkPin.msg, '⚠️ Sai định dạng Mật khẩu / Mã PIN');
+      }
+
+      await sb.from('team_users').update({ role_title: newRole, pin_code: checkPin.value, telegram_chat_id: newTgId }).eq('id', userId);
       u.role_title = newRole;
-      u.pin_code = newPin;
+      u.pin_code = checkPin.value;
       u.telegram_chat_id = newTgId;
 
       if (isSelf) {
         currentUser.role_title = newRole;
-        currentUser.pin_code = newPin;
+        currentUser.pin_code = checkPin.value;
         currentUser.telegram_chat_id = newTgId;
         applyPermissionUI();
         updateTelegramIndicator();
       }
 
-      await recordAuditLog('CẤP ĐỔI PIN / ID', `Cập nhật Pass/PIN & Telegram ID cho thành viên "${u.display_name}".`);
+      await recordAuditLog('CẤP ĐỔI PIN / ID', `Cập nhật Pass/PIN chữ+số & Telegram ID cho thành viên "${u.display_name}".`);
       renderChannelsAndDm();
       renderStaffPassPinIdTab();
       renderStaffRoleTab();
-      showAppNotice(`Đã lưu thông tin Pass/PIN & Telegram ID cho "${u.display_name}"!`, '🔑 Cập nhật Pass/PIN thành công');
+      showAppNotice(`Đã lưu thông tin Pass/PIN (${checkPin.value}) & Telegram ID cho "${u.display_name}"!`, '🔑 Cập nhật Pass/PIN thành công');
     }
 
     function renderStaffRoleTab() {
@@ -3287,6 +3457,7 @@
         const isRootOwner = isPrimarySystemOwner(u);
         const targetPerm = getUserPermDef(u);
         const canSeeDetails = callerIsFull || isSelf;
+        const locked = isAccountLocked(u.id);
 
         if (!canSeeDetails) {
           return `
@@ -3304,21 +3475,28 @@
         ).join('');
 
         return `
-          <div class="bg-slate-800/90 border border-slate-700 rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : 'border-slate-700'} rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div class="space-y-0.5 min-w-0">
               <div class="font-bold text-white flex items-center gap-2 flex-wrap">
                 <span>${escapeHtmlSafe(u.display_name)}</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
+                ${locked ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white">🔒 ĐANG KHÓA</span>' : ''}
               </div>
               <div class="text-[11px] text-slate-400">
                 Chức vụ: <b class="text-slate-200">${escapeHtmlSafe(u.role_title || 'Chuyên viên')}</b>
-                • PIN: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '123456')}</code>
+                • PIN: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '')}</code>
                 • Telegram: <span class="${u.telegram_chat_id ? 'text-emerald-400' : 'text-rose-400'}">${u.telegram_chat_id || 'Chưa gắn'}</span>
               </div>
             </div>
 
             ${callerIsFull ? `
               <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                ${locked ? `
+                  <button type="button" onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold">
+                    🔓 Mở khóa
+                  </button>
+                ` : ''}
+
                 ${isRootOwner ? `
                   <span class="text-[11px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg font-semibold">
                     🔒 Quyền Quản trị gốc (Cố định)
@@ -3365,7 +3543,6 @@
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      initLoginOptions();
       showAppNotice(`Đã cấp quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${u.display_name}"!`, '🛡️ Cập nhật Phân quyền');
     }
 
@@ -3375,18 +3552,27 @@
       }
       const name = document.getElementById('newStaffName').value.trim();
       const role = document.getElementById('newStaffRole').value.trim() || 'Chuyên viên';
-      const pin = document.getElementById('newStaffPin').value.trim() || '123456';
+      const rawPin = document.getElementById('newStaffPin').value.trim();
       const permCode = document.getElementById('newStaffPerm').value || 'MEMBER';
 
       if (!name) {
-        return showAppNotice('Vui lòng nhập Họ và tên thành viên mới trước khi bấm Thêm!', '👥 Quản lý Nhân sự');
+        return showAppNotice('Vui lòng nhập Tên tài khoản / Họ tên thành viên mới trước khi bấm Thêm!', '👥 Quản lý Nhân sự');
+      }
+
+      if (findUserByLoginName(name)) {
+        return showAppNotice(`Tên tài khoản "${name}" đã tồn tại. Vui lòng đặt tên khác để tránh trùng lặp khi đăng nhập!`, '⚠️ Trùng tên tài khoản');
+      }
+
+      const checkPin = validateAlphanumericPin(rawPin);
+      if (!checkPin.ok) {
+        return showAppNotice(checkPin.msg, '⚠️ Sai định dạng Mã PIN');
       }
 
       const isAdminFlag = (permCode === 'FULL');
       const { data, error } = await sb.from('team_users').insert([{
         display_name: name,
         role_title: role,
-        pin_code: pin,
+        pin_code: checkPin.value,
         is_admin: isAdminFlag,
         telegram_chat_id: ''
       }]).select();
@@ -3395,7 +3581,7 @@
         id: 'u_' + Date.now(),
         display_name: name,
         role_title: role,
-        pin_code: pin,
+        pin_code: checkPin.value,
         is_admin: isAdminFlag,
         telegram_chat_id: ''
       };
@@ -3413,8 +3599,7 @@
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      initLoginOptions();
-      showAppNotice(`Đã thêm thành viên "${name}" với quyền [${PERMISSION_DEFS[permCode].label}]!`, '✅ Thêm nhân sự thành công');
+      showAppNotice(`Đã tạo thành viên "${name}"!\n• Mã PIN đăng nhập: ${checkPin.value}\n• Quyền hạn: ${PERMISSION_DEFS[permCode].label}`, '✅ Thêm nhân sự thành công');
     }
 
     async function adminEditStaffInfo(userId) {
@@ -3422,7 +3607,7 @@
       const u = dbUsers.find(x => String(x.id) === String(userId));
       if (!u) return;
 
-      const newName = await showAppPrompt('Nhập Họ và tên mới cho thành viên:', u.display_name, '✏️ Sửa tên thành viên');
+      const newName = await showAppPrompt('Nhập Tên tài khoản / Họ tên mới cho thành viên:', u.display_name, '✏️ Sửa tên tài khoản');
       if (newName === null || !newName.trim()) return;
       const newRole = await showAppPrompt('Nhập Chức vụ / Vị trí mới:', u.role_title || 'Chuyên viên', '✏️ Sửa chức vụ');
       if (newRole === null) return;
@@ -3454,13 +3639,14 @@
       await sb.from('team_users').delete().eq('id', userId);
       dbUsers = dbUsers.filter(x => String(x.id) !== String(userId));
       delete dbUserPermsMap[String(userId)];
+      delete dbAccountLocksMap[String(userId)];
       await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
+      await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
       await recordAuditLog('XÓA NHÂN SỰ', `Đã xóa thành viên "${u.display_name}" khỏi hệ thống.`);
 
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      initLoginOptions();
       showAppNotice(`Đã xóa thành viên "${u.display_name}" khỏi hệ thống.`, '🗑️ Đã xóa nhân sự');
     }
 
@@ -3491,79 +3677,89 @@
       const statusEl = document.getElementById('tgAutoLinkStatus');
       statusEl.classList.remove('hidden', 'text-emerald-400');
       statusEl.classList.add('text-amber-300');
-      statusEl.innerHTML = '⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự nhận ID ngay lập tức.';
+      statusEl.innerHTML = '⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự động lấy ID ngay.';
 
       if (tgPollTimer) clearInterval(tgPollTimer);
       let attempts = 0;
-
       tgPollTimer = setInterval(async () => {
         attempts++;
-        if (attempts > 45) {
+        if (attempts > 30) {
           clearInterval(tgPollTimer);
           tgPollTimer = null;
           return;
         }
-        try {
-          const { data } = await sb.from('team_users').select('*').eq('id', targetUserId).single();
-          if (data && data.telegram_chat_id) {
-            clearInterval(tgPollTimer);
-            tgPollTimer = null;
-            currentUser = data;
-            const idx = dbUsers.findIndex(u => String(u.id) === targetUserId);
-            if (idx !== -1) dbUsers[idx] = data;
+        const { data } = await sb.from('team_users').select('telegram_chat_id').eq('id', targetUserId).single();
+        if (data && data.telegram_chat_id) {
+          clearInterval(tgPollTimer);
+          tgPollTimer = null;
+          const detectedId = String(data.telegram_chat_id).trim();
+          currentUser.telegram_chat_id = detectedId;
+          const idx = dbUsers.findIndex(x => String(x.id) === targetUserId);
+          if (idx !== -1) dbUsers[idx].telegram_chat_id = detectedId;
 
-            document.getElementById('profileTelegramId').value = data.telegram_chat_id;
-            updateTelegramIndicator();
-            renderChannelsAndDm();
-            renderStaffPassPinIdTab();
-
-            statusEl.classList.remove('hidden', 'text-amber-300');
-            statusEl.classList.add('text-emerald-400');
-            statusEl.innerHTML = `🎉 <b>Liên kết thành công!</b> Đã tự động nhận Telegram Chat ID: <b>${data.telegram_chat_id}</b>`;
-          }
-        } catch (e) {}
+          document.getElementById('profileTelegramId').value = detectedId;
+          statusEl.classList.remove('text-amber-300');
+          statusEl.classList.add('text-emerald-400');
+          statusEl.innerHTML = `🎉 <b>Liên kết thành công!</b> Telegram ID (<b>${detectedId}</b>) đã được tự động lưu.`;
+          updateTelegramIndicator();
+          renderStaffPassPinIdTab();
+          renderStaffRoleTab();
+        }
       }, 2000);
     }
 
     async function saveProfileSettings() {
       if (!currentUser) return;
-      const roleTitle = document.getElementById('profileRoleTitle').value.trim() || 'Thành viên';
-      const tgId = document.getElementById('profileTelegramId').value.trim();
-      const newPass = document.getElementById('profileNewPass').value.trim();
-      if (!newPass) return showAppNotice('Mật khẩu / Mã PIN không được để trống!', '⚠️ Thiếu mã PIN');
+      const newRole = document.getElementById('profileRoleTitle').value.trim() || 'Thành viên';
+      const newTg = document.getElementById('profileTelegramId').value.trim();
+      const rawPin = document.getElementById('profileNewPass').value.trim();
 
-      await sb.from('team_users').update({ role_title: roleTitle, telegram_chat_id: tgId, pin_code: newPass }).eq('id', currentUser.id);
-      currentUser.role_title = roleTitle;
-      currentUser.telegram_chat_id = tgId;
-      currentUser.pin_code = newPass;
+      const checkPin = validateAlphanumericPin(rawPin);
+      if (!checkPin.ok) {
+        return showAppNotice(checkPin.msg, '⚠️ Sai định dạng Mật khẩu / Mã PIN');
+      }
+
+      const updateObj = { role_title: newRole, telegram_chat_id: newTg, pin_code: checkPin.value };
+      await sb.from('team_users').update(updateObj).eq('id', currentUser.id);
+      Object.assign(currentUser, updateObj);
+
+      const idx = dbUsers.findIndex(u => String(u.id) === String(currentUser.id));
+      if (idx !== -1) Object.assign(dbUsers[idx], updateObj);
 
       applyPermissionUI();
       updateTelegramIndicator();
       renderStaffPassPinIdTab();
       renderStaffRoleTab();
-      showAppNotice('Đã lưu 3 trường thông tin bảo mật cá nhân!', '✅ Lưu thành công');
+      showAppNotice('Đã cập nhật thông tin & Mật khẩu/PIN chữ+số cá nhân thành công!', '✅ Lưu thành công');
     }
 
+    // =========================================================================
+    // 15. TIỆN ÍCH MODAL & KHỞI CHẠY REALTIME
+    // =========================================================================
+    function openProgressModal() { renderProgressTable(); openModal('progressModal'); }
     function openModal(id) {
       const el = document.getElementById(id);
       el.classList.remove('hidden');
       el.classList.add('flex');
     }
-
     function closeModal(id) {
       const el = document.getElementById(id);
       el.classList.add('hidden');
       el.classList.remove('flex');
     }
 
-    function openProgressModal() {
-      renderProgressTable();
-      openModal('progressModal');
-    }
+    window.addEventListener('DOMContentLoaded', async () => {
+      await syncAllFromSupabase();
 
-    initLoginOptions();
-    syncAllFromSupabase();
-    setInterval(() => syncAllFromSupabase(true), 15000);
+      sb.channel('teamwork_realtime_v7')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => syncAllFromSupabase(true))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_tasks' }, () => syncAllFromSupabase(true))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_users' }, () => syncAllFromSupabase(true))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_channels' }, () => syncAllFromSupabase(true))
+        .subscribe();
+
+      setInterval(() => syncAllFromSupabase(true), 20000);
+    });
   </script>
 </body>
 </html>
