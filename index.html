@@ -16,6 +16,32 @@
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* === TỐI ƯU GIAO DIỆN MOBILE <= 480PX (ĐÃ KHỚP ĐÚNG ID/CLASS THỰC TẾ) === */
+    @media (max-width: 480px) {
+      header {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        gap: 4px !important;
+      }
+      #activeChannelTitle {
+        font-size: 13px !important;
+        white-space: normal !important;
+        line-height: 1.25 !important;
+      }
+      #activeChannelDesc {
+        font-size: 11px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 170px !important;
+      }
+      #btnAssignTaskTop,
+      #btnAssignTaskTop + button {
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none sm:select-auto" onclick="closeAllDropdowns()">
