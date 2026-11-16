@@ -2,110 +2,80 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeamWork Cloud — Điều Hành Công Việc & Phê Duyệt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TeamWork Cloud — Điều Hành & Quản Trị Dự Án</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @keyframes spinOnce {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .animate-spin-once { animation: spinOnce 0.6s ease-in-out; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-    /* === TỐI ƯU GIAO DIỆN MOBILE <= 480PX (ĐÃ KHỚP ĐÚNG ID/CLASS THỰC TẾ) === */
-    @media (max-width: 480px) {
-      header {
-        padding-left: 8px !important;
-        padding-right: 8px !important;
-        gap: 4px !important;
-      }
-      #activeChannelTitle {
-        font-size: 13px !important;
-        white-space: normal !important;
-        line-height: 1.25 !important;
-      }
-      #activeChannelDesc {
-        font-size: 11px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 170px !important;
-      }
-      #btnAssignTaskTop,
-      #btnAssignTaskTop + button {
-        padding: 6px 8px !important;
-        font-size: 11px !important;
-      }
-    }
+    body { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none sm:select-auto" onclick="closeAllDropdowns()">
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none sm:select-auto">
 
   <!-- MÀN HÌNH ĐĂNG NHẬP -->
-  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-1">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-2xl mb-1">⚡</div>
-        <h1 class="text-lg font-bold text-white tracking-wide">TEAMWORK CLOUD</h1>
-        <p class="text-xs text-slate-400">Hệ thống Điều hành Dự án, Checklist & Trình duyệt Telegram</p>
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 text-2xl mb-1">⚡</div>
+        <h1 class="text-xl font-bold text-white">TeamWork Cloud</h1>
+        <p class="text-xs text-slate-400">Hệ thống Điều hành Dự án, Phê duyệt & Telegram Realtime</p>
       </div>
 
       <!-- FORM ĐĂNG NHẬP -->
-      <div id="loginFormBox" class="space-y-3.5 text-xs">
+      <div id="loginFormBox" class="space-y-4">
         <div>
-          <label class="block text-slate-400 mb-1 font-medium">Tên tài khoản / Họ tên</label>
-          <input id="loginUsernameInput" type="text" placeholder="Ví dụ: Lãnh Đạo / Quản Lý hoặc Thành Viên 01"
-            onkeydown="if(event.key==='Enter') handleLogin()"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên tài khoản / Họ tên đăng nhập</label>
+          <input id="loginUsernameInput" type="text" placeholder="Nhập chính xác tên tài khoản được cấp..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
         </div>
+
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="text-slate-400 font-medium">Mật khẩu / Mã PIN</label>
-            <button type="button" onclick="toggleForgotPassword(true)" class="text-blue-400 hover:underline text-[11px]">Quên mật khẩu / PIN?</button>
+            <label class="text-xs font-semibold text-slate-300">Mật khẩu / Mã PIN (Chữ + Số)</label>
+            <button type="button" onclick="toggleForgotPassword(true)" class="text-[11px] text-blue-400 hover:underline">Quên mật khẩu / PIN?</button>
           </div>
           <div class="relative">
-            <input id="loginPassword" type="password" placeholder="Nhập mật khẩu hoặc mã PIN..."
+            <input id="loginPassword" type="password" maxlength="12" placeholder="Nhập mật khẩu hoặc mã PIN..."
               onkeydown="if(event.key==='Enter') handleLogin()"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-white focus:outline-none focus:border-blue-500" />
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-white focus:outline-none focus:border-blue-500" />
             <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-white text-sm">👁️</button>
           </div>
         </div>
-        <div class="flex items-center justify-between">
-          <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
-            <input id="rememberLoginCheck" type="checkbox" checked class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-blue-600" />
-            <span>Ghi nhớ đăng nhập trên thiết bị này</span>
-          </label>
-        </div>
-        <div id="loginError" class="hidden bg-rose-950/70 border border-rose-500/50 text-rose-200 rounded-xl p-3 text-[11px] leading-relaxed"></div>
-        <button onclick="handleLogin()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/25 transition">
+
+        <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+          <input id="rememberLoginCheck" type="checkbox" checked class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-blue-500" />
+          <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+        </label>
+
+        <div id="loginError" class="hidden bg-rose-950/70 border border-rose-500/40 text-rose-300 text-xs p-3 rounded-xl leading-relaxed"></div>
+
+        <button id="btnLoginSubmit" onclick="handleLogin()"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-sm shadow-lg transition">
           Đăng Nhập Hệ Thống
         </button>
       </div>
 
       <!-- FORM QUÊN MẬT KHẨU -->
-      <div id="forgotPasswordBox" class="hidden space-y-3.5 text-xs">
-        <div class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-3 text-blue-200 text-[11px] leading-relaxed">
-          Nhập đúng <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo mã PIN ngẫu nhiên mới và gửi trực tiếp về Telegram của bạn.
+      <div id="forgotPasswordBox" class="hidden space-y-4">
+        <div class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-3 text-xs text-blue-200 leading-relaxed">
+          Nhập chính xác <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo mã PIN ngẫu nhiên (chữ + số) và gửi thẳng về Telegram của bạn.
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Tên tài khoản</label>
-          <input id="resetUsernameInput" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên tài khoản</label>
+          <input id="resetUsernameInput" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white" />
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Telegram Chat ID đã liên kết</label>
-          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Telegram Chat ID đã liên kết</label>
+          <input id="resetTelegramIdInput" type="text" inputmode="numeric" placeholder="VD: 123456789" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white" />
         </div>
-        <div id="resetFeedback" class="hidden text-[11px] leading-relaxed"></div>
+        <div id="resetFeedback" class="hidden text-xs p-2.5 rounded-xl bg-slate-800"></div>
         <div class="flex gap-2">
-          <button type="button" onclick="toggleForgotPassword(false)" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">← Quay lại</button>
-          <button id="btnResetSubmit" type="button" onclick="handleResetPasswordViaTelegram()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
-            📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram
-          </button>
+          <button type="button" onclick="toggleForgotPassword(false)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-semibold">← Quay lại</button>
+          <button id="btnResetSubmit" type="button" onclick="handleResetPasswordViaTelegram()" class="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold">📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram</button>
         </div>
       </div>
     </div>
@@ -114,213 +84,170 @@
   <!-- HEADER CHÍNH -->
   <header class="h-14 bg-slate-900 border-b border-slate-800 px-3 sm:px-4 flex items-center justify-between gap-2 shrink-0 z-20">
     <div class="flex items-center gap-2 min-w-0">
-      <button onclick="toggleMobileSidebar()" class="lg:hidden w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-white shrink-0">☰</button>
-      <div class="flex items-center gap-2 truncate">
-        <span class="text-lg">⚡</span>
-        <span class="font-bold text-sm sm:text-base text-white truncate">TeamWork Cloud</span>
-      </div>
-      <div id="syncStatus" class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-full ml-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-        <span class="truncate">Đã kết nối Cloud</span>
+      <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700">☰</button>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <h2 id="activeChannelTitle" class="text-sm sm:text-base font-bold text-white truncate"># Đang tải kênh...</h2>
+          <span id="dmBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">🔒 Kênh kín 1-1</span>
+          <span id="channelMemberBadge" class="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shrink-0">👥 0 thành viên</span>
+          <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Cấu hình Nhóm / Dự án" class="text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-slate-800">⚙️</button>
+        </div>
+        <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate hidden sm:block">Hệ thống điều hành tập trung</p>
       </div>
     </div>
 
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <button onclick="manualRefreshApp()" title="Làm mới dữ liệu" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-200 transition">
-        <span id="refreshIcon">🔄</span>
+      <button id="btnAssignTaskTop" onclick="openAssignModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold shadow transition">
+        + Giao việc
+      </button>
+      <button onclick="openApprovalModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold shadow transition">
+        📋 Trình duyệt
+      </button>
+      <button onclick="openMyTasksModal()" class="relative bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-slate-700">
+        Việc của tôi
+        <span id="myTaskBadge" class="ml-1 bg-amber-500 text-slate-950 font-extrabold text-[10px] px-1.5 py-0.2 rounded-full">0</span>
       </button>
 
-      <button onclick="openMyTasksModal()" class="relative bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-        <span>📋</span>
-        <span class="hidden md:inline">Việc của tôi</span>
-        <span id="myTaskBadge" class="bg-amber-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.2 rounded-full">0</span>
-      </button>
-
-      <!-- MENU DỮ LIỆU & TÁC VỤ -->
-      <div class="relative" onclick="event.stopPropagation()">
-        <button onclick="toggleDropdown('menuDataFiles')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
-          <span>⚡ Tác vụ</span>
-          <span class="text-[10px]">▼</span>
-        </button>
-        <div id="menuDataFiles" class="hidden absolute right-0 mt-2 w-60 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30 text-xs">
-          <button onclick="closeAllDropdowns(); openApprovalModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
-            <span>📋</span> Trình Phê Duyệt Hồ Sơ
-          </button>
-          <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-teal-300 font-semibold flex items-center gap-2">
-            <span>📅</span> Chốt Lịch Họp & Biên Bản
-          </button>
-          <button onclick="closeAllDropdowns(); openMultiFileModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2">
-            <span>📤</span> Gửi File Nhiều Thành Viên
-          </button>
-          <div class="border-t border-slate-800 my-1"></div>
-          <button onclick="closeAllDropdowns(); openProgressModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-emerald-300 flex items-center gap-2">
-            <span>📊</span> Bảng Tiến Độ & Xuất Excel/PDF
-          </button>
-          <button onclick="closeAllDropdowns(); openBackupModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2">
-            <span>💾</span> Backup, Restore & Digest 17h
-          </button>
-        </div>
-      </div>
-
-      <!-- MENU TÀI KHOẢN & QUẢN TRỊ -->
-      <div class="relative" onclick="event.stopPropagation()">
-        <button onclick="toggleDropdown('menuAccountAdmin')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1.5 rounded-xl flex items-center gap-2 text-left transition">
-          <span id="tgStatusDot" class="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Trạng thái liên kết Telegram"></span>
-          <div class="hidden sm:block leading-tight max-w-[140px]">
-            <div id="currentUserName" class="text-xs font-bold text-white truncate">Người dùng</div>
-            <div class="flex items-center gap-1">
-              <span id="currentUserPermBadge" class="text-[9px] px-1 rounded bg-slate-700 text-slate-300">Thành viên</span>
-              <span id="currentUserRole" class="text-[10px] text-slate-400 truncate">Chức vụ</span>
-            </div>
-          </div>
-          <span class="text-[10px] text-slate-400">▼</span>
-        </button>
-
-        <div id="menuAccountAdmin" class="hidden absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-30 text-xs">
-          <div class="sm:hidden px-3.5 py-2 border-b border-slate-800">
-            <div id="mobileMenuUserName" class="font-bold text-white">Người dùng</div>
-            <div id="mobileMenuUserRole" class="text-[11px] text-slate-400">Vai trò</div>
-          </div>
-          <button onclick="closeAllDropdowns(); openStaffModal('MY_TELEGRAM')" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2">
-            <span>🤖</span> Liên Kết Telegram & Đổi PIN
-          </button>
-          <button onclick="closeAllDropdowns(); openStaffModal('PASS_PIN_ID')" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2">
-            <span>🔑</span> Quản Lý Nhân Sự & Phân Quyền
-          </button>
-          <button id="menuBtnAuditLog" onclick="closeAllDropdowns(); openAuditLogModal()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-cyan-300 flex items-center gap-2">
-            <span>🛡️</span> Nhật Ký Kiểm Toán (Audit Log)
-          </button>
-          <div class="border-t border-slate-800 my-1"></div>
-          <button onclick="closeAllDropdowns(); handleLogout()" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 font-semibold flex items-center gap-2">
-            <span>🚪</span> Đăng Xuất
-          </button>
+      <!-- MENU TÙY CHỌN MỞ RỘNG -->
+      <div class="relative">
+        <button onclick="toggleHeaderMoreMenu(event)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-700">⋮</button>
+        <div id="headerMoreMenu" class="hidden absolute right-0 mt-2 w-60 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-1.5 z-50 text-xs">
+          <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-emerald-300 font-semibold">📅 Chốt lịch họp & Giao việc</button>
+          <button onclick="closeAllDropdowns(); openProgressModal()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-blue-300 font-semibold">📊 Bảng tổng hợp tiến độ</button>
+          <button onclick="closeAllDropdowns(); openMultiFileModal()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-indigo-300">📤 Gửi tài liệu nhiều người</button>
+          <div class="my-1 border-t border-slate-800"></div>
+          <button onclick="closeAllDropdowns(); openStaffModal('PASS_PIN_ID')" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-amber-300">👥 Nhân sự, Phân quyền & PIN</button>
+          <button onclick="closeAllDropdowns(); openBackupModal()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">☁️ Sao lưu & Khôi phục (Backup)</button>
+          <button id="menuBtnAuditLog" onclick="closeAllDropdowns(); openAuditLogModal()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-purple-300">🛡️ Nhật ký kiểm toán (Audit Log)</button>
+          <div class="my-1 border-t border-slate-800"></div>
+          <button onclick="closeAllDropdowns(); handleLogout()" class="w-full px-3.5 py-2 text-left hover:bg-rose-950/60 flex items-center gap-2 text-rose-400 font-semibold">🚪 Đăng xuất tài khoản</button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- KHUNG NỘI DUNG CHÍNH 3 CỘT -->
+  <!-- THÂN ỨNG DỤNG 3 CỘT -->
   <div class="flex-1 flex overflow-hidden relative">
-    <!-- BACKDROP MOBILE -->
-    <div id="leftSidebarBackdrop" onclick="toggleMobileSidebar(false)" class="hidden fixed inset-0 bg-slate-950/70 z-20 lg:hidden"></div>
+    <!-- OVERLAY MOBILE SIDEBAR -->
+    <div id="mobileSidebarBackdrop" onclick="toggleMobileSidebar(false)" class="hidden fixed inset-0 bg-black/60 z-30 lg:hidden"></div>
 
-    <!-- CỘT TRÁI: NHÓM DỰ ÁN & CHAT 1-1 -->
-    <aside id="leftSidebar" class="hidden lg:flex flex-col w-72 bg-slate-900 border-r border-slate-800 fixed lg:static inset-y-0 left-0 z-30 shrink-0">
+    <!-- CỘT TRÁI: KÊNH DỰ ÁN & CHAT 1-1 -->
+    <aside id="leftSidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-72 bg-slate-900 border-r border-slate-800 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
       <div class="p-3 border-b border-slate-800 flex items-center justify-between">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">📁 Nhóm / Dự Án</span>
-        <button id="btnNewGroupSidebar" onclick="openProjectGroupModal()" class="text-[11px] bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white px-2 py-1 rounded-lg font-semibold transition">
-          + Tạo Nhóm
-        </button>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span id="tgStatusDot" class="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Trạng thái kết nối Telegram"></span>
+            <span id="currentUserName" class="text-xs font-bold text-white truncate">Chưa đăng nhập</span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span id="currentUserPermBadge" class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-slate-700 text-slate-200">Member</span>
+            <span id="currentUserRole" class="text-[10px] text-slate-400 truncate">Thành viên</span>
+          </div>
+        </div>
+        <button onclick="openStaffModal('MY_TELEGRAM')" title="Liên kết Telegram cá nhân" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs">⚙️</button>
       </div>
-      <div id="channelList" class="p-2 space-y-1 overflow-y-auto max-h-[50%] border-b border-slate-800"></div>
 
-      <div class="p-3 pb-1 flex items-center justify-between">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">🔒 Trao Đổi Kín 1-1</span>
+      <div class="flex-1 overflow-y-auto p-3 space-y-5">
+        <div>
+          <div class="flex items-center justify-between px-1 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự án</span>
+            <button id="btnNewGroupSidebar" onclick="openProjectGroupModal()" class="text-[11px] text-blue-400 hover:text-blue-300 font-bold">+ Tạo mới</button>
+          </div>
+          <div id="channelList" class="space-y-1"></div>
+        </div>
+
+        <div>
+          <div class="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Trao đổi riêng 1-1</div>
+          <div id="dmUserList" class="space-y-1"></div>
+        </div>
       </div>
-      <div id="dmUserList" class="p-2 space-y-1 overflow-y-auto flex-1"></div>
+
+      <div class="p-3 border-t border-slate-800 lg:hidden text-xs">
+        <div class="font-bold text-white" id="mobileMenuUserName"></div>
+        <div class="text-[11px] text-slate-400" id="mobileMenuUserRole"></div>
+      </div>
     </aside>
 
-    <!-- CỘT GIỮA: KHUNG THẢO LUẬN & PHÊ DUYỆT -->
-    <main id="centerChatPanel" class="flex-1 flex flex-col bg-slate-950 min-w-0 overflow-hidden">
-      <!-- THANH TIÊU ĐỀ KÊNH -->
-      <div class="px-3 sm:px-4 py-2.5 bg-slate-900/70 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0">
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <h2 id="activeChannelTitle" class="text-sm font-bold text-white truncate"># Phòng Điều Hành Chung</h2>
-            <span id="channelMemberBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full shrink-0">👥 3 thành viên</span>
-            <span id="dmBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full shrink-0">🔒 Kênh riêng 1-1</span>
-          </div>
-          <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate mt-0.5">Trao đổi công việc hàng ngày & thông báo chung của tập thể</p>
-        </div>
-
-        <div class="flex items-center gap-1.5 shrink-0">
-          <button id="btnAssignTaskTop" onclick="openAssignModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition">
-            ✅ Giao Việc
-          </button>
-          <button onclick="openApprovalModal()" class="bg-indigo-600/25 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition">
-            📋 Trình Duyệt
-          </button>
-          <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Cấu hình Nhóm/Dự án" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs">
-            ⚙️
-          </button>
-        </div>
-      </div>
-
+    <!-- CỘT GIỮA: LUỒNG TRAO ĐỔI & PHÊ DUYỆT -->
+    <main id="centerChatPane" class="flex-1 flex flex-col bg-slate-950 min-w-0">
       <!-- THANH GHIM CHỈ ĐẠO ĐẦU KÊNH -->
-      <div id="pinnedDirectivesBar" class="hidden px-3 sm:px-4 py-2 bg-amber-950/40 border-b border-amber-500/30 flex items-center justify-between gap-2 text-xs shrink-0">
+      <div id="pinnedDirectivesBar" class="hidden bg-amber-950/60 border-b border-amber-500/40 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0">
         <div onclick="scrollToPinnedMessage()" class="min-w-0 cursor-pointer flex-1">
-          <div class="flex items-center gap-1.5 text-[10px] font-bold text-amber-400">
-            <span>📌 CHỈ ĐẠO GHIM ĐẦU KÊNH</span>
-            <span>•</span>
-            <span id="pinnedByLabel" class="font-normal text-amber-300/80"></span>
-          </div>
-          <div id="pinnedContentText" class="text-amber-100 truncate font-medium"></div>
+          <div class="text-[10px] font-bold text-amber-400 uppercase">📌 CHỈ ĐẠO GHIM ĐẦU KÊNH • <span id="pinnedByLabel" class="font-normal text-amber-200/80"></span></div>
+          <div id="pinnedContentText" class="text-xs text-amber-100 truncate"></div>
         </div>
-        <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" class="text-[11px] text-amber-300 hover:text-white bg-amber-900/50 px-2 py-1 rounded-lg shrink-0">
-          Bỏ ghim
-        </button>
+        <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" class="text-[11px] text-amber-300 hover:text-white px-2 py-1 rounded bg-amber-900/50 shrink-0">Gỡ ghim</button>
       </div>
 
       <!-- DANH SÁCH TIN NHẮN -->
       <div id="messageFeed" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3"></div>
 
-      <!-- BANNER TRẢ LỜI / CHỈNH SỬA TIN NHẮN -->
-      <div id="chatActionBanner" class="hidden px-3 sm:px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-2 min-w-0">
-          <span id="chatActionIcon">↩️</span>
+      <!-- THANH TRẢ LỜI / CHỈNH SỬA TIN NHẮN -->
+      <div id="chatActionBanner" class="hidden bg-slate-900 border-t border-slate-800 px-3.5 py-2 flex items-center justify-between gap-2 text-xs">
+        <div class="min-w-0 flex items-center gap-2">
+          <span id="chatActionIcon" class="text-sm">↩️</span>
           <div class="min-w-0">
-            <div id="chatActionTitle" class="font-bold text-blue-400">Đang trả lời</div>
+            <div id="chatActionTitle" class="font-bold text-blue-400"></div>
             <div id="chatActionPreview" class="text-[11px] text-slate-400 truncate"></div>
           </div>
         </div>
         <button onclick="cancelChatActionBanner()" class="text-slate-400 hover:text-white px-2 py-1">✕</button>
       </div>
 
-      <!-- KHUNG NHẬP TIN NHẮN -->
-      <div class="p-2.5 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
-        <label class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 cursor-pointer shrink-0" title="Đính kèm tệp (< 3MB)">
-          <span>📎</span>
+      <!-- Ô NHẬP TIN NHẮN & BẢNG CHỌN EMOJI -->
+      <div class="relative p-2.5 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
+        <!-- Bảng thả xuống chứa nhiều biểu tượng cảm xúc -->
+        <div id="emojiPickerPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-3 z-50 w-72 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
+          <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
+            <span>Chọn biểu tượng cảm xúc</span>
+            <button type="button" onclick="toggleEmojiPicker(event, false)" class="text-slate-400 hover:text-white">✕</button>
+          </div>
+          <div id="emojiGridContainer" class="grid grid-cols-8 gap-1 text-lg max-h-48 overflow-y-auto"></div>
+        </div>
+
+        <label title="Đính kèm tệp tin (<3MB)" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-sm shrink-0">
+          📎
           <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
         </label>
-        <button type="button" onclick="insertQuickEmoji()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 shrink-0" title="Chèn biểu tượng">😊</button>
-        <input id="chatInput" type="text" placeholder="Nhập nội dung trao đổi, báo cáo tiến độ hoặc tọa độ GPS..."
+
+        <button type="button" onclick="toggleEmojiPicker(event)" title="Chèn biểu tượng cảm xúc" class="bg-slate-800 hover:bg-slate-700 text-amber-300 p-2.5 rounded-xl text-sm shrink-0">
+          😊
+        </button>
+
+        <input id="chatInput" type="text" placeholder="Nhập nội dung trao đổi, chỉ đạo hoặc dán tọa độ / link bản đồ..."
           onkeydown="if(event.key==='Enter') sendChatMessage()"
-          class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500" />
-        <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs shrink-0 transition">
+          class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500" />
+        <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm shrink-0 transition">
           Gửi
         </button>
       </div>
     </main>
 
-    <!-- CỘT PHẢI: CHECKLIST & TÀI NGUYÊN NHÓM -->
-    <aside id="rightSidebarPanel" class="hidden xl:flex flex-col w-80 2xl:w-96 bg-slate-900 border-l border-slate-800 shrink-0 overflow-hidden">
-      <div class="p-2.5 border-b border-slate-800 grid grid-cols-2 gap-1.5 shrink-0">
-        <button id="tabBtnChecklist" onclick="switchRightPanelTab('CHECKLIST')" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1">
-          <span>✅ Checklist</span>
-          <span id="channelTaskCount" class="bg-blue-600 text-white text-[10px] px-1.5 rounded-full">0</span>
+    <!-- CỘT PHẢI: CHECKLIST CÔNG VIỆC & TÀI NGUYÊN KÊNH -->
+    <aside id="rightPanelPane" class="hidden xl:flex w-80 bg-slate-900 border-l border-slate-800 flex-col shrink-0">
+      <div class="flex border-b border-slate-800 text-xs font-bold">
+        <button id="rightTabBtnTasks" onclick="switchRightPanelTab('TASKS')" class="flex-1 py-2.5 text-blue-400 border-b-2 border-blue-500">
+          ✅ Checklist (<span id="channelTaskCount">0</span>)
         </button>
-        <button id="tabBtnFiles" onclick="switchRightPanelTab('FILES')" class="py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1">
-          <span>📂 Tài nguyên</span>
-          <span id="channelFileCount" class="bg-slate-700 text-slate-200 text-[10px] px-1.5 rounded-full">0</span>
+        <button id="rightTabBtnFiles" onclick="switchRightPanelTab('FILES')" class="flex-1 py-2.5 text-slate-400 hover:text-white">
+          📁 Tài nguyên (<span id="channelFileCount">0</span>)
         </button>
       </div>
 
-      <!-- TAB CHECKLIST -->
-      <div id="rightTabChecklist" class="flex-1 flex flex-col overflow-hidden">
-        <div class="px-3 py-2 bg-slate-950/50 border-b border-slate-800 flex items-center justify-between text-[11px] shrink-0">
-          <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer">
-            <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="w-3.5 h-3.5 rounded bg-slate-800 border-slate-600 text-blue-500" />
+      <div id="rightTabContentTasks" class="flex-1 flex flex-col overflow-hidden">
+        <div class="px-3 py-2 border-b border-slate-800 flex items-center justify-between text-[11px]">
+          <label class="flex items-center gap-1.5 text-slate-400 cursor-pointer">
+            <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="rounded bg-slate-800 border-slate-600 text-blue-500" />
             <span>Ẩn việc đã xong</span>
           </label>
-          <button onclick="openProgressModal()" class="text-blue-400 hover:underline font-semibold">📊 Bảng chi tiết</button>
+          <button onclick="openProgressModal()" class="text-blue-400 hover:underline font-semibold">Bảng tiến độ ↗</button>
         </div>
         <div id="checklistContainer" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
       </div>
 
-      <!-- TAB TÀI NGUYÊN -->
-      <div id="rightTabFiles" class="hidden flex-1 flex flex-col overflow-hidden">
-        <div class="px-3 py-2 bg-slate-950/50 border-b border-slate-800 flex items-center justify-between text-[11px] shrink-0">
-          <span class="text-slate-400">Hồ sơ & Liên kết chung</span>
+      <div id="rightTabContentFiles" class="hidden flex-1 flex-col overflow-hidden">
+        <div class="px-3 py-2 border-b border-slate-800 flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">Hồ sơ & Link dự án</span>
           <button id="btnAddResourceRightTab" onclick="openProjectGroupModal(activeChannelId)" class="text-blue-400 hover:underline font-semibold">+ Thêm tài nguyên</button>
         </div>
         <div id="channelFilesContainer" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
@@ -328,484 +255,415 @@
     </aside>
   </div>
 
-  <!-- THANH ĐIỀU HƯỚNG DƯỚI CÙNG CHO MOBILE / TABLET -->
-  <nav class="xl:hidden grid grid-cols-3 bg-slate-900 border-t border-slate-800 text-[11px] shrink-0">
-    <button id="mobNavBtn_CHAT" onclick="switchMobileView('CHAT')" class="py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-blue-400 font-bold border-t-2 border-blue-500 bg-blue-950/20">
-      <span>💬 Thảo luận</span>
-    </button>
-    <button id="mobNavBtn_CHECKLIST" onclick="switchMobileView('CHECKLIST')" class="py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 font-medium border-t-2 border-transparent">
-      <span>✅ Checklist (<span id="mobTaskBadge">0</span>)</span>
-    </button>
-    <button id="mobNavBtn_FILES" onclick="switchMobileView('FILES')" class="py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 font-medium border-t-2 border-transparent">
-      <span>📂 Tài nguyên (<span id="mobFileBadge">0</span>)</span>
-    </button>
+  <!-- THANH CHUYỂN TAB TRÊN MOBILE -->
+  <nav class="xl:hidden h-12 bg-slate-900 border-t border-slate-800 flex items-center text-xs font-bold shrink-0">
+    <button id="mobNavChat" onclick="switchMobileView('CHAT')" class="flex-1 h-full flex items-center justify-center gap-1 text-blue-400 border-t-2 border-blue-500">💬 Trao đổi</button>
+    <button id="mobNavTasks" onclick="switchMobileView('TASKS')" class="flex-1 h-full flex items-center justify-center gap-1 text-slate-400">✅ Checklist (<span id="mobTaskBadge">0</span>)</button>
+    <button id="mobNavFiles" onclick="switchMobileView('FILES')" class="flex-1 h-full flex items-center justify-center gap-1 text-slate-400">📁 Tài nguyên (<span id="mobFileBadge">0</span>)</button>
   </nav>
 
-  <!-- CONTEXT MENU TIN NHẮN -->
-  <div id="msgContextMenu" onclick="event.stopPropagation()" class="hidden fixed z-50 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 text-xs">
-    <button onclick="ctxActionReply()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">↩️ Trả lời tin nhắn</button>
-    <button onclick="ctxActionForward()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">➡️ Chuyển tiếp</button>
-    <button onclick="ctxActionTranslate()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-emerald-300 flex items-center gap-2">🌐 Dịch sang Tiếng Việt</button>
-    <button id="ctxBtnPin" onclick="ctxActionPin()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2">📌 Ghim chỉ đạo đầu kênh</button>
-    <div id="ctxOwnerDivider" class="border-t border-slate-800 my-1"></div>
-    <button id="ctxBtnEdit" onclick="ctxActionEdit()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2">✏️ Chỉnh sửa nội dung</button>
-    <button id="ctxBtnRecall" onclick="ctxActionRecall()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-400 flex items-center gap-2">🚫 Thu hồi tin nhắn</button>
-    <button id="ctxBtnDelete" onclick="ctxActionDelete()" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 flex items-center gap-2">🗑️ Xóa vĩnh viễn</button>
+  <!-- MENU CHUỘT PHẢI TIN NHẮN -->
+  <div id="msgContextMenu" class="hidden fixed z-50 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-1.5 text-xs">
+    <button onclick="ctxActionReply()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">↩️ Trả lời tin nhắn</button>
+    <button onclick="ctxActionForward()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">➡️ Chuyển tiếp tin nhắn</button>
+    <button onclick="ctxActionTranslate()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-emerald-300">🌐 Dịch sang Tiếng Việt</button>
+    <button id="ctxBtnPin" onclick="ctxActionPin()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-amber-300">📌 Ghim chỉ đạo đầu kênh</button>
+    <div id="ctxOwnerDivider" class="my-1 border-t border-slate-800"></div>
+    <button id="ctxBtnEdit" onclick="ctxActionEdit()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-blue-300">✏️ Chỉnh sửa nội dung</button>
+    <button id="ctxBtnRecall" onclick="ctxActionRecall()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-amber-400">🚫 Thu hồi tin nhắn</button>
+    <button id="ctxBtnDelete" onclick="ctxActionDelete()" class="w-full px-3.5 py-2 text-left hover:bg-rose-950/60 flex items-center gap-2 text-rose-400">🗑️ Xóa vĩnh viễn</button>
   </div>
 
-  <!-- HỘP THOẠI DIALOG NỘI BỘ -->
-  <div id="customDialogOverlay" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
-      <h3 id="customDialogTitle" class="text-sm font-bold text-white">ℹ️ Thông báo</h3>
-      <p id="customDialogMessage" class="text-xs text-slate-300 whitespace-pre-line leading-relaxed"></p>
-      <div id="customDialogPromptBox" class="hidden">
-        <input id="customDialogInput" type="text" onkeydown="if(event.key==='Enter') resolveCustomDialog(true)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" />
+  <!-- MODAL GIAO VIỆC MỚI -->
+  <div id="assignModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">📌 Giao Công Việc Mới</h3>
+        <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <div class="flex justify-end gap-2 pt-1">
-        <button id="customDialogCancelBtn" onclick="resolveCustomDialog(false)" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Hủy</button>
-        <button id="customDialogOkBtn" onclick="resolveCustomDialog(true)" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">Đồng ý</button>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Người thực hiện</label>
+          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Nội dung công việc yêu cầu</label>
+          <textarea id="taskContent" rows="3" placeholder="Mô tả chi tiết đầu việc cần hoàn thành..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Thời gian bắt đầu</label>
+            <input id="taskStartTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Thời hạn hoàn thành (Deadline)</label>
+            <input id="taskDueTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('assignModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Hủy</button>
+        <button id="btnSubmitNewTask" onclick="submitNewTask()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold">Giao Việc & Gửi Telegram</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TRÌNH PHÊ DUYỆT -->
+  <div id="approvalModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 id="approvalModalTitle" class="text-sm font-bold text-white">📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình</h3>
+        <button onclick="closeModal('approvalModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <input type="hidden" id="editingApprovalId" />
+      <div class="space-y-3 text-xs">
+        <div id="approvalApproverBox">
+          <label class="block text-slate-400 mb-1">Người có thẩm quyền phê duyệt</label>
+          <select id="approvalApprover" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Nội dung tờ trình / Đề xuất phê duyệt</label>
+          <textarea id="approvalContent" rows="4" placeholder="Nhập nội dung trình duyệt chi tiết..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Link tài liệu Google Drive / Hồ sơ (nếu có)</label>
+          <input id="approvalFileUrl" type="url" placeholder="https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Hoặc đính kèm tệp trực tiếp (&lt;3MB)</label>
+          <input id="approvalFileInput" type="file" class="w-full text-slate-300" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('approvalModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Hủy</button>
+        <button id="btnSubmitApproval" onclick="submitApprovalRequest()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">Gửi Trình Duyệt & Báo Telegram</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CHỐT LỊCH HỌP -->
+  <div id="meetingModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">📅 Chốt Lịch Họp & Tự Động Phân Công</h3>
+        <button onclick="closeModal('meetingModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Thời gian họp</label>
+            <input id="meetingTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Địa điểm / Link họp Online</label>
+            <input id="meetingLocation" type="text" placeholder="VD: Phòng họp 2 / Google Meet" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Nội dung / Kết luận cuộc họp</label>
+          <textarea id="meetingAgenda" rows="3" placeholder="Nội dung chính cuộc họp..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
+        </div>
+        <label class="flex items-center gap-2 text-emerald-300 font-semibold cursor-pointer">
+          <input id="meetingAutoTasksCheck" type="checkbox" checked class="rounded bg-slate-800 border-slate-600 text-emerald-500" />
+          <span>Tự động tạo Checklist công việc sau họp từ danh sách bên dưới</span>
+        </label>
+        <div>
+          <label class="block text-slate-400 mb-1">Danh sách giao việc (Mỗi dòng theo cú pháp: <code>@Tên: Nội dung việc</code>)</label>
+          <textarea id="meetingAutoTasksLines" rows="3" placeholder="@Minh: Hoàn thiện hồ sơ pháp lý&#10;@Lan: Tổng hợp báo cáo tiến độ" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono"></textarea>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Thời hạn chung cho các đầu việc sau họp</label>
+          <input id="meetingTasksDue" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+        </div>
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" onclick="exportMeetingMinutesPDF()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-semibold">🖨️ Xuất Biên Bản PDF</button>
+        <div class="flex gap-2">
+          <button onclick="closeModal('meetingModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Hủy</button>
+          <button id="btnSubmitMeeting" onclick="submitMeetingNotice()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">📅 Chốt Lịch & Giao Việc</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL KHỞI TẠO / SỬA NHÓM DỰ ÁN -->
+  <div id="projectGroupModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white">🏗️ Khởi tạo Nhóm / Dự án</h3>
+        <button onclick="closeModal('projectGroupModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <input type="hidden" id="pgEditId" />
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Tên Nhóm / Dự án</label>
+            <input id="pgNameInput" type="text" placeholder="VD: Dự án Trường Vĩ - Nhà Bè" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Mô tả ngắn</label>
+            <input id="pgDescInput" type="text" placeholder="Ban điều hành & giải phóng mặt bằng" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="font-bold text-slate-300">👥 Thành viên tham gia kênh</label>
+            <div id="pgMemberBulkBtns" class="flex gap-2">
+              <button type="button" onclick="pgSelectAllMembers(true)" class="text-blue-400 hover:underline">Chọn tất cả</button>
+              <button type="button" onclick="pgSelectAllMembers(false)" class="text-slate-400 hover:underline">Bỏ chọn</button>
+            </div>
+          </div>
+          <div id="pgMembersChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-1"></div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="font-bold text-slate-300">📁 Tài nguyên & Hồ sơ đính kèm của dự án</label>
+            <label id="pgAddFileLabel" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1 rounded-lg font-semibold">
+              + Tải tệp (&lt;3MB)
+              <input id="pgResourceFileInput" type="file" multiple class="hidden" onchange="handlePgAddFiles(event)" />
+            </label>
+          </div>
+          <div id="pgAddLinkRow" class="flex flex-col sm:flex-row gap-2">
+            <input id="pgLinkNameInput" type="text" placeholder="Tên tài liệu (VD: Bản vẽ 1/500)" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            <input id="pgLinkUrlInput" type="url" placeholder="https://drive.google.com/..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            <button type="button" onclick="handlePgAddLink()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-semibold shrink-0">+ Add Link</button>
+          </div>
+          <div id="pgResourcesList" class="space-y-1.5 max-h-36 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <button id="btnDeleteProjectGroup" type="button" onclick="deleteProjectGroup()" class="hidden px-3 py-2 rounded-xl bg-rose-950/70 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-bold">🗑️ Xóa Nhóm/Dự án</button>
+        <div class="flex gap-2 ml-auto">
+          <button onclick="closeModal('projectGroupModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Đóng</button>
+          <button id="btnSaveProjectGroup" onclick="saveProjectGroup()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold">💾 Lưu Nhóm / Dự án</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL QUẢN LÝ NHÂN SỰ, PHÂN QUYỀN & TELEGRAM -->
-  <div id="staffModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl p-4 sm:p-5 shadow-2xl max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
+  <div id="staffModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl p-5 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between shrink-0">
         <h3 class="text-sm font-bold text-white">👥 Quản Lý Nhân Sự, Phân Quyền & Liên Kết Telegram</h3>
-        <button onclick="closeStaffModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 text-xs shrink-0">
-        <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')" class="py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2">🔑 Cấp Đổi Pass/PIN & Telegram ID</button>
-        <button id="staffTabBtn_STAFF_ROLE" onclick="switchStaffModalTab('STAFF_ROLE')" class="py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2">🛡️ Danh Sách & Phân Quyền</button>
-        <button id="staffTabBtn_MY_TELEGRAM" onclick="switchStaffModalTab('MY_TELEGRAM')" class="py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2">🤖 Liên Kết Telegram Cá Nhân</button>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs shrink-0">
+        <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')">🔑 Cấp / Đổi Pass-PIN & ID</button>
+        <button id="staffTabBtn_STAFF_ROLE" onclick="switchStaffModalTab('STAFF_ROLE')">🛡️ Danh sách & Phân quyền</button>
+        <button id="staffTabBtn_MY_TELEGRAM" onclick="switchStaffModalTab('MY_TELEGRAM')">📲 Liên kết Telegram cá nhân</button>
       </div>
 
-      <div class="overflow-y-auto flex-1 space-y-4 text-xs pr-1">
-        <!-- TAB 1: CẤP ĐỔI PASS/PIN -->
-        <div id="staffSection_PASS_PIN_ID" class="space-y-2.5">
-          <div id="passPinIdListContainer" class="space-y-2.5"></div>
-        </div>
+      <div class="flex-1 overflow-y-auto pr-1 text-xs">
+        <!-- TAB 1: PASS PIN & ID -->
+        <div id="staffSection_PASS_PIN_ID" class="space-y-2.5"></div>
 
         <!-- TAB 2: DANH SÁCH & PHÂN QUYỀN -->
         <div id="staffSection_STAFF_ROLE" class="hidden space-y-4">
-          <div id="addStaffFormBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-            <div class="font-bold text-purple-300">+ Thêm Thành Viên Mới Vào Hệ Thống</div>
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-              <input id="newStaffName" type="text" placeholder="Tên tài khoản / Họ tên..." class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
-              <input id="newStaffRole" type="text" placeholder="Chức vụ (VD: Chuyên viên)..." class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
-              <input id="newStaffPin" type="text" maxlength="12" placeholder="Mã PIN chữ+số (VD: tv03ab)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono" />
-              <select id="newStaffPerm" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white">
+          <div id="addStaffFormBox" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-2.5">
+            <div class="font-bold text-emerald-400">+ Thêm Nhân Sự Mới</div>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              <input id="newStaffName" type="text" placeholder="Họ tên / Tên đăng nhập" class="sm:col-span-3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
+              <input id="newStaffRole" type="text" placeholder="Chức vụ (VD: Kỹ sư)" class="sm:col-span-3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
+              <input id="newStaffPin" type="text" maxlength="12" placeholder="PIN (4-12 chữ+số)" class="sm:col-span-2 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono" />
+              <select id="newStaffPerm" class="sm:col-span-2 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-white">
                 <option value="MEMBER">Thành viên</option>
                 <option value="ASSISTANT">Trợ lý</option>
-                <option value="APPROVER">Chủ trì / Phê duyệt</option>
-                <option value="MANAGER">Quản trị Nhóm/Dự án</option>
-                <option value="RESOURCE_LEAD">Điều phối Tài nguyên</option>
-                <option value="AUDITOR">Giám sát / Thanh tra</option>
-                <option value="FULL">Quản trị hệ thống (Full)</option>
+                <option value="CHAIR">Chủ trì</option>
+                <option value="FULL">Quản trị (Full)</option>
               </select>
-            </div>
-            <div class="flex justify-end">
-              <button type="button" onclick="addNewStaffMember()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-4 py-2 rounded-lg">+ Tạo Tài Khoản</button>
+              <button onclick="addNewStaffMember()" class="sm:col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg py-2">+ Thêm</button>
             </div>
           </div>
-          <div id="staffRoleListContainer" class="space-y-2"></div>
+          <div id="staffRoleListContainer" class="space-y-2.5"></div>
         </div>
 
         <!-- TAB 3: TELEGRAM CÁ NHÂN -->
-        <div id="staffSection_MY_TELEGRAM" class="hidden space-y-3">
-          <div class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-3.5 space-y-2">
-            <div class="font-bold text-blue-300">Liên kết tự động 1 chạm với Telegram Bot</div>
-            <p class="text-[11px] text-slate-300 leading-relaxed">Bấm nút bên dưới để mở Telegram và nhấn <b>START</b>. Hệ thống sẽ tự động nhận diện Chat ID của bạn để gửi thông báo giao việc & duyệt hồ sơ.</p>
-            <a id="telegramAutoLinkBtn" href="#" target="_blank" onclick="startTelegramAutoLinkListener()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl">
-              🚀 Mở Telegram & Bấm START Ngay
+        <div id="staffSection_MY_TELEGRAM" class="hidden space-y-4 max-w-lg mx-auto py-2">
+          <div class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-3.5 space-y-2">
+            <div class="font-bold text-blue-300">Bước 1: Liên kết tự động 1 chạm với Bot Telegram</div>
+            <p class="text-slate-300 leading-relaxed">Bấm nút bên dưới để mở Bot Telegram, sau đó nhấn <b>START</b> trên Telegram. Hệ thống sẽ tự động nhận diện Chat ID của bạn.</p>
+            <a id="telegramAutoLinkBtn" href="#" target="_blank" onclick="startTelegramAutoLinkListener()"
+              class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold px-4 py-2 rounded-xl transition">
+              ✈️ Mở Bot Telegram & Bấm START
             </a>
-            <div id="tgAutoLinkStatus" class="hidden text-[11px] pt-1"></div>
+            <div id="tgAutoLinkStatus" class="hidden text-xs pt-1"></div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-800/60 border border-slate-700 rounded-xl p-3.5">
+          <div class="space-y-3 bg-slate-800/70 border border-slate-700 rounded-xl p-3.5">
+            <div class="font-bold text-white">Bước 2: Cập nhật thông tin & Mật khẩu cá nhân</div>
             <div>
               <label class="block text-slate-400 mb-1">Chức vụ hiển thị</label>
               <input id="profileRoleTitle" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
             </div>
             <div>
               <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
-              <input id="profileTelegramId" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono" />
+              <input id="profileTelegramId" type="text" inputmode="numeric" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono" />
             </div>
             <div>
-              <label class="block text-slate-400 mb-1">Đổi Mật khẩu / PIN (4–12 chữ+số)</label>
+              <label class="block text-slate-400 mb-1">Mật khẩu / Mã PIN mới (4–12 ký tự gồm cả chữ và số)</label>
               <input id="profileNewPass" type="text" maxlength="12" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono" />
             </div>
-          </div>
-          <div class="flex justify-end">
-            <button type="button" onclick="saveProfileSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl">💾 Lưu Hồ Sơ Cá Nhân</button>
+            <button onclick="saveProfileSettings()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl">💾 Lưu Hồ Sơ Cá Nhân</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL KHỞI TẠO & CHỈNH SỬA NHÓM / DỰ ÁN -->
-  <div id="projectGroupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-4 sm:p-5 shadow-2xl max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white">🏗️ Khởi tạo Nhóm/Dự án mới</h3>
-        <button onclick="closeModal('projectGroupModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <input type="hidden" id="pgEditId" value="" />
-      <div class="overflow-y-auto flex-1 space-y-3.5 text-xs pr-1">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-400 mb-1">Tên Nhóm / Dự án</label>
-            <input id="pgNameInput" type="text" placeholder="Ví dụ: Dự án Trạm dừng nghỉ KM47..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1">Mô tả ngắn</label>
-            <input id="pgDescInput" type="text" placeholder="Mục tiêu, phạm vi triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
-          </div>
-        </div>
-
+  <!-- MODAL BẢNG TỔNG HỢP TIẾN ĐỘ -->
+  <div id="progressModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-3 sm:p-5">
+    <div class="bg-white text-slate-900 rounded-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between gap-2 shrink-0">
         <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-slate-400 font-semibold">Thành viên tham gia Nhóm / Dự án:</label>
-            <div id="pgMemberBulkBtns" class="flex gap-2">
-              <button type="button" onclick="pgSelectAllMembers(true)" class="text-blue-400 hover:underline">Chọn tất cả</button>
-              <button type="button" onclick="pgSelectAllMembers(false)" class="text-slate-400 hover:underline">Bỏ chọn</button>
-            </div>
-          </div>
-          <div id="pgMembersChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto bg-slate-950/60 p-2.5 rounded-xl border border-slate-800"></div>
+          <h3 class="text-sm sm:text-base font-bold">📊 BẢNG THEO DÕI TIẾN ĐỘ CÔNG VIỆC DỰ ÁN</h3>
+          <p id="progressModalSubtitle" class="text-xs text-slate-400"></p>
         </div>
-
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="text-slate-400 font-semibold">Tài nguyên & Hồ sơ đính kèm của Nhóm:</label>
-            <label id="pgAddFileLabel" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1 rounded-lg cursor-pointer font-semibold">
-              + Tải tệp (&lt;3MB)
-              <input id="pgResourceFileInput" type="file" multiple class="hidden" onchange="handlePgAddFiles(event)" />
-            </label>
-          </div>
-          <div id="pgAddLinkRow" class="flex flex-col sm:flex-row gap-1.5">
-            <input id="pgLinkNameInput" type="text" placeholder="Tên tài liệu (VD: Bản đồ quy hoạch)..." class="sm:w-1/3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
-            <input id="pgLinkUrlInput" type="text" placeholder="Dán link Google Drive / URL..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
-            <button type="button" onclick="handlePgAddLink()" class="bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white px-3 py-1.5 rounded-lg font-semibold shrink-0">+ Add Link</button>
-          </div>
-          <div id="pgResourcesList" class="space-y-1.5 max-h-36 overflow-y-auto"></div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportChecklistToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">📗 Xuất Excel</button>
+          <button onclick="exportChecklistToPDF()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">📕 Xuất PDF</button>
+          <button onclick="closeModal('progressModal')" class="text-slate-300 hover:text-white px-2 text-lg">✕</button>
         </div>
       </div>
-
-      <div class="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
-        <button id="btnDeleteProjectGroup" type="button" onclick="deleteProjectGroup()" class="hidden px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-semibold">
-          🗑️ Xóa Nhóm/Dự án
-        </button>
-        <div class="flex gap-2 ml-auto">
-          <button onclick="closeModal('projectGroupModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Đóng</button>
-          <button id="btnSaveProjectGroup" onclick="saveProjectGroup()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">💾 Lưu Nhóm / Dự Án</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL NHẬT KÝ KIỂM TOÁN (AUDIT LOG) -->
-  <div id="auditLogModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-4 sm:p-5 shadow-2xl max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <h3 class="text-sm font-bold text-white">🛡️ Nhật Ký Kiểm Toán Hệ Thống (Audit Log)</h3>
-        <button onclick="closeModal('auditLogModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div id="auditLogListContainer" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1"></div>
-      <div class="mt-3 pt-3 border-t border-slate-800 flex justify-end shrink-0">
-        <button onclick="closeModal('auditLogModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs">Đóng</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL CHUYỂN TIẾP TIN NHẮN -->
-  <div id="forwardModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">➡️ Chuyển Tiếp Tin Nhắn / Tài Liệu</h3>
-        <button onclick="closeModal('forwardModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div id="forwardPreviewBox" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-slate-300 max-h-28 overflow-y-auto whitespace-pre-line"></div>
-        <div>
-          <label class="block text-slate-400 mb-1.5">Chọn Nhóm/Dự án hoặc Thành viên nhận:</label>
-          <select id="forwardTargetSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></select>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('forwardModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-          <button onclick="submitForwardMessage()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold">Chuyển Tiếp Ngay</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST & XUẤT EXCEL / PDF -->
-  <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-2 sm:p-4">
-    <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="px-4 sm:px-6 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-wrap gap-2">
-        <div class="min-w-0">
-          <h3 class="text-sm sm:text-base font-bold text-slate-900 truncate">📊 Bảng Theo Dõi Tiến Độ Checklist</h3>
-          <p id="progressModalSubtitle" class="text-xs text-slate-500 mt-0.5 truncate">Nhóm / Dự án: Phòng Điều Hành Chung</p>
-        </div>
-        <div class="flex items-center gap-1.5 sm:gap-2">
-          <button onclick="exportChecklistToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
-            📥 Xuất Excel
-          </button>
-          <button onclick="exportChecklistToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
-            🖨️ Xuất PDF
-          </button>
-          <button onclick="closeModal('progressModal')" class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">✕</button>
-        </div>
-      </div>
-
-      <div class="overflow-auto flex-1">
-        <table class="w-full text-left border-collapse min-w-[760px]">
-          <thead class="bg-slate-100 sticky top-0 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
+      <div class="flex-1 overflow-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-100 text-slate-700 uppercase text-[11px] sticky top-0 border-b border-slate-200">
             <tr>
-              <th class="py-3 px-4">Thành viên</th>
+              <th class="py-3 px-4">Thực hiện</th>
               <th class="py-3 px-4">Nội dung công việc</th>
-              <th class="py-3 px-4">Bắt đầu → Hoàn thành</th>
-              <th class="py-3 px-4">Chủ trì / Trợ lý</th>
-              <th class="py-3 px-4">Trạng thái hạn</th>
-              <th class="py-3 px-4">Lý do & Hồi đáp</th>
-              <th class="py-3 px-4 text-right">Tác vụ & Nhắc việc</th>
+              <th class="py-3 px-4">Thời gian & Hạn</th>
+              <th class="py-3 px-4">Người giao</th>
+              <th class="py-3 px-4">Trạng thái</th>
+              <th class="py-3 px-4">Hồi đáp / Ghi chú</th>
+              <th class="py-3 px-4 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody id="progressTableBody" class="divide-y divide-slate-200 text-xs"></tbody>
+          <tbody id="progressTableBody" class="divide-y divide-slate-200"></tbody>
         </table>
-      </div>
-
-      <div class="px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
-        <span class="text-[11px] sm:text-xs text-slate-500">* Trợ lý & Quản lý có thể bấm 🔔 Nhắc việc qua Telegram hoặc xuất file Excel/PDF.</span>
-        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shrink-0">Đóng</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL GIAO VIỆC MỚI -->
-  <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">✅ Giao Công Việc Mới</h3>
-        <button onclick="closeModal('assignModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-slate-400 mb-1.5">Người thực hiện</label>
-          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></select>
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1.5">Nội dung công việc</label>
-          <textarea id="taskContent" rows="3" placeholder="Nhập chi tiết đầu việc cần triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></textarea>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-emerald-400 mb-1.5">🟢 Thời gian bắt đầu</label>
-            <input type="datetime-local" id="taskStartTime" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-rose-400 mb-1.5">🔴 Thời hạn hoàn thành</label>
-            <input type="datetime-local" id="taskDueTime" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500" />
-          </div>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('assignModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">Hủy</button>
-          <button onclick="submitNewTask()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-600/25">Giao Việc & Gửi Telegram</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL TRÌNH PHÊ DUYỆT & SỬA PHIẾU TRÌNH -->
-  <div id="approvalModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 id="approvalModalTitle" class="text-sm font-bold text-white">📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình</h3>
-        <button onclick="closeModal('approvalModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <input type="hidden" id="editingApprovalId" value="" />
-      <div class="space-y-3 text-xs">
-        <div id="approvalApproverBox">
-          <label class="block text-slate-400 mb-1">Lãnh đạo / Chủ trì phê duyệt</label>
-          <select id="approvalApprover" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Nội dung trình phê duyệt</label>
-          <textarea id="approvalContent" rows="4" placeholder="Ví dụ: Tờ trình phê duyệt phương án đền bù đợt 2..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></textarea>
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Link tài liệu / File đính kèm (tùy chọn)</label>
-          <input id="approvalFileUrl" type="text" placeholder="Dán link Google Drive hoặc chọn tệp bên dưới..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white mb-1.5" />
-          <input id="approvalFileInput" type="file" class="text-xs text-slate-400 w-full" />
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('approvalModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-          <button id="btnSubmitApproval" onclick="submitApprovalRequest()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">Gửi Trình Duyệt & Báo Telegram</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL CHỐT LỊCH HỌP & XUẤT BIÊN BẢN -->
-  <div id="meetingModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">📅 Chốt Lịch Họp, Phân Công & Xuất Biên Bản</h3>
-        <button onclick="closeModal('meetingModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-slate-400 mb-1">Thời gian họp</label>
-            <input id="meetingTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1">Địa điểm / Link họp trực tuyến</label>
-            <input id="meetingLocation" type="text" placeholder="Phòng họp tầng 3 / Google Meet" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Nội dung chốt cuộc họp</label>
-          <textarea id="meetingAgenda" rows="2" placeholder="Nhập nội dung chính & kết luận cuộc họp..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
-        </div>
-
-        <div class="bg-teal-950/30 border border-teal-700/40 rounded-xl p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-teal-300">⚡ Tự động tạo Checklist công việc sau họp</span>
-            <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
-              <input id="meetingAutoTasksCheck" type="checkbox" checked class="w-4 h-4 rounded bg-slate-900 border-slate-600 text-teal-500" />
-              <span>Kích hoạt</span>
-            </label>
-          </div>
-          <p class="text-[11px] text-slate-400 leading-relaxed">
-            Nhập mỗi dòng: <code class="text-teal-300">@Tên thành viên: Nội dung đầu việc</code>
-          </p>
-          <textarea id="meetingAutoTasksLines" rows="3" placeholder="Ví dụ:&#10;@Thành Viên 01: Hoàn thiện hồ sơ đo đạc thực địa&#10;@Thành Viên 02: Tổng hợp bảng giá đền bù trình duyệt" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white font-mono text-[11px]"></textarea>
-          <div>
-            <label class="block text-slate-400 mb-1">Hạn hoàn thành chung cho các việc sau họp (tùy chọn)</label>
-            <input id="meetingTasksDue" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white" />
-          </div>
-        </div>
-
-        <div class="pt-2 flex items-center justify-between flex-wrap gap-2">
-          <button type="button" onclick="exportMeetingMinutesPDF()" class="px-3.5 py-2.5 rounded-xl bg-amber-600/25 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 font-semibold">
-            🖨️ Xuất Biên Bản (PDF)
-          </button>
-          <div class="flex gap-2 ml-auto">
-            <button onclick="closeModal('meetingModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-            <button onclick="submitMeetingNotice()" class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold">📅 Chốt Lịch & Giao Việc</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL GỬI FILE NHIỀU NGƯỜI -->
-  <div id="multiFileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">📤 Gửi File & Tài Liệu Cho Nhiều Thành Viên</h3>
-        <button onclick="closeModal('multiFileModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-slate-400 font-medium">Chọn người nhận (từ 1 đến nhiều thành viên):</label>
-            <button type="button" onclick="toggleSelectAllRecipients()" class="text-blue-400 hover:text-blue-300 font-semibold">Chọn / Bỏ chọn tất cả</button>
-          </div>
-          <div id="multiFileRecipientsList" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto bg-slate-950/70 p-2.5 rounded-xl border border-slate-800"></div>
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Chọn tệp tin từ máy tính / điện thoại</label>
-          <input id="multiFileUploadInput" type="file" multiple class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Hoặc dán đường link tài liệu (Google Drive / OneDrive)</label>
-          <input id="multiFileLinkInput" type="text" placeholder="https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Lời nhắn / Ghi chú kèm theo</label>
-          <textarea id="multiFileNoteInput" rows="2" placeholder="Nhập ghi chú gửi các thành viên được chọn..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('multiFileModal')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 text-slate-300">Đóng</button>
-          <button onclick="submitMultiFileSend()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">📤 Gửi File & Báo Telegram</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL BACKUP & RESTORE + DAILY DIGEST 17:00 -->
-  <div id="backupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl p-4 sm:p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">💾 Backup, Restore & Báo Cáo Tự Động 17:00</h3>
-        <button onclick="closeModal('backupModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="font-bold text-emerald-400">1. Sao lưu dữ liệu ngay (Backup Now)</div>
-          <div>
-            <label class="block text-slate-400 mb-1">Phạm vi dữ liệu sao lưu:</label>
-            <select id="backupScopeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
-          </div>
-          <div class="flex flex-wrap gap-2 pt-1">
-            <button onclick="downloadBackupNow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2.5 rounded-lg transition">
-              ⬇️ Tải file JSON về máy
-            </button>
-            <button onclick="backupToGoogleDriveNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2.5 rounded-lg transition">
-              ☁️ Đẩy Backup lên Google Drive
-            </button>
-          </div>
-        </div>
-
-        <div id="systemBackupScheduleBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-blue-400">2. Báo cáo tiến độ cuối ngày (Daily Digest 17:00)</span>
-          </div>
-          <p class="text-[11px] text-slate-300 leading-relaxed">
-            Hệ thống tự động tổng hợp công việc trễ hạn, sắp đến hạn và tờ trình chờ duyệt lúc <b>17:00 hàng ngày</b> gửi 1 bản tóm tắt về Telegram của Lãnh đạo và Trợ lý.
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="triggerDailyDigestNow()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3.5 py-2.5 rounded-lg">
-              📩 Gửi thử Báo cáo Daily Digest ngay
-            </button>
-          </div>
-        </div>
-
-        <div id="systemRestoreBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2">
-          <div class="font-bold text-amber-400">3. Khôi phục dữ liệu toàn hệ thống từ bản sao lưu (Restore)</div>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <input id="restoreFileInput" type="file" accept=".json" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-300" />
-            <button onclick="restoreFromJsonFile()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-lg shrink-0">
-              ♻️ Khôi Phục
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 
   <!-- MODAL VIỆC CỦA TÔI -->
-  <div id="myTasksModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-4 sm:p-5 shadow-2xl max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4 shrink-0">
-        <h3 class="text-sm font-bold text-white">📋 Danh Sách Công Việc Được Giao Cho Tôi</h3>
-        <button onclick="closeModal('myTasksModal')" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white">✕</button>
+  <div id="myTasksModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-5 space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">📌 Danh Sách Công Việc Của Tôi</h3>
+        <button onclick="closeModal('myTasksModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <div id="myTasksListContainer" class="space-y-2.5 overflow-y-auto flex-1 text-xs"></div>
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
-        <button onclick="closeModal('myTasksModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs">Đóng</button>
+      <div id="myTasksListContainer" class="flex-1 overflow-y-auto space-y-2.5 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- MODAL GỬI TÀI LIỆU NHIỀU NGƯỜI -->
+  <div id="multiFileModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-5 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">📤 Gửi Tài Liệu Kín Cho Nhiều Thành Viên</h3>
+        <button onclick="closeModal('multiFileModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="font-bold text-slate-300">Chọn thành viên nhận tài liệu</label>
+          <button type="button" onclick="toggleSelectAllRecipients()" class="text-blue-400 hover:underline">Chọn / Bỏ chọn tất cả</button>
+        </div>
+        <div id="multiFileRecipientsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto"></div>
+      </div>
+      <div>
+        <label class="block text-slate-400 mb-1">Chọn tệp tin (&lt;3MB)</label>
+        <input id="multiFileUploadInput" type="file" class="w-full text-slate-300" />
+      </div>
+      <div>
+        <label class="block text-slate-400 mb-1">Hoặc dán đường dẫn Google Drive</label>
+        <input id="multiFileLinkInput" type="url" placeholder="https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+      </div>
+      <div>
+        <label class="block text-slate-400 mb-1">Ghi chú kèm theo</label>
+        <input id="multiFileNoteInput" type="text" placeholder="Nội dung nhắn gửi..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('multiFileModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Hủy</button>
+        <button id="btnSubmitMultiFile" onclick="submitMultiFileSend()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold">📤 Gửi File & Báo Telegram</button>
       </div>
     </div>
   </div>
 
+  <!-- MODAL CHUYỂN TIẾP TIN NHẮN -->
+  <div id="forwardModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">➡️ Chuyển Tiếp Tin Nhắn</h3>
+        <button onclick="closeModal('forwardModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div id="forwardPreviewBox" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300 max-h-28 overflow-y-auto"></div>
+      <div>
+        <label class="block text-slate-400 mb-1">Chọn kênh dự án hoặc thành viên nhận</label>
+        <select id="forwardTargetSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('forwardModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Hủy</button>
+        <button onclick="submitForwardMessage()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold">Chuyển tiếp ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BACKUP & RESTORE -->
+  <div id="backupModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4 text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">☁️ Sao Lưu & Khôi Phục Dữ Liệu (Backup)</h3>
+        <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div>
+        <label class="block text-slate-400 mb-1">Phạm vi dữ liệu sao lưu</label>
+        <select id="backupScopeSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button onclick="downloadBackupNow()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl border border-slate-700">⬇️ Tải File JSON về máy</button>
+        <button onclick="backupToGoogleDriveNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl">☁️ Đẩy lên Google Drive</button>
+      </div>
+      <div id="systemBackupScheduleBox" class="border-t border-slate-800 pt-3 space-y-2">
+        <div class="font-bold text-amber-300">📊 Báo cáo tổng hợp cuối ngày (Daily Digest)</div>
+        <button onclick="triggerDailyDigestNow()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl">📨 Gửi Báo Cáo Tiến Độ Về Telegram Ngay</button>
+      </div>
+      <div id="systemRestoreBox" class="border-t border-slate-800 pt-3 space-y-2">
+        <div class="font-bold text-rose-300">♻️ Khôi phục dữ liệu từ file sao lưu (.json)</div>
+        <input id="restoreFileInput" type="file" accept=".json" class="w-full text-slate-300" />
+        <button onclick="restoreFromJsonFile()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 rounded-xl">Khôi Phục Dữ Liệu Lên Hệ Thống</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NHẬT KÝ KIỂM TOÁN (AUDIT LOG) -->
+  <div id="auditLogModal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl p-5 space-y-4 max-h-[85vh] flex flex-col text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">🛡️ Nhật Ký Kiểm Toán & Bảo Mật Hệ Thống (Audit Log)</h3>
+        <button onclick="closeModal('auditLogModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div id="auditLogListContainer" class="flex-1 overflow-y-auto space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- HỘP THOẠI THÔNG BÁO / XÁC NHẬN TÙY CHỈNH -->
+  <div id="appDialogModal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl text-xs">
+      <h4 id="appDialogTitle" class="text-sm font-bold text-white">Thông báo</h4>
+      <p id="appDialogMessage" class="text-slate-200 leading-relaxed whitespace-pre-line"></p>
+      <input id="appDialogPromptInput" type="text" class="hidden w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-white" />
+      <div class="flex justify-end gap-2 pt-1">
+        <button id="appDialogCancelBtn" class="hidden px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">Hủy</button>
+        <button id="appDialogOkBtn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold">Đồng ý</button>
+      </div>
+    </div>
+  </div>
   <script>
     // =========================================================================
-    // 1. CẤU HÌNH KẾT NỐI SUPABASE, TELEGRAM BOT & MA TRẬN 7 CẤP QUYỀN
+    // 1. CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT WEBHOOK
     // =========================================================================
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
@@ -813,101 +671,19 @@
     const TELEGRAM_BOT_USERNAME = 'TeamWork_Duyet_Bot';
     const DEFAULT_APPROVER_CHAT_ID = '522439752';
 
-    const SESSION_STORAGE_KEY = 'tw_cloud_session_uid_v7';
-    const CHANNEL_STORAGE_KEY = 'tw_cloud_active_channel_v7';
-    const MAX_FAILED_ATTEMPTS = 5;
-
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // HỆ THỐNG DIALOG NỘI BỘ
-    let customDialogResolver = null;
-    let customDialogMode = 'ALERT';
+    const SESSION_STORAGE_KEY = 'tw_cloud_uid_v7';
+    const CHANNEL_STORAGE_KEY = 'tw_cloud_cid_v7';
+    const MAX_FAILED_ATTEMPTS = 5;
 
-    function showAppNotice(message, title = 'ℹ️ Thông báo TeamWork Cloud') {
-      return new Promise(resolve => {
-        customDialogMode = 'ALERT';
-        customDialogResolver = resolve;
-        document.getElementById('customDialogTitle').textContent = title;
-        document.getElementById('customDialogMessage').textContent = message;
-        document.getElementById('customDialogPromptBox').classList.add('hidden');
-        document.getElementById('customDialogCancelBtn').classList.add('hidden');
-        document.getElementById('customDialogOkBtn').textContent = 'Đồng ý';
-        const overlay = document.getElementById('customDialogOverlay');
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-      });
-    }
-
-    function showAppConfirm(message, title = '⚠️ Xác nhận thao tác') {
-      return new Promise(resolve => {
-        customDialogMode = 'CONFIRM';
-        customDialogResolver = resolve;
-        document.getElementById('customDialogTitle').textContent = title;
-        document.getElementById('customDialogMessage').textContent = message;
-        document.getElementById('customDialogPromptBox').classList.add('hidden');
-        document.getElementById('customDialogCancelBtn').classList.remove('hidden');
-        document.getElementById('customDialogOkBtn').textContent = 'Xác nhận';
-        const overlay = document.getElementById('customDialogOverlay');
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-      });
-    }
-
-    function showAppPrompt(message, defaultValue = '', title = '✏️ Nhập thông tin') {
-      return new Promise(resolve => {
-        customDialogMode = 'PROMPT';
-        customDialogResolver = resolve;
-        document.getElementById('customDialogTitle').textContent = title;
-        document.getElementById('customDialogMessage').textContent = message;
-        const inp = document.getElementById('customDialogInput');
-        inp.value = defaultValue || '';
-        document.getElementById('customDialogPromptBox').classList.remove('hidden');
-        document.getElementById('customDialogCancelBtn').classList.remove('hidden');
-        document.getElementById('customDialogOkBtn').textContent = 'Lưu thông tin';
-        const overlay = document.getElementById('customDialogOverlay');
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-        setTimeout(() => inp.focus(), 50);
-      });
-    }
-
-    function resolveCustomDialog(isOk) {
-      const overlay = document.getElementById('customDialogOverlay');
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
-      if (!customDialogResolver) return;
-      const resFn = customDialogResolver;
-      customDialogResolver = null;
-      if (customDialogMode === 'PROMPT') {
-        resFn(isOk ? document.getElementById('customDialogInput').value : null);
-      } else {
-        resFn(Boolean(isOk));
-      }
-    }
-
-    const PERMISSION_DEFS = {
-      FULL: { code: 'FULL', label: 'Quản trị hệ thống', shortTitle: 'Full (Quản trị hệ thống)', badgeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40' },
-      MANAGER: { code: 'MANAGER', label: 'Quản trị', shortTitle: 'Quản trị (Nhóm/Dự án)', badgeClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/40' },
-      ASSISTANT: { code: 'ASSISTANT', label: 'Trợ lý', shortTitle: 'Trợ lý (Lịch họp & Checklist)', badgeClass: 'bg-teal-500/20 text-teal-300 border border-teal-500/40' },
-      APPROVER: { code: 'APPROVER', label: 'Chủ trì / Phê duyệt', shortTitle: 'Chủ trì / Phê duyệt', badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' },
-      RESOURCE_LEAD: { code: 'RESOURCE_LEAD', label: 'Điều phối Tài nguyên', shortTitle: 'Điều phối Tài nguyên', badgeClass: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' },
-      AUDITOR: { code: 'AUDITOR', label: 'Giám sát / Thanh tra', shortTitle: 'Giám sát / Thanh tra', badgeClass: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' },
-      MEMBER: { code: 'MEMBER', label: 'Thành viên', shortTitle: 'Thành viên', badgeClass: 'bg-slate-700/80 text-slate-300 border border-slate-600' }
-    };
-
-    let dbUsers = [
-      { id: 'u_admin', display_name: 'Lãnh Đạo / Quản Lý', role_title: 'Trưởng Ban / Giám Đốc', is_admin: true, pin_code: '123456', telegram_chat_id: '522439752' },
-      { id: 'u_tv1', display_name: 'Thành Viên 01', role_title: 'Chuyên viên Dự án', is_admin: false, pin_code: 'tv01ab', telegram_chat_id: '' },
-      { id: 'u_tv2', display_name: 'Thành Viên 02', role_title: 'Chuyên viên Hồ sơ', is_admin: false, pin_code: 'tv02ab', telegram_chat_id: '' }
-    ];
-    let dbChannels = [
-      { id: 'c_general', name: 'Phòng Điều Hành Chung', description: 'Trao đổi công việc hàng ngày & thông báo chung của tập thể' },
-      { id: 'c_docs', name: 'Trình Duyệt Hồ Sơ - Tờ Trình', description: 'Kênh gửi báo cáo, tờ trình & phê duyệt nhanh' },
-      { id: 'c_project', name: 'Dự Án Trọng Điểm', description: 'Theo dõi tiến độ thực địa, hồ sơ pháp lý & GPMB' }
-    ];
+    // =========================================================================
+    // 2. BIẾN TRẠNG THÁI TOÀN CỤC
+    // =========================================================================
+    let dbUsers = [];
+    let dbChannels = [];
     let dbMessages = [];
     let dbTasks = [];
-
     let dbGroupMetaMap = {};
     let dbUserPermsMap = {};
     let dbAuditLogs = [];
@@ -916,56 +692,109 @@
     let dbAccountLocksMap = {};
 
     let currentUser = null;
-    let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || 'c_general';
+    let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || '';
     let activeDmPeer = null;
-    let mobileActiveView = 'CHAT';
-    let tgPollTimer = null;
-    let tempPgResources = [];
-
     let selectedContextMsgId = null;
     let replyToMsgObj = null;
     let editingMsgId = null;
     let forwardingMsgObj = null;
     let translatedCache = {};
+    let tempPgResources = [];
+    let tgPollTimer = null;
 
     // =========================================================================
-    // 2. KIỂM TRA ĐỊNH DẠNG PASS/PIN CHỮ + SỐ (4 - 12 KÝ TỰ) & SINH MÃ NGẪU NHIÊN
+    // 3. HỆ THỐNG PHÂN QUYỀN 4 CẤP & KIỂM TRA BẢO MẬT
     // =========================================================================
-    function validateAlphanumericPin(pinStr) {
-      const val = String(pinStr || '').trim();
-      if (val.length < 4 || val.length > 12) {
-        return { ok: false, msg: 'Mật khẩu / Mã PIN phải có độ dài từ 4 đến 12 ký tự!' };
+    const PERMISSION_DEFS = {
+      FULL: {
+        code: 'FULL',
+        label: 'Quản trị (Full)',
+        shortTitle: 'Quản trị hệ thống (Full)',
+        badgeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+      },
+      CHAIR: {
+        code: 'CHAIR',
+        label: 'Chủ trì',
+        shortTitle: 'Chủ trì / Phê duyệt',
+        badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+      },
+      ASSISTANT: {
+        code: 'ASSISTANT',
+        label: 'Trợ lý',
+        shortTitle: 'Trợ lý điều hành',
+        badgeClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+      },
+      MEMBER: {
+        code: 'MEMBER',
+        label: 'Thành viên',
+        shortTitle: 'Thành viên dự án',
+        badgeClass: 'bg-slate-700 text-slate-200'
       }
-      if (!/^[A-Za-z0-9]+$/.test(val)) {
-        return { ok: false, msg: 'Mật khẩu / Mã PIN chỉ được chứa chữ cái không dấu (A-Z, a-z) và chữ số (0-9)!' };
-      }
-      if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) {
-        return { ok: false, msg: 'Mật khẩu / Mã PIN bắt buộc phải bao gồm CẢ CHỮ CÁI VÀ CHỮ SỐ (Ví dụ: tv01ab, ql2026)!' };
-      }
-      return { ok: true, value: val };
+    };
+
+    function isPrimarySystemOwner(user) {
+      if (!user) return false;
+      const name = String(user.display_name || '').toLowerCase();
+      return name.includes('tào thành tài') || name.includes('tài thành');
     }
 
-    function generateRandomAlphanumericPin(length = 6) {
-      const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
-      const digits = '23456789';
-      const all = letters + digits;
-      let chars = [
-        letters.charAt(Math.floor(Math.random() * letters.length)),
-        digits.charAt(Math.floor(Math.random() * digits.length))
-      ];
-      for (let i = 2; i < length; i++) {
-        chars.push(all.charAt(Math.floor(Math.random() * all.length)));
-      }
-      for (let i = chars.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [chars[i], chars[j]] = [chars[j], chars[i]];
-      }
-      return chars.join('');
+    function getUserPermDef(user) {
+      if (!user) return PERMISSION_DEFS.MEMBER;
+      if (isPrimarySystemOwner(user)) return PERMISSION_DEFS.FULL;
+      const mapped = dbUserPermsMap[String(user.id)];
+      if (mapped && PERMISSION_DEFS[mapped]) return PERMISSION_DEFS[mapped];
+      if (user.is_admin) return PERMISSION_DEFS.FULL;
+      return PERMISSION_DEFS.MEMBER;
+    }
+
+    function isSystemFullAdmin(user) {
+      return getUserPermDef(user).code === 'FULL';
+    }
+
+    function canApproveItems(user) {
+      const code = getUserPermDef(user).code;
+      return code === 'FULL' || code === 'CHAIR';
+    }
+
+    function canAssignOrManageTasks(user) {
+      const code = getUserPermDef(user).code;
+      return code === 'FULL' || code === 'CHAIR' || code === 'ASSISTANT';
+    }
+
+    function canScheduleMeetings(user) {
+      const code = getUserPermDef(user).code;
+      return code === 'FULL' || code === 'CHAIR' || code === 'ASSISTANT';
+    }
+
+    function canPinDirectives(user) {
+      const code = getUserPermDef(user).code;
+      return code === 'FULL' || code === 'CHAIR' || code === 'ASSISTANT';
+    }
+
+    function canManageGroupMembers(user) {
+      const code = getUserPermDef(user).code;
+      return code === 'FULL' || code === 'ASSISTANT';
+    }
+
+    function canManageGroupResources(user) {
+      const code = getUserPermDef(user).code;
+      return code === 'FULL' || code === 'CHAIR' || code === 'ASSISTANT';
+    }
+
+    function canEditApprovalItem(msg) {
+      if (!currentUser || !msg || msg.msg_type !== 'APPROVAL') return false;
+      if (isSystemFullAdmin(currentUser)) return true;
+      return msg.approval_status === 'PENDING' && currentUser.display_name === msg.sender_name;
+    }
+
+    function canDeleteApprovalItem(msg) {
+      if (!currentUser || !msg || msg.msg_type !== 'APPROVAL') return false;
+      return isSystemFullAdmin(currentUser);
     }
 
     function isAccountLocked(userId) {
       const info = dbAccountLocksMap[String(userId)];
-      return Boolean(info && info.locked === true);
+      return Boolean(info && info.locked);
     }
 
     function getAccountFailCount(userId) {
@@ -973,301 +802,304 @@
       return info ? (Number(info.fails) || 0) : 0;
     }
 
-    // =========================================================================
-    // 3. PHÂN QUYỀN & KHÓA CỨNG QUYỀN QUẢN TRỊ HỆ THỐNG CHO TÀI KHOẢN GỐC
-    // =========================================================================
-    function isPrimarySystemOwner(user) {
-      if (!user) return false;
-      const nameNorm = String(user.display_name || '').trim().toLowerCase();
-      return String(user.id) === 'u_admin' ||
-             nameNorm === 'lãnh đạo / quản lý' ||
-             String(user.telegram_chat_id || '').trim() === DEFAULT_APPROVER_CHAT_ID;
-    }
-
-    function getUserPermCode(user) {
-      if (!user) return 'MEMBER';
-      if (isPrimarySystemOwner(user)) return 'FULL';
-      const mapped = dbUserPermsMap[String(user.id)];
-      if (mapped && PERMISSION_DEFS[mapped]) return mapped;
-      if (user.is_admin === true) return 'FULL';
-      return 'MEMBER';
-    }
-
-    function getUserPermDef(user) {
-      return PERMISSION_DEFS[getUserPermCode(user)] || PERMISSION_DEFS.MEMBER;
-    }
-
-    function isSystemFullAdmin(user) {
-      return getUserPermCode(user) === 'FULL';
-    }
-
-    function canApproveItems(user) {
-      return ['FULL', 'MANAGER', 'APPROVER'].includes(getUserPermCode(user));
-    }
-
-    function canManageGroupMembers(user) {
-      return ['FULL', 'MANAGER'].includes(getUserPermCode(user));
-    }
-
-    function canManageGroupResources(user) {
-      return ['FULL', 'MANAGER', 'RESOURCE_LEAD'].includes(getUserPermCode(user));
-    }
-
-    function canAssignOrManageTasks(user) {
-      return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
-    }
-
-    function canScheduleMeetings(user) {
-      return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
-    }
-
-    function canPinDirectives(user) {
-      return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
-    }
-
-    function canEditApprovalItem(msg) {
-      if (!currentUser || !msg) return false;
-      if (isSystemFullAdmin(currentUser)) return true;
-      const isSubmitter = String(currentUser.display_name || '').trim() === String(msg.sender_name || '').trim();
-      return isSubmitter && msg.approval_status === 'PENDING';
-    }
-
-    function canDeleteApprovalItem(msg) {
-      if (!currentUser || !msg) return false;
-      return isSystemFullAdmin(currentUser);
+    function getVisibleChannelsForCurrentUser() {
+      if (!currentUser) return [];
+      if (isSystemFullAdmin(currentUser)) return dbChannels;
+      return dbChannels.filter(c => {
+        const meta = dbGroupMetaMap[String(c.id)];
+        if (!meta || !Array.isArray(meta.members) || meta.members.length === 0) return true;
+        return meta.members.map(String).includes(String(currentUser.id));
+      });
     }
 
     // =========================================================================
-    // 4. NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG)
+    // 4. TIỆN ÍCH ĐỊNH DẠNG, MÃ PIN CHỮ+SỐ & HỘP THOẠI TÙY CHỈNH
     // =========================================================================
-    async function recordAuditLog(actionType, detailText, customActor = null) {
-      try {
-        const entry = {
-          id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 999),
-          at: new Date().toISOString(),
-          actor: customActor || (currentUser ? `${currentUser.display_name} [${getUserPermDef(currentUser).label}]` : 'Hệ thống bảo mật'),
-          action: actionType,
-          detail: detailText
-        };
-        dbAuditLogs.unshift(entry);
-        if (dbAuditLogs.length > 150) dbAuditLogs = dbAuditLogs.slice(0, 150);
-        await persistSystemConfigRow('__AUDIT_LOGS__', dbAuditLogs);
-      } catch (e) {}
+    function escapeHtmlSafe(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatDateTimeVN(isoStr) {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return String(isoStr);
+      return d.toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    function replaceQuickEmojis(text) {
+      return text
+        .replace(/:\)/g, '😊')
+        .replace(/:\(/g, '😟')
+        .replace(/:D/g, '😄')
+        .replace(/<3/g, '❤️');
+    }
+
+    function formatMessageTextHtml(rawText) {
+      let safe = escapeHtmlSafe(rawText);
+      safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline hover:text-blue-300 break-all">$1</a>');
+      safe = safe.replace(/(@[^\s:.,;!?]+)/g, '<span class="text-amber-300 font-semibold">$1</span>');
+      return safe;
+    }
+
+    function validateAlphanumericPin(pin) {
+      const clean = String(pin || '').trim();
+      if (clean.length < 4 || clean.length > 12) {
+        return { ok: false, msg: 'Mã PIN / Mật khẩu phải có độ dài từ 4 đến 12 ký tự!' };
+      }
+      if (!/[a-zA-Z]/.test(clean) || !/[0-9]/.test(clean)) {
+        return { ok: false, msg: 'Mã PIN / Mật khẩu bắt buộc phải bao gồm CẢ CHỮ VÀ SỐ (VD: tv01ab, hcm2026)!' };
+      }
+      return { ok: true, value: clean };
+    }
+
+    function generateRandomAlphanumericPin(len = 6) {
+      const letters = 'abcdefghjkmnpqrstuvwxyz';
+      const digits = '23456789';
+      let res = letters[Math.floor(Math.random() * letters.length)] + digits[Math.floor(Math.random() * digits.length)];
+      const all = letters + digits;
+      while (res.length < len) {
+        res += all[Math.floor(Math.random() * all.length)];
+      }
+      return res.split('').sort(() => 0.5 - Math.random()).join('');
+    }
+
+    function showAppNotice(message, title = '📢 Thông báo') {
+      return new Promise(resolve => {
+        const modal = document.getElementById('appDialogModal');
+        document.getElementById('appDialogTitle').textContent = title;
+        document.getElementById('appDialogMessage').textContent = message;
+        document.getElementById('appDialogPromptInput').classList.add('hidden');
+        document.getElementById('appDialogCancelBtn').classList.add('hidden');
+        const okBtn = document.getElementById('appDialogOkBtn');
+        okBtn.textContent = 'Đã hiểu';
+        okBtn.onclick = () => { closeModal('appDialogModal'); resolve(true); };
+        openModal('appDialogModal');
+      });
+    }
+
+    function showAppConfirm(message, title = '❓ Xác nhận thao tác') {
+      return new Promise(resolve => {
+        const modal = document.getElementById('appDialogModal');
+        document.getElementById('appDialogTitle').textContent = title;
+        document.getElementById('appDialogMessage').textContent = message;
+        document.getElementById('appDialogPromptInput').classList.add('hidden');
+        const cancelBtn = document.getElementById('appDialogCancelBtn');
+        const okBtn = document.getElementById('appDialogOkBtn');
+        cancelBtn.classList.remove('hidden');
+        okBtn.textContent = 'Xác nhận';
+        cancelBtn.onclick = () => { closeModal('appDialogModal'); resolve(false); };
+        okBtn.onclick = () => { closeModal('appDialogModal'); resolve(true); };
+        openModal('appDialogModal');
+      });
+    }
+
+    function showAppPrompt(message, defaultVal = '', title = '✏️ Nhập thông tin') {
+      return new Promise(resolve => {
+        document.getElementById('appDialogTitle').textContent = title;
+        document.getElementById('appDialogMessage').textContent = message;
+        const inp = document.getElementById('appDialogPromptInput');
+        inp.value = defaultVal;
+        inp.classList.remove('hidden');
+        const cancelBtn = document.getElementById('appDialogCancelBtn');
+        const okBtn = document.getElementById('appDialogOkBtn');
+        cancelBtn.classList.remove('hidden');
+        okBtn.textContent = 'Lưu';
+        cancelBtn.onclick = () => { closeModal('appDialogModal'); resolve(null); };
+        okBtn.onclick = () => { const v = inp.value; closeModal('appDialogModal'); resolve(v); };
+        openModal('appDialogModal');
+        setTimeout(() => inp.focus(), 100);
+      });
+    }
+
+    // =========================================================================
+    // 5. NHẬT KÝ KIỂM TOÁN (AUDIT LOG) & ĐIỀU HƯỚNG UI
+    // =========================================================================
+    async function recordAuditLog(actionName, detailText, actorOverride = null) {
+      const actor = actorOverride || (currentUser ? currentUser.display_name : 'Hệ thống');
+      dbAuditLogs.unshift({
+        time: new Date().toISOString(),
+        actor,
+        action: actionName,
+        detail: detailText
+      });
+      if (dbAuditLogs.length > 120) dbAuditLogs = dbAuditLogs.slice(0, 120);
+      await persistSystemConfigRow('__AUDIT_LOGS__', dbAuditLogs);
     }
 
     function openAuditLogModal() {
-      if (!isSystemFullAdmin(currentUser)) {
-        return showAppNotice('Chỉ tài khoản quyền Quản trị hệ thống (Full) mới được xem Nhật ký kiểm toán.', '🔒 Giới hạn quyền truy cập');
-      }
+      if (!isSystemFullAdmin(currentUser)) return;
       const box = document.getElementById('auditLogListContainer');
       if (!dbAuditLogs.length) {
-        box.innerHTML = `<div class="text-center text-slate-400 py-8">Chưa có bản ghi kiểm toán nào.</div>`;
+        box.innerHTML = `<div class="text-center text-slate-500 py-8">Chưa có ghi nhận nào trong nhật ký kiểm toán.</div>`;
       } else {
         box.innerHTML = dbAuditLogs.map(log => `
-          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="space-y-0.5">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold">${escapeHtmlSafe(log.action)}</span>
-                <span class="font-semibold text-white">${escapeHtmlSafe(log.actor)}</span>
-              </div>
-              <div class="text-slate-300">${escapeHtmlSafe(log.detail)}</div>
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-2.5 flex items-start justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">${escapeHtmlSafe(log.action)}</span>
+              <span class="font-bold text-white ml-1.5">${escapeHtmlSafe(log.actor)}</span>
+              <div class="text-slate-300 mt-1">${escapeHtmlSafe(log.detail)}</div>
             </div>
-            <div class="text-[11px] text-slate-400 font-mono shrink-0">${formatDateTimeVN(log.at)}</div>
+            <span class="text-[10px] text-slate-400 shrink-0">${formatDateTimeVN(log.time)}</span>
           </div>
         `).join('');
       }
       openModal('auditLogModal');
     }
 
-    // =========================================================================
-    // 5. TIỆN ÍCH DROPDOWN, REFRESH & TỐI ƯU GIAO DIỆN MOBILE
-    // =========================================================================
-    function toggleDropdown(menuId) {
-      const target = document.getElementById(menuId);
-      const isHidden = target.classList.contains('hidden');
+    function toggleMobileSidebar(forceState = null) {
+      const sidebar = document.getElementById('leftSidebar');
+      const backdrop = document.getElementById('mobileSidebarBackdrop');
+      const isCurrentlyOpen = !sidebar.classList.contains('-translate-x-full');
+      const nextState = forceState !== null ? forceState : !isCurrentlyOpen;
+      if (nextState) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function switchMobileView(tab) {
+      const chatPane = document.getElementById('centerChatPane');
+      const rightPane = document.getElementById('rightPanelPane');
+      const navChat = document.getElementById('mobNavChat');
+      const navTasks = document.getElementById('mobNavTasks');
+      const navFiles = document.getElementById('mobNavFiles');
+
+      [navChat, navTasks, navFiles].forEach(el => {
+        if (el) el.className = 'flex-1 h-full flex items-center justify-center gap-1 text-slate-400';
+      });
+
+      if (tab === 'CHAT') {
+        chatPane.classList.remove('hidden');
+        rightPane.classList.add('hidden');
+        rightPane.classList.remove('flex', 'fixed', 'inset-0', 'bottom-12', 'z-30', 'w-full');
+        if (navChat) navChat.className = 'flex-1 h-full flex items-center justify-center gap-1 text-blue-400 border-t-2 border-blue-500';
+      } else {
+        chatPane.classList.add('hidden');
+        rightPane.classList.remove('hidden');
+        rightPane.classList.add('flex', 'fixed', 'inset-0', 'bottom-12', 'z-30', 'w-full');
+        switchRightPanelTab(tab);
+        const activeBtn = tab === 'TASKS' ? navTasks : navFiles;
+        if (activeBtn) activeBtn.className = 'flex-1 h-full flex items-center justify-center gap-1 text-blue-400 border-t-2 border-blue-500';
+      }
+    }
+
+    function switchRightPanelTab(tab) {
+      const btnT = document.getElementById('rightTabBtnTasks');
+      const btnF = document.getElementById('rightTabBtnFiles');
+      const boxT = document.getElementById('rightTabContentTasks');
+      const boxF = document.getElementById('rightTabContentFiles');
+      if (tab === 'TASKS') {
+        boxT.classList.remove('hidden');
+        boxF.classList.add('hidden');
+        btnT.className = 'flex-1 py-2.5 text-blue-400 border-b-2 border-blue-500';
+        btnF.className = 'flex-1 py-2.5 text-slate-400 hover:text-white';
+      } else {
+        boxF.classList.remove('hidden');
+        boxT.classList.add('hidden');
+        btnF.className = 'flex-1 py-2.5 text-blue-400 border-b-2 border-blue-500';
+        btnT.className = 'flex-1 py-2.5 text-slate-400 hover:text-white';
+      }
+    }
+
+   function toggleHeaderMoreMenu(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('headerMoreMenu');
+      const isHidden = menu.classList.contains('hidden');
       closeAllDropdowns();
-      if (isHidden) target.classList.remove('hidden');
+      if (isHidden) menu.classList.remove('hidden');
+    }
+
+    const QUICK_EMOJIS_LIST = [
+      '👍', '👌', '✅', '🙏', '🤝', '👏', '💪', '🎉',
+      '😊', '😄', '😁', '😅', '😂', '😉', '😍', '🤔',
+      '😮', '😢', '😟', '😡', '🚨', '⚠️', '🔥', '⭐',
+      '📌', '📋', '📎', '📁', '📅', '⏰', '📍', '🏗️',
+      '💼', '📊', '📈', '💰', '📞', '🚗', '☕', '❤️'
+    ];
+
+    function toggleEmojiPicker(event, forceState = null) {
+      if (event) event.stopPropagation();
+      const pop = document.getElementById('emojiPickerPopover');
+      const grid = document.getElementById('emojiGridContainer');
+      if (!pop || !grid) return;
+
+      if (!grid.innerHTML.trim()) {
+        grid.innerHTML = QUICK_EMOJIS_LIST.map(em => `
+          <button type="button" onclick="insertEmojiToChat('${em}')" class="w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition">
+            ${em}
+          </button>
+        `).join('');
+      }
+
+      const isHidden = pop.classList.contains('hidden');
+      closeAllDropdowns();
+      const shouldOpen = forceState !== null ? forceState : isHidden;
+      if (shouldOpen) pop.classList.remove('hidden');
+    }
+
+    function insertEmojiToChat(emojiChar) {
+      const inp = document.getElementById('chatInput');
+      if (!inp) return;
+      const start = inp.selectionStart || inp.value.length;
+      const end = inp.selectionEnd || inp.value.length;
+      inp.value = inp.value.slice(0, start) + emojiChar + inp.value.slice(end);
+      inp.focus();
+      inp.setSelectionRange(start + emojiChar.length, start + emojiChar.length);
     }
 
     function closeAllDropdowns() {
-      ['menuDataFiles', 'menuAccountAdmin', 'menuChannelActions', 'msgContextMenu'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-      });
+      const hMenu = document.getElementById('headerMoreMenu');
+      const cMenu = document.getElementById('msgContextMenu');
+      const ePop = document.getElementById('emojiPickerPopover');
+      if (hMenu) hMenu.classList.add('hidden');
+      if (cMenu) cMenu.classList.add('hidden');
+      if (ePop) ePop.classList.add('hidden');
     }
 
-    async function manualRefreshApp() {
-      const icon = document.getElementById('refreshIcon');
-      const statusEl = document.getElementById('syncStatus');
-      if (icon) {
-        icon.classList.remove('animate-spin-once');
-        void icon.offsetWidth;
-        icon.classList.add('animate-spin-once');
-      }
-      if (statusEl) {
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span> <span class="truncate">Đang đồng bộ...</span>`;
-      }
-      await syncAllFromSupabase(false);
-      if (statusEl) {
-        const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span> <span class="truncate">Cập nhật ${nowTime}</span>`;
-      }
-    }
-
-    function toggleMobileSidebar(forceState = null) {
-      const sbEl = document.getElementById('leftSidebar');
-      const bdEl = document.getElementById('leftSidebarBackdrop');
-      const shouldOpen = forceState !== null ? forceState : sbEl.classList.contains('hidden');
-      if (shouldOpen) {
-        sbEl.classList.remove('hidden');
-        sbEl.classList.add('flex');
-        if (bdEl) bdEl.classList.remove('hidden');
-      } else {
-        sbEl.classList.add('hidden');
-        sbEl.classList.remove('flex');
-        if (bdEl) bdEl.classList.add('hidden');
-      }
-    }
-
-    function switchMobileView(view) {
-      mobileActiveView = view;
-      const centerEl = document.getElementById('centerChatPanel');
-      const rightEl = document.getElementById('rightSidebarPanel');
-
-      ['CHAT', 'CHECKLIST', 'FILES'].forEach(v => {
-        const btn = document.getElementById('mobNavBtn_' + v);
-        if (!btn) return;
-        if (v === view) {
-          btn.className = 'py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-blue-400 font-bold border-t-2 border-blue-500 bg-blue-950/20';
-        } else {
-          btn.className = 'py-2 px-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 font-medium border-t-2 border-transparent';
-        }
-      });
-
-      if (window.innerWidth < 1280) {
-        if (view === 'CHAT') {
-          centerEl.classList.remove('hidden');
-          centerEl.classList.add('flex');
-          rightEl.classList.add('hidden');
-          rightEl.classList.remove('flex');
-        } else {
-          centerEl.classList.add('hidden');
-          centerEl.classList.remove('flex');
-          rightEl.classList.remove('hidden');
-          rightEl.classList.add('flex');
-          switchRightPanelTab(view);
-        }
-      }
-    }
-
-    window.addEventListener('resize', () => {
-      const centerEl = document.getElementById('centerChatPanel');
-      const rightEl = document.getElementById('rightSidebarPanel');
-      const bdEl = document.getElementById('leftSidebarBackdrop');
-      if (window.innerWidth >= 1024 && bdEl) {
-        bdEl.classList.add('hidden');
-      }
-      if (window.innerWidth >= 1280) {
-        centerEl.classList.remove('hidden');
-        centerEl.classList.add('flex');
-        rightEl.classList.remove('hidden');
-        rightEl.classList.add('flex');
-      } else {
-        switchMobileView(mobileActiveView);
-      }
-    });
-
-    function switchRightPanelTab(tab) {
-      const btnC = document.getElementById('tabBtnChecklist');
-      const btnF = document.getElementById('tabBtnFiles');
-      const boxC = document.getElementById('rightTabChecklist');
-      const boxF = document.getElementById('rightTabFiles');
-
-      if (tab === 'CHECKLIST') {
-        btnC.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
-        btnF.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
-        boxC.classList.remove('hidden');
-        boxF.classList.add('hidden');
-      } else {
-        btnF.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
-        btnC.className = 'py-2 sm:py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
-        boxF.classList.remove('hidden');
-        boxC.classList.add('hidden');
-      }
-    }
-
-    function formatDateTimeVN(isoStr) {
-      if (!isoStr) return '';
-      const d = new Date(isoStr);
-      if (isNaN(d.getTime())) return '';
-      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' +
-             d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-
-    function replaceQuickEmojis(str) {
-      return String(str || '')
-        .replace(/(^|\s):\)(?=\s|$)/g, '$1😊')
-        .replace(/(^|\s):D(?=\s|$)/g, '$1😄')
-        .replace(/(^|\s)<3(?=\s|$)/g, '$1❤️')
-        .replace(/(^|\s)\(y\)(?=\s|$)/gi, '$1👍')
-        .replace(/:ok:/gi, '👌');
-    }
-
-    function insertQuickEmoji() {
-      const inp = document.getElementById('chatInput');
-      inp.value = (inp.value + ' 👍 ').trimStart();
-      inp.focus();
-    }
-
-    function escapeHtmlSafe(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    }
+    document.addEventListener('click', closeAllDropdowns);
 
     // =========================================================================
-    // 6. NHẬN DIỆN CHÍNH XÁC TỌA ĐỘ / ĐỊA CHỈ CỤ THỂ CHO GOOGLE MAPS
+    // 6. TỰ ĐỘNG NHẬN DIỆN TỌA ĐỘ / LINK GOOGLE MAPS NHÚNG TRỰC TIẾP
     // =========================================================================
     function extractLocationForMap(text) {
-      if (!text || text.includes('Tin nhắn đã được thu hồi') || text.startsWith('⚙️') || text.startsWith('🏗️')) return null;
-      const clean = String(text).replace(/<[^>]*>/g, ' ').trim();
-
-      const coordRegex = /(?:^|[\s:(])(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})(?:$|[\s),.;])/;
-      const coordMatch = clean.match(coordRegex);
+      const str = String(text || '');
+      const coordMatch = str.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
       if (coordMatch) {
-        const lat = parseFloat(coordMatch[1]);
-        const lng = parseFloat(coordMatch[2]);
-        if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-          return { query: `${lat},${lng}`, label: `Tọa độ GPS: ${lat}, ${lng}` };
+        const lat = coordMatch[1];
+        const lng = coordMatch[2];
+        return { query: `${lat},${lng}`, label: `Tọa độ ${lat}, ${lng}` };
+      }
+      const gmapMatch = str.match(/https?:\/\/(?:www\.)?(?:google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)[^\s]*/i);
+      if (gmapMatch) {
+        const url = gmapMatch[0];
+        const atMatch = url.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+        if (atMatch) {
+          return { query: `${atMatch[1]},${atMatch[2]}`, label: `Vị trí bản đồ (${atMatch[1]}, ${atMatch[2]})` };
         }
+        return { query: 'Ho Chi Minh City', label: 'Vị trí Google Maps đính kèm', rawUrl: url };
       }
-
-      const strictAddressRegex = /(?:địa chỉ|tọa độ|vị trí thực địa)\s*:\s*([^\n.;!?]{8,80})/i;
-      const explicitMatch = clean.match(strictAddressRegex);
-      if (explicitMatch && explicitMatch[1].trim().length >= 8) {
-        const loc = explicitMatch[1].trim();
-        return { query: loc, label: loc };
-      }
-
-      const adminUnitRegex = /(?:số\s+\d+[a-z0-9\/\-]*\s+(?:đường|quốc lộ|ql|tỉnh lộ|tl)|(?:quốc lộ|ql)\s*\d+[a-z]?|(?:phường|xã|thị trấn)\s+[A-ZÀ-Ỹ0-9][a-zà-ỹ0-9\s]{1,25},\s*(?:quận|huyện|thị xã|tp\.?|thành phố|tỉnh)\s+[A-ZÀ-Ỹ0-9][a-zà-ỹ0-9\s]{1,25})/i;
-      const adminMatch = clean.match(adminUnitRegex);
-      if (adminMatch) {
-        const locText = adminMatch[0].trim();
-        return { query: locText, label: locText };
-      }
-
       return null;
     }
 
     function renderGoogleMapEmbedHtml(locInfo) {
-      if (!locInfo) return '';
-      const qEncoded = encodeURIComponent(locInfo.query);
-      const embedUrl = `https://maps.google.com/maps?q=${qEncoded}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-      const externalUrl = `https://www.google.com/maps/search/?api=1&query=${qEncoded}`;
-
+      const q = encodeURIComponent(locInfo.query);
+      const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      const externalUrl = locInfo.rawUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
       return `
-        <div class="mt-2.5 rounded-xl overflow-hidden border border-slate-700/90 bg-slate-950">
+        <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
           <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
             <span class="text-emerald-400 font-semibold truncate">📍 Vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
             <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">
@@ -1470,6 +1302,7 @@
       const pass = document.getElementById('loginPassword').value.trim();
       const rememberMe = document.getElementById('rememberLoginCheck').checked;
       const errEl = document.getElementById('loginError');
+      const btn = document.getElementById('btnLoginSubmit');
 
       errEl.classList.add('hidden');
 
@@ -1492,53 +1325,61 @@
         return;
       }
 
-      const isValid = (pass === String(user.pin_code || ''));
+      btn.disabled = true;
+      btn.textContent = 'Đang xác thực...';
 
-      if (!isValid) {
-        const prevFails = getAccountFailCount(user.id);
-        const newFails = prevFails + 1;
-        const shouldLock = newFails >= MAX_FAILED_ATTEMPTS;
+      try {
+        const isValid = (pass === String(user.pin_code || ''));
 
-        dbAccountLocksMap[String(user.id)] = {
-          fails: newFails,
-          locked: shouldLock,
-          lockedAt: shouldLock ? new Date().toISOString() : ''
-        };
-        await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
+        if (!isValid) {
+          const prevFails = getAccountFailCount(user.id);
+          const newFails = prevFails + 1;
+          const shouldLock = newFails >= MAX_FAILED_ATTEMPTS;
 
-        if (shouldLock) {
-          await recordAuditLog(
-            'KHÓA TÀI KHOẢN TỰ ĐỘNG',
-            `Tài khoản "${user.display_name}" bị khóa (LOCKED) do nhập sai mật khẩu liên tiếp ${MAX_FAILED_ATTEMPTS} lần.`,
-            'Hệ thống Bảo mật'
-          );
+          dbAccountLocksMap[String(user.id)] = {
+            fails: newFails,
+            locked: shouldLock,
+            lockedAt: shouldLock ? new Date().toISOString() : ''
+          };
+          await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
 
-          await callGasWebhook({
-            action: 'SECURITY_ALERT',
-            chatId: DEFAULT_APPROVER_CHAT_ID,
-            message: `🚨 <b>CẢNH BÁO BẢO MẬT — KHÓA TÀI KHOẢN</b>\n\n• Tài khoản: <b>${user.display_name}</b>\n• Lý do: Nhập sai mật khẩu liên tiếp <b>${MAX_FAILED_ATTEMPTS} lần</b>.\n• Trạng thái: <b>ĐÃ KHÓA (LOCKED)</b>. Vào mục Quản lý Nhân sự trên Web App để mở khóa.`
-          });
+          if (shouldLock) {
+            await recordAuditLog(
+              'KHÓA TÀI KHOẢN TỰ ĐỘNG',
+              `Tài khoản "${user.display_name}" bị khóa (LOCKED) do nhập sai mật khẩu liên tiếp ${MAX_FAILED_ATTEMPTS} lần.`,
+              'Hệ thống Bảo mật'
+            );
 
-          errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA!</b><br/>Bạn đã nhập sai mật khẩu <b>5/5 lần</b>. Hệ thống đã khóa tài khoản <b>${escapeHtmlSafe(user.display_name)}</b>.<br/>Vui lòng liên hệ <b>Quản trị hệ thống</b> để mở khóa và cấp lại mã PIN.`;
-        } else {
-          const remain = MAX_FAILED_ATTEMPTS - newFails;
-          errEl.innerHTML = `❌ Sai Mật khẩu / Mã PIN (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).<br/>Còn <b>${remain} lần thử</b> trước khi tài khoản bị khóa tự động. Nếu quên, hãy bấm <b>"Quên mật khẩu / PIN?"</b> phía trên.`;
+            await callGasWebhook({
+              action: 'SECURITY_ALERT',
+              chatId: DEFAULT_APPROVER_CHAT_ID,
+              message: `🚨 <b>CẢNH BÁO BẢO MẬT — KHÓA TÀI KHOẢN</b>\n\n• Tài khoản: <b>${user.display_name}</b>\n• Lý do: Nhập sai mật khẩu liên tiếp <b>${MAX_FAILED_ATTEMPTS} lần</b>.\n• Trạng thái: <b>ĐÃ KHÓA (LOCKED)</b>. Vào mục Quản lý Nhân sự trên Web App để mở khóa.`
+            });
+
+            errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA!</b><br/>Bạn đã nhập sai mật khẩu <b>5/5 lần</b>. Hệ thống đã khóa tài khoản <b>${escapeHtmlSafe(user.display_name)}</b>.<br/>Vui lòng liên hệ <b>Quản trị hệ thống</b> để mở khóa và cấp lại mã PIN.`;
+          } else {
+            const remain = MAX_FAILED_ATTEMPTS - newFails;
+            errEl.innerHTML = `❌ Sai Mật khẩu / Mã PIN (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).<br/>Còn <b>${remain} lần thử</b> trước khi tài khoản bị khóa tự động. Nếu quên, hãy bấm <b>"Quên mật khẩu / PIN?"</b> phía trên.`;
+          }
+          errEl.classList.remove('hidden');
+          return;
         }
-        errEl.classList.remove('hidden');
-        return;
-      }
 
-      if (dbAccountLocksMap[String(user.id)]) {
-        delete dbAccountLocksMap[String(user.id)];
-        await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
-      }
+        if (dbAccountLocksMap[String(user.id)]) {
+          delete dbAccountLocksMap[String(user.id)];
+          await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
+        }
 
-      errEl.classList.add('hidden');
-      document.getElementById('loginPassword').value = '';
-      applyLoggedInUI(user, rememberMe);
+        errEl.classList.add('hidden');
+        document.getElementById('loginPassword').value = '';
+        applyLoggedInUI(user, rememberMe);
 
-      if (!user.telegram_chat_id) {
-        setTimeout(() => openStaffModal('MY_TELEGRAM', true), 300);
+        if (!user.telegram_chat_id) {
+          setTimeout(() => openStaffModal('MY_TELEGRAM', true), 300);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Đăng Nhập Hệ Thống';
       }
     }
 
@@ -1605,7 +1446,7 @@
 
       btn.disabled = false;
       btn.textContent = '📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram';
-      fbEl.innerHTML = `✅ Đã gửi mã PIN ngẫu nhiên (chữ + số) tới Telegram ID <b>${inputTgId}</b>. Hãy kiểm tra Telegram và quay lại đăng nhập.`;
+      fbEl.innerHTML = `✅ Đã gửi mã PIN ngẫu nhiên (chữ + số) tới Telegram ID <b>${escapeHtmlSafe(inputTgId)}</b>. Hãy kiểm tra Telegram và quay lại đăng nhập.`;
       fbEl.classList.add('text-emerald-400');
     }
 
@@ -1755,8 +1596,8 @@
       box.innerHTML = tempPgResources.map(r => `
         <div class="flex items-center justify-between gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
           <div class="min-w-0">
-            <a href="${r.url}" download="${r.name}" target="_blank" class="text-blue-300 font-semibold hover:underline truncate block">📄 ${escapeHtmlSafe(r.name)}</a>
-            <div class="text-[10px] text-slate-400">${r.sizeText || ''} • Thêm bởi: ${escapeHtmlSafe(r.addedBy || '')}</div>
+            <a href="${escapeHtmlSafe(r.url)}" download="${escapeHtmlSafe(r.name)}" target="_blank" class="text-blue-300 font-semibold hover:underline truncate block">📄 ${escapeHtmlSafe(r.name)}</a>
+            <div class="text-[10px] text-slate-400">${escapeHtmlSafe(r.sizeText || '')} • Thêm bởi: ${escapeHtmlSafe(r.addedBy || '')}</div>
           </div>
           ${canRes ? `<button type="button" onclick="removePgResource('${r.id}')" class="text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-rose-950/40 shrink-0">🗑️ Xóa</button>` : ''}
         </div>
@@ -1896,11 +1737,12 @@
     }
 
     function renderChannelsAndDm() {
-      if (!dbChannels.some(c => String(c.id) === String(activeChannelId)) && dbChannels.length > 0) {
-        activeChannelId = dbChannels[0].id;
+      const visibleChannels = getVisibleChannelsForCurrentUser();
+      if (!visibleChannels.some(c => String(c.id) === String(activeChannelId)) && visibleChannels.length > 0) {
+        activeChannelId = visibleChannels[0].id;
       }
 
-      document.getElementById('channelList').innerHTML = dbChannels.map(c => {
+      document.getElementById('channelList').innerHTML = visibleChannels.map(c => {
         const active = !activeDmPeer && String(c.id) === String(activeChannelId);
         const meta = dbGroupMetaMap[String(c.id)];
         const memCount = (meta && Array.isArray(meta.members)) ? meta.members.length : dbUsers.length;
@@ -1949,7 +1791,7 @@
       } else {
         dmBadge.classList.add('hidden');
         editBtn.classList.remove('hidden');
-        const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
+        const activeChan = visibleChannels.find(c => String(c.id) === String(activeChannelId)) || dbChannels.find(c => String(c.id) === String(activeChannelId));
         if (activeChan) {
           const meta = dbGroupMetaMap[String(activeChan.id)];
           const memCount = (meta && Array.isArray(meta.members)) ? meta.members.length : dbUsers.length;
@@ -2115,10 +1957,11 @@
       forwardingMsgObj = msg;
 
       document.getElementById('forwardPreviewBox').textContent = `[Từ ${msg.sender_name}]: ${String(msg.content || '').replace(/<[^>]*>/g, ' ')}`;
-      const chanOpts = dbChannels.map(c => `<option value="CHAN:${c.id}"># Nhóm/Dự án: ${c.name}</option>`).join('');
+      const visibleChans = getVisibleChannelsForCurrentUser();
+      const chanOpts = visibleChans.map(c => `<option value="CHAN:${c.id}"># Nhóm/Dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
       const userOpts = dbUsers
         .filter(u => !currentUser || String(u.id) !== String(currentUser.id))
-        .map(u => `<option value="USER:${u.id}">👤 Riêng 1-1: ${u.display_name} (${getUserPermDef(u).label})</option>`)
+        .map(u => `<option value="USER:${u.id}">👤 Riêng 1-1: ${escapeHtmlSafe(u.display_name)} (${getUserPermDef(u).label})</option>`)
         .join('');
 
       document.getElementById('forwardTargetSelect').innerHTML = chanOpts + userOpts;
@@ -2215,9 +2058,9 @@
         if (isApproval) {
           let badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">⏳ ĐANG CHỜ PHÊ DUYỆT</span>`;
           if (m.approval_status === 'APPROVED') {
-            badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ ĐÃ CHẤP THUẬN (${m.approver_name || 'Chủ trì'})</span>`;
+            badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ ĐÃ CHẤP THUẬN (${escapeHtmlSafe(m.approver_name || 'Chủ trì')})</span>`;
           } else if (m.approval_status === 'REJECTED') {
-            badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30">❌ ĐÃ TỪ CHỐI (${m.approver_name || 'Chủ trì'})</span>`;
+            badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30">❌ ĐÃ TỪ CHỐI (${escapeHtmlSafe(m.approver_name || 'Chủ trì')})</span>`;
           }
 
           const editHist = dbApprovalHistoryMap[String(m.id)];
@@ -2243,8 +2086,8 @@
                 </div>
               </div>
               <div class="text-xs text-slate-400">Người trình: <b class="text-white">${escapeHtmlSafe(m.sender_name)}</b> (${escapeHtmlSafe(m.sender_role || '')})</div>
-              <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">${escapeHtmlSafe(m.content)}</div>
-              ${m.file_url ? `<div><a href="${m.file_url}" target="_blank" class="text-xs text-blue-400 underline break-all">📎 ${escapeHtmlSafe(m.file_name || 'Xem tài liệu đính kèm')}</a></div>` : ''}
+              <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">${formatMessageTextHtml(m.content)}</div>
+              ${m.file_url ? `<div><a href="${escapeHtmlSafe(m.file_url)}" target="_blank" class="text-xs text-blue-400 underline break-all">📎 ${escapeHtmlSafe(m.file_name || 'Xem tài liệu đính kèm')}</a></div>` : ''}
               ${editLogBadgeHtml ? `<div>${editLogBadgeHtml}</div>` : ''}
               ${transHtml}
               <div class="pt-1.5 flex items-center justify-between flex-wrap gap-2 border-t border-slate-800/80">
@@ -2273,7 +2116,7 @@
             <div id="msg_card_${m.id}" ${ctxAttr} class="bg-amber-950/40 border border-amber-600/40 rounded-xl p-3 max-w-2xl text-xs text-amber-200 flex items-center justify-between gap-2 cursor-context-menu">
               <div>
                 <div class="font-bold text-amber-400 mb-0.5">🔔 Cảnh Báo Tiến Độ & Deadline • ${timeStr}</div>
-                <div class="leading-relaxed">${m.content}</div>
+                <div class="leading-relaxed">${formatMessageTextHtml(m.content)}</div>
               </div>
               <button onclick="openProgressModal()" class="shrink-0 text-[11px] text-amber-300 underline font-semibold">Xem bảng</button>
             </div>
@@ -2285,17 +2128,17 @@
         return `
           <div id="msg_card_${m.id}" ${ctxAttr} class="group bg-slate-900/90 hover:border-slate-700 border border-slate-800 rounded-xl p-3 max-w-2xl transition cursor-context-menu relative">
             <div class="flex items-center justify-between mb-1 gap-2">
-              <span class="text-xs font-bold text-blue-400 truncate">${m.sender_name} <span class="font-normal text-slate-500 text-[10px]">${m.sender_role ? '• ' + m.sender_role : ''}</span></span>
+              <span class="text-xs font-bold text-blue-400 truncate">${escapeHtmlSafe(m.sender_name)} <span class="font-normal text-slate-500 text-[10px]">${m.sender_role ? '• ' + escapeHtmlSafe(m.sender_role) : ''}</span></span>
               <div class="flex items-center gap-1.5 shrink-0">
                 <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn tin nhắn" class="w-7 h-7 flex items-center justify-center rounded-lg opacity-80 sm:opacity-60 hover:opacity-100 text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                 <span class="text-[10px] text-slate-500">${timeStr}</span>
               </div>
             </div>
-            <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line break-words">${m.content}</div>
+            <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line break-words">${formatMessageTextHtml(m.content)}</div>
             ${m.file_url ? `
               <div class="mt-2 pt-2 border-t border-slate-800">
-                <a href="${m.file_url}" download="${m.file_name || 'tai_lieu'}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
-                  <span>📎</span><span class="truncate">${m.file_name || 'Tệp đính kèm'}</span>
+                <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(m.file_name || 'tai_lieu')}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
+                  <span>📎</span><span class="truncate">${escapeHtmlSafe(m.file_name || 'Tệp đính kèm')}</span>
                 </a>
               </div>
             ` : ''}
@@ -2309,41 +2152,47 @@
 
     async function sendChatMessage() {
       const input = document.getElementById('chatInput');
+      const btn = document.getElementById('btnSendChat');
       const raw = input.value.trim();
-      if (!raw || !currentUser) return;
+      if (!raw || !currentUser || btn.disabled) return;
       const text = replaceQuickEmojis(raw);
       const convKey = getCurrentConversationChannelKey();
 
-      if (editingMsgId) {
-        const targetId = editingMsgId;
-        const editedContent = `${text} (đã chỉnh sửa)`;
+      btn.disabled = true;
+      try {
+        if (editingMsgId) {
+          const targetId = editingMsgId;
+          const editedContent = `${text} (đã chỉnh sửa)`;
+          input.value = '';
+          cancelChatActionBanner();
+
+          await sb.from('team_messages').update({ content: editedContent }).eq('id', targetId);
+          const targetMsg = dbMessages.find(m => String(m.id) === String(targetId));
+          if (targetMsg) targetMsg.content = editedContent;
+          renderMessages();
+          return;
+        }
+
+        let finalContent = text;
+        if (replyToMsgObj) {
+          const quotedSnippet = String(replyToMsgObj.content || '').replace(/<[^>]*>/g, ' ').slice(0, 75);
+          finalContent = `↪️ Trả lời ${replyToMsgObj.sender_name}: "${quotedSnippet}"\n──────────────\n${text}`;
+          cancelChatActionBanner();
+        }
+
         input.value = '';
-        cancelChatActionBanner();
-
-        await sb.from('team_messages').update({ content: editedContent }).eq('id', targetId);
-        const targetMsg = dbMessages.find(m => String(m.id) === String(targetId));
-        if (targetMsg) targetMsg.content = editedContent;
+        const { data } = await sb.from('team_messages').insert([{
+          channel_id: convKey,
+          sender_name: currentUser.display_name,
+          sender_role: `${getUserPermDef(currentUser).label}`,
+          msg_type: 'CHAT',
+          content: finalContent
+        }]).select();
+        if (data && data[0]) dbMessages.push(data[0]);
         renderMessages();
-        return;
+      } finally {
+        btn.disabled = false;
       }
-
-      let finalContent = text;
-      if (replyToMsgObj) {
-        const quotedSnippet = String(replyToMsgObj.content || '').replace(/<[^>]*>/g, ' ').slice(0, 75);
-        finalContent = `↪️ Trả lời ${replyToMsgObj.sender_name}: "${quotedSnippet}"\n──────────────\n${text}`;
-        cancelChatActionBanner();
-      }
-
-      input.value = '';
-      const { data } = await sb.from('team_messages').insert([{
-        channel_id: convKey,
-        sender_name: currentUser.display_name,
-        sender_role: `${getUserPermDef(currentUser).label}`,
-        msg_type: 'CHAT',
-        content: finalContent
-      }]).select();
-      if (data && data[0]) dbMessages.push(data[0]);
-      renderMessages();
     }
 
     async function handleQuickChatFileAttach(event) {
@@ -2382,7 +2231,7 @@
       const groupResources = (groupMeta && Array.isArray(groupMeta.resources)) ? groupMeta.resources : [];
 
       const addBtn = document.getElementById('btnAddResourceRightTab');
-      if (addBtn) addBtn.style.display = canManageGroupResources(currentUser) ? 'inline-block' : 'none';
+      if (addBtn) addBtn.style.display = (!activeDmPeer && canManageGroupResources(currentUser)) ? 'inline-block' : 'none';
 
       const totalCount = chatFiles.length + groupResources.length;
       document.getElementById('channelFileCount').textContent = totalCount;
@@ -2390,21 +2239,21 @@
       if (mobFileBadge) mobFileBadge.textContent = totalCount;
 
       if (totalCount === 0) {
-        container.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Chưa có tài nguyên nào trong Nhóm/Dự án này.</div>`;
+        container.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Chưa có tài nguyên nào trong mục này.</div>`;
         return;
       }
 
       const resHtml = groupResources.map(r => `
         <div class="bg-blue-950/30 border border-blue-800/50 rounded-xl p-2.5 space-y-1">
           <div class="text-[10px] font-bold text-blue-400 uppercase">📌 Tài nguyên Nhóm/Dự án</div>
-          <a href="${r.url}" download="${r.name}" target="_blank" class="text-xs font-semibold text-white hover:underline block truncate">📄 ${escapeHtmlSafe(r.name)}</a>
-          <div class="text-[10px] text-slate-400">${r.sizeText || ''} • Thêm bởi: ${escapeHtmlSafe(r.addedBy || '')}</div>
+          <a href="${escapeHtmlSafe(r.url)}" download="${escapeHtmlSafe(r.name)}" target="_blank" class="text-xs font-semibold text-white hover:underline block truncate">📄 ${escapeHtmlSafe(r.name)}</a>
+          <div class="text-[10px] text-slate-400">${escapeHtmlSafe(r.sizeText || '')} • Thêm bởi: ${escapeHtmlSafe(r.addedBy || '')}</div>
         </div>
       `).join('');
 
       const msgFilesHtml = chatFiles.map(f => `
         <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-2.5 space-y-1">
-          <a href="${f.file_url}" download="${f.file_name || 'file'}" target="_blank" class="text-xs font-semibold text-blue-300 hover:underline block truncate">📎 ${escapeHtmlSafe(f.file_name || 'Tài liệu đính kèm')}</a>
+          <a href="${escapeHtmlSafe(f.file_url)}" download="${escapeHtmlSafe(f.file_name || 'file')}" target="_blank" class="text-xs font-semibold text-blue-300 hover:underline block truncate">📎 ${escapeHtmlSafe(f.file_name || 'Tài liệu đính kèm')}</a>
           <div class="text-[10px] text-slate-400">Gửi bởi: ${escapeHtmlSafe(f.sender_name)} • ${f.created_at ? new Date(f.created_at).toLocaleDateString('vi-VN') : ''}</div>
         </div>
       `).join('');
@@ -2444,14 +2293,14 @@
         return `
           <div class="bg-slate-800/90 border ${isDone ? 'border-emerald-800/60' : 'border-slate-700'} rounded-xl p-3 space-y-2 transition hover:border-slate-600">
             <div class="flex items-start justify-between gap-2">
-              <div class="text-xs font-bold text-blue-300 truncate">👤 ${t.assignee_name}</div>
+              <div class="text-xs font-bold text-blue-300 truncate">👤 ${escapeHtmlSafe(t.assignee_name)}</div>
               <div class="flex items-center gap-1 shrink-0">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${isDone ? 'DONE' : 'ĐANG LÀM'}</span>
                 ${(!isDone && canManageTasks) ? `<button onclick="sendTaskReminder('${t.id}')" title="Gửi nhắc việc qua Telegram" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[11px] transition">🔔</button>` : ''}
                 ${canDelete ? `<button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2 py-0.5 rounded text-[11px] transition">🗑️</button>` : ''}
               </div>
             </div>
-            <div class="text-xs text-white font-medium leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${t.task_title}</div>
+            <div class="text-xs text-white font-medium leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${escapeHtmlSafe(t.task_title)}</div>
             <div class="text-[11px] text-slate-400 space-y-1 pt-1.5 border-t border-slate-700/70">
               <div class="text-emerald-400/90">🟢 BĐ: ${startStr}</div>
               <div class="flex items-center justify-between gap-2">
@@ -2462,7 +2311,7 @@
                 </div>
               </div>
             </div>
-            ${(t.delay_reason || t.progress_note) ? `<div class="text-[11px] text-slate-300 bg-slate-900/70 px-2 py-1 rounded">💬 ${t.delay_reason || t.progress_note}</div>` : ''}
+            ${(t.delay_reason || t.progress_note) ? `<div class="text-[11px] text-slate-300 bg-slate-900/70 px-2 py-1 rounded">💬 ${escapeHtmlSafe(t.delay_reason || t.progress_note)}</div>` : ''}
           </div>
         `;
       }).join('');
@@ -2498,15 +2347,15 @@
 
         return `
           <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-4 font-semibold text-slate-900">${t.assignee_name}</td>
-            <td class="py-3 px-4 text-slate-800 max-w-xs">${t.task_title}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">${escapeHtmlSafe(t.assignee_name)}</td>
+            <td class="py-3 px-4 text-slate-800 max-w-xs">${escapeHtmlSafe(t.task_title)}</td>
             <td class="py-3 px-4 text-[11px] text-slate-600">
               <div class="text-emerald-600 font-medium">🟢 ${startStr}</div>
               <div class="text-rose-600 font-medium">🔴 ${dueStr}</div>
             </td>
-            <td class="py-3 px-4 text-slate-700">${t.meeting_chair || t.assigned_by || 'Lãnh Đạo'} ✅</td>
+            <td class="py-3 px-4 text-slate-700">${escapeHtmlSafe(t.meeting_chair || t.assigned_by || 'Lãnh Đạo')} ✅</td>
             <td class="py-3 px-4">${statusBadge}</td>
-            <td class="py-3 px-4 text-slate-600 max-w-xs">${noteDisplay}</td>
+            <td class="py-3 px-4 text-slate-600 max-w-xs">${escapeHtmlSafe(noteDisplay)}</td>
             <td class="py-3 px-4 text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-1.5">
                 ${(!isDone && canRemind) ? `<button onclick="sendTaskReminder('${t.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">🔔 Nhắc việc</button>` : ''}
@@ -2559,6 +2408,7 @@
       const tasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
 
       const win = window.open('', '_blank');
+      if (!win) return showAppNotice('Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng cho phép mở Pop-up để xuất PDF!', '⚠️ Chặn Pop-up');
       win.document.write(`
         <html><head><meta charset="UTF-8"><title>Báo Cáo Tiến Độ - ${escapeHtmlSafe(chanName)}</title>
         <style>
@@ -2603,6 +2453,7 @@
       const tasksLines = document.getElementById('meetingAutoTasksLines').value.trim();
 
       const win = window.open('', '_blank');
+      if (!win) return showAppNotice('Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng cho phép mở Pop-up để xuất PDF!', '⚠️ Chặn Pop-up');
       win.document.write(`
         <html><head><meta charset="UTF-8"><title>Biên Bản Họp - ${escapeHtmlSafe(chanName)}</title>
         <style>
@@ -2662,7 +2513,7 @@
         return showAppNotice('Tài khoản của bạn chưa được cấp quyền Giao việc!', '🔒 Giới hạn quyền');
       }
       const sel = document.getElementById('taskAssignee');
-      sel.innerHTML = dbUsers.map(u => `<option value="${u.id}">${u.display_name} (${getUserPermDef(u).label})</option>`).join('');
+      sel.innerHTML = dbUsers.map(u => `<option value="${u.id}">${escapeHtmlSafe(u.display_name)} (${getUserPermDef(u).label})</option>`).join('');
       document.getElementById('taskContent').value = '';
       const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       document.getElementById('taskStartTime').value = nowLocal;
@@ -2671,6 +2522,8 @@
     }
 
     async function submitNewTask() {
+      const btn = document.getElementById('btnSubmitNewTask');
+      if (btn.disabled) return;
       const assigneeId = document.getElementById('taskAssignee').value;
       const content = document.getElementById('taskContent').value.trim();
       const startRaw = document.getElementById('taskStartTime').value;
@@ -2682,50 +2535,59 @@
       }
 
       const assignee = dbUsers.find(u => String(u.id) === String(assigneeId));
+      if (!assignee) return showAppNotice('Vui lòng chọn người thực hiện!', '⚠️ Thiếu thông tin');
       const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
       const startIso = startRaw ? new Date(startRaw).toISOString() : new Date().toISOString();
       const dueIso = dueRaw ? new Date(dueRaw).toISOString() : null;
 
-      const insertPayload = {
-        channel_id: activeChannelId,
-        assignee_name: assignee.display_name,
-        assigned_by: currentUser.display_name,
-        meeting_chair: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
-        chair_confirmed: true,
-        task_title: content,
-        due_at: dueIso,
-        status: 'PENDING',
-        alert_stage: 'NONE'
-      };
+      btn.disabled = true;
+      btn.textContent = 'Đang giao việc...';
 
-      const { data } = await sb.from('team_tasks').insert([insertPayload]).select();
-      let createdTask = (data && data[0]) ? data[0] : { id: '', ...insertPayload };
-      createdTask.start_at = startIso;
-      dbTasks.unshift(createdTask);
+      try {
+        const insertPayload = {
+          channel_id: activeChannelId,
+          assignee_name: assignee.display_name,
+          assigned_by: currentUser.display_name,
+          meeting_chair: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+          chair_confirmed: true,
+          task_title: content,
+          due_at: dueIso,
+          status: 'PENDING',
+          alert_stage: 'NONE'
+        };
 
-      const { data: msgData } = await sb.from('team_messages').insert([{
-        channel_id: activeChannelId,
-        sender_name: '📌 Hệ Thống Giao Việc',
-        sender_role: `${currentUser.display_name} • ${getUserPermDef(currentUser).label}`,
-        msg_type: 'CHAT',
-        content: `Đã giao việc cho @${assignee.display_name}: "${content}"\n⏰ Thời gian: ${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`
-      }]).select();
-      if (msgData && msgData[0]) dbMessages.push(msgData[0]);
+        const { data } = await sb.from('team_tasks').insert([insertPayload]).select();
+        let createdTask = (data && data[0]) ? data[0] : { id: 't_' + Date.now(), ...insertPayload };
+        createdTask.start_at = startIso;
+        dbTasks.unshift(createdTask);
 
-      closeModal('assignModal');
-      renderAll();
+        const { data: msgData } = await sb.from('team_messages').insert([{
+          channel_id: activeChannelId,
+          sender_name: '📌 Hệ Thống Giao Việc',
+          sender_role: `${currentUser.display_name} • ${getUserPermDef(currentUser).label}`,
+          msg_type: 'CHAT',
+          content: `Đã giao việc cho @${assignee.display_name}: "${content}"\n⏰ Thời gian: ${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`
+        }]).select();
+        if (msgData && msgData[0]) dbMessages.push(msgData[0]);
 
-      if (assignee.telegram_chat_id) {
-        await callGasWebhook({
-          action: 'NOTIFY_TASK',
-          assigneeChatId: String(assignee.telegram_chat_id),
-          assigneeName: assignee.display_name,
-          assignedBy: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
-          channelName: activeChan ? activeChan.name : 'Dự án',
-          taskTitle: content,
-          dueDate: `${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`,
-          taskId: createdTask.id || ''
-        });
+        closeModal('assignModal');
+        renderAll();
+
+        if (assignee.telegram_chat_id) {
+          await callGasWebhook({
+            action: 'NOTIFY_TASK',
+            assigneeChatId: String(assignee.telegram_chat_id),
+            assigneeName: assignee.display_name,
+            assignedBy: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+            channelName: activeChan ? activeChan.name : 'Dự án',
+            taskTitle: content,
+            dueDate: `${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`,
+            taskId: createdTask.id || ''
+          });
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Giao Việc & Gửi Telegram';
       }
     }
 
@@ -2774,8 +2636,8 @@
         box.innerHTML = myTasks.map(t => `
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <div class="font-bold text-white">${t.task_title}</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">Giao bởi: ${t.assigned_by} • Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</div>
+              <div class="font-bold text-white">${escapeHtmlSafe(t.task_title)}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Giao bởi: ${escapeHtmlSafe(t.assigned_by)} • Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               ${t.status !== 'DONE' ? `<button onclick="markTaskDone('${t.id}'); openMyTasksModal();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-semibold">✓ Xong</button>` : `<span class="text-emerald-400 font-bold">✓ DONE</span>`}
@@ -2799,7 +2661,7 @@
       const sel = document.getElementById('approvalApprover');
       const approvers = dbUsers.filter(u => canApproveItems(u));
       const list = approvers.length ? approvers : dbUsers;
-      sel.innerHTML = list.map(u => `<option value="${u.id}">${u.display_name} — [${getUserPermDef(u).label}]</option>`).join('');
+      sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(u.display_name)} — [${getUserPermDef(u).label}]</option>`).join('');
       document.getElementById('approvalContent').value = '';
       document.getElementById('approvalFileUrl').value = '';
       document.getElementById('approvalFileInput').value = '';
@@ -2850,6 +2712,8 @@
     }
 
     async function submitApprovalRequest() {
+      const btn = document.getElementById('btnSubmitApproval');
+      if (btn.disabled) return;
       const editId = document.getElementById('editingApprovalId').value.trim();
       const content = document.getElementById('approvalContent').value.trim();
       let fileUrl = document.getElementById('approvalFileUrl').value.trim();
@@ -2857,99 +2721,121 @@
       const fileInput = document.getElementById('approvalFileInput');
 
       if (!content) return showAppNotice('Vui lòng nhập nội dung trình phê duyệt!', '⚠️ Thiếu nội dung');
+      if (fileInput.files && fileInput.files[0] && fileInput.files[0].size > 3 * 1024 * 1024) {
+        return showAppNotice('Tệp đính kèm vượt quá 3MB. Vui lòng tải lên Google Drive và dán link!', '⚠️ Giới hạn dung lượng');
+      }
 
-      if (editId) {
-        const existingMsg = dbMessages.find(m => String(m.id) === String(editId));
-        if (!existingMsg || !canEditApprovalItem(existingMsg)) return;
+      btn.disabled = true;
+      const oldBtnText = btn.textContent;
+      btn.textContent = 'Đang xử lý...';
 
-        const applyApprovalEdit = async (finalUrl, finalName) => {
-          const updateFields = { content };
-          if (finalUrl) {
-            updateFields.file_url = finalUrl;
-            updateFields.file_name = finalName || existingMsg.file_name || 'Tài liệu đính kèm';
-          }
+      try {
+        if (editId) {
+          const existingMsg = dbMessages.find(m => String(m.id) === String(editId));
+          if (!existingMsg || !canEditApprovalItem(existingMsg)) return;
 
-          await sb.from('team_messages').update(updateFields).eq('id', editId);
-          existingMsg.content = content;
-          if (finalUrl) {
-            existingMsg.file_url = finalUrl;
-            existingMsg.file_name = updateFields.file_name;
-          }
+          const applyApprovalEdit = async (finalUrl, finalName) => {
+            const updateFields = { content };
+            if (finalUrl) {
+              updateFields.file_url = finalUrl;
+              updateFields.file_name = finalName || existingMsg.file_name || 'Tài liệu đính kèm';
+            }
 
-          const prevHist = dbApprovalHistoryMap[String(editId)] || { count: 0 };
-          const newCount = (Number(prevHist.count) || 0) + 1;
-          const nowIso = new Date().toISOString();
-          dbApprovalHistoryMap[String(editId)] = {
-            count: newCount,
-            lastEditedAt: nowIso,
-            lastEditedBy: currentUser.display_name
+            await sb.from('team_messages').update(updateFields).eq('id', editId);
+            existingMsg.content = content;
+            if (finalUrl) {
+              existingMsg.file_url = finalUrl;
+              existingMsg.file_name = updateFields.file_name;
+            }
+
+            const prevHist = dbApprovalHistoryMap[String(editId)] || { count: 0 };
+            const newCount = (Number(prevHist.count) || 0) + 1;
+            const nowIso = new Date().toISOString();
+            dbApprovalHistoryMap[String(editId)] = {
+              count: newCount,
+              lastEditedAt: nowIso,
+              lastEditedBy: currentUser.display_name
+            };
+            await persistSystemConfigRow('__APPROVAL_HISTORY__', dbApprovalHistoryMap);
+            await recordAuditLog('SỬA PHIẾU TRÌNH', `Sửa lần ${newCount} phiếu trình của ${existingMsg.sender_name}: "${content.slice(0, 60)}"`);
+
+            closeModal('approvalModal');
+            renderMessages();
+            renderChannelFiles();
+            showAppNotice(`Đã cập nhật nội dung phiếu trình (Sửa lần ${newCount} lúc ${formatDateTimeVN(nowIso)}).`, '✏️ Đã cập nhật phiếu trình');
           };
-          await persistSystemConfigRow('__APPROVAL_HISTORY__', dbApprovalHistoryMap);
-          await recordAuditLog('SỬA PHIẾU TRÌNH', `Sửa lần ${newCount} phiếu trình của ${existingMsg.sender_name}: "${content.slice(0, 60)}"`);
 
+          if (fileInput.files && fileInput.files[0]) {
+            const f = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              await applyApprovalEdit(e.target.result, f.name);
+              btn.disabled = false;
+              btn.textContent = oldBtnText;
+            };
+            reader.readAsDataURL(f);
+            return;
+          } else {
+            await applyApprovalEdit(fileUrl, fileName);
+            return;
+          }
+        }
+
+        const approverId = document.getElementById('approvalApprover').value;
+        const approver = dbUsers.find(u => String(u.id) === String(approverId));
+        const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
+
+        const finalizeSubmit = async () => {
+          const { data } = await sb.from('team_messages').insert([{
+            channel_id: activeChannelId,
+            sender_name: currentUser.display_name,
+            sender_role: getUserPermDef(currentUser).label,
+            msg_type: 'APPROVAL',
+            content,
+            file_url: fileUrl,
+            file_name: fileName,
+            approval_status: 'PENDING'
+          }]).select();
+
+          const createdMsg = data && data[0];
+          if (createdMsg) dbMessages.push(createdMsg);
           closeModal('approvalModal');
           renderMessages();
           renderChannelFiles();
-          showAppNotice(`Đã cập nhật nội dung phiếu trình (Sửa lần ${newCount} lúc ${formatDateTimeVN(nowIso)}).`, '✏️ Đã cập nhật phiếu trình');
+
+          await callGasWebhook({
+            action: 'NOTIFY_APPROVAL',
+            approverChatId: (approver && approver.telegram_chat_id) || DEFAULT_APPROVER_CHAT_ID,
+            messageId: createdMsg ? createdMsg.id : '',
+            senderName: currentUser.display_name,
+            senderRole: getUserPermDef(currentUser).label,
+            channelName: activeChan ? activeChan.name : 'Phòng Điều Hành',
+            content,
+            fileUrl: fileUrl.startsWith('http') ? fileUrl : '',
+            fileName
+          });
         };
 
         if (fileInput.files && fileInput.files[0]) {
           const f = fileInput.files[0];
+          fileName = f.name;
           const reader = new FileReader();
-          reader.onload = async (e) => await applyApprovalEdit(e.target.result, f.name);
+          reader.onload = async (e) => {
+            fileUrl = e.target.result;
+            await finalizeSubmit();
+            btn.disabled = false;
+            btn.textContent = oldBtnText;
+          };
           reader.readAsDataURL(f);
+          return;
         } else {
-          await applyApprovalEdit(fileUrl, fileName);
-        }
-        return;
-      }
-
-      const approverId = document.getElementById('approvalApprover').value;
-      const approver = dbUsers.find(u => String(u.id) === String(approverId));
-      const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
-
-      const finalizeSubmit = async () => {
-        const { data } = await sb.from('team_messages').insert([{
-          channel_id: activeChannelId,
-          sender_name: currentUser.display_name,
-          sender_role: getUserPermDef(currentUser).label,
-          msg_type: 'APPROVAL',
-          content,
-          file_url: fileUrl,
-          file_name: fileName,
-          approval_status: 'PENDING'
-        }]).select();
-
-        const createdMsg = data && data[0];
-        if (createdMsg) dbMessages.push(createdMsg);
-        closeModal('approvalModal');
-        renderMessages();
-        renderChannelFiles();
-
-        await callGasWebhook({
-          action: 'NOTIFY_APPROVAL',
-          approverChatId: (approver && approver.telegram_chat_id) || DEFAULT_APPROVER_CHAT_ID,
-          messageId: createdMsg ? createdMsg.id : '',
-          senderName: currentUser.display_name,
-          senderRole: getUserPermDef(currentUser).label,
-          channelName: activeChan ? activeChan.name : 'Phòng Điều Hành',
-          content,
-          fileUrl: fileUrl.startsWith('http') ? fileUrl : '',
-          fileName
-        });
-      };
-
-      if (fileInput.files && fileInput.files[0]) {
-        const f = fileInput.files[0];
-        fileName = f.name;
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          fileUrl = e.target.result;
           await finalizeSubmit();
-        };
-        reader.readAsDataURL(f);
-      } else {
-        await finalizeSubmit();
+        }
+      } finally {
+        if (!(fileInput.files && fileInput.files[0])) {
+          btn.disabled = false;
+          btn.textContent = oldBtnText;
+        }
       }
     }
 
@@ -2984,6 +2870,8 @@
     }
 
     async function submitMeetingNotice() {
+      const btn = document.getElementById('btnSubmitMeeting');
+      if (btn.disabled) return;
       const mTime = document.getElementById('meetingTime').value;
       const mLoc = document.getElementById('meetingLocation').value.trim() || 'Phòng họp điều hành';
       const mAgenda = document.getElementById('meetingAgenda').value.trim();
@@ -2993,69 +2881,77 @@
 
       if (!mAgenda) return showAppNotice('Vui lòng nhập nội dung cuộc họp!', '⚠️ Thiếu nội dung');
 
-      const formattedTime = mTime ? formatDateTimeVN(new Date(mTime).toISOString()) : 'Theo thông báo';
-      let noticeText = `📅 CHỐT LỊCH HỌP DỰ ÁN\n• Thời gian: ${formattedTime}\n• Địa điểm: ${mLoc}\n• Nội dung: ${mAgenda}`;
+      btn.disabled = true;
+      btn.textContent = 'Đang chốt lịch...';
 
-      let createdTasksCount = 0;
-      if (autoCreate && autoLinesRaw) {
-        const lines = autoLinesRaw.split('\n').map(l => l.trim()).filter(Boolean);
-        const dueIso = tasksDueRaw ? new Date(tasksDueRaw).toISOString() : null;
-        const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
+      try {
+        const formattedTime = mTime ? formatDateTimeVN(new Date(mTime).toISOString()) : 'Theo thông báo';
+        let noticeText = `📅 CHỐT LỊCH HỌP DỰ ÁN\n• Thời gian: ${formattedTime}\n• Địa điểm: ${mLoc}\n• Nội dung: ${mAgenda}`;
 
-        for (const line of lines) {
-          const match = line.match(/^@?([^:]+):\s*(.+)$/);
-          if (match) {
-            const rawName = match[1].trim().toLowerCase();
-            const taskTitle = match[2].trim();
-            const matchedUser = dbUsers.find(u => u.display_name.toLowerCase().includes(rawName));
-            const assigneeName = matchedUser ? matchedUser.display_name : match[1].trim();
+        let createdTasksCount = 0;
+        if (autoCreate && autoLinesRaw) {
+          const lines = autoLinesRaw.split('\n').map(l => l.trim()).filter(Boolean);
+          const dueIso = tasksDueRaw ? new Date(tasksDueRaw).toISOString() : null;
+          const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
 
-            const insertPayload = {
-              channel_id: activeChannelId,
-              assignee_name: assigneeName,
-              assigned_by: currentUser.display_name,
-              meeting_chair: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
-              chair_confirmed: true,
-              task_title: `[Sau họp] ${taskTitle}`,
-              due_at: dueIso,
-              status: 'PENDING',
-              alert_stage: 'NONE'
-            };
+          for (const line of lines) {
+            const match = line.match(/^@?([^:]+):\s*(.+)$/);
+            if (match) {
+              const rawName = match[1].trim().toLowerCase();
+              const taskTitle = match[2].trim();
+              const matchedUser = dbUsers.find(u => u.display_name.toLowerCase().includes(rawName));
+              const assigneeName = matchedUser ? matchedUser.display_name : match[1].trim();
 
-            const { data: tData } = await sb.from('team_tasks').insert([insertPayload]).select();
-            const newTask = (tData && tData[0]) ? tData[0] : insertPayload;
-            dbTasks.unshift(newTask);
-            createdTasksCount++;
+              const insertPayload = {
+                channel_id: activeChannelId,
+                assignee_name: assigneeName,
+                assigned_by: currentUser.display_name,
+                meeting_chair: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+                chair_confirmed: true,
+                task_title: `[Sau họp] ${taskTitle}`,
+                due_at: dueIso,
+                status: 'PENDING',
+                alert_stage: 'NONE'
+              };
 
-            if (matchedUser && matchedUser.telegram_chat_id) {
-              await callGasWebhook({
-                action: 'NOTIFY_TASK',
-                assigneeChatId: String(matchedUser.telegram_chat_id),
-                assigneeName: matchedUser.display_name,
-                assignedBy: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
-                channelName: activeChan ? activeChan.name : 'Dự án',
-                taskTitle: `[Sau họp] ${taskTitle}`,
-                dueDate: dueIso ? formatDateTimeVN(dueIso) : 'Theo kết luận họp',
-                taskId: newTask.id || ''
-              });
+              const { data: tData } = await sb.from('team_tasks').insert([insertPayload]).select();
+              const newTask = (tData && tData[0]) ? tData[0] : insertPayload;
+              dbTasks.unshift(newTask);
+              createdTasksCount++;
+
+              if (matchedUser && matchedUser.telegram_chat_id) {
+                await callGasWebhook({
+                  action: 'NOTIFY_TASK',
+                  assigneeChatId: String(matchedUser.telegram_chat_id),
+                  assigneeName: matchedUser.display_name,
+                  assignedBy: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+                  channelName: activeChan ? activeChan.name : 'Dự án',
+                  taskTitle: `[Sau họp] ${taskTitle}`,
+                  dueDate: dueIso ? formatDateTimeVN(dueIso) : 'Theo kết luận họp',
+                  taskId: newTask.id || ''
+                });
+              }
             }
           }
         }
+
+        if (createdTasksCount > 0) noticeText += `\n✅ Đã tự động phân công ${createdTasksCount} đầu việc vào Checklist dự án.`;
+
+        const { data } = await sb.from('team_messages').insert([{
+          channel_id: activeChannelId,
+          sender_name: currentUser.display_name,
+          sender_role: `${getUserPermDef(currentUser).label} • Chốt lịch họp`,
+          msg_type: 'CHAT',
+          content: noticeText
+        }]).select();
+
+        if (data && data[0]) dbMessages.push(data[0]);
+        closeModal('meetingModal');
+        renderAll();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📅 Chốt Lịch & Giao Việc';
       }
-
-      if (createdTasksCount > 0) noticeText += `\n✅ Đã tự động phân công ${createdTasksCount} đầu việc vào Checklist dự án.`;
-
-      const { data } = await sb.from('team_messages').insert([{
-        channel_id: activeChannelId,
-        sender_name: currentUser.display_name,
-        sender_role: `${getUserPermDef(currentUser).label} • Chốt lịch họp`,
-        msg_type: 'CHAT',
-        content: noticeText
-      }]).select();
-
-      if (data && data[0]) dbMessages.push(data[0]);
-      closeModal('meetingModal');
-      renderAll();
     }
 
     function openMultiFileModal() {
@@ -3064,7 +2960,7 @@
         <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 cursor-pointer hover:border-slate-700">
           <input type="checkbox" name="multiFileTarget" value="${u.id}" class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-indigo-500" />
           <div class="truncate">
-            <div class="font-semibold text-white truncate">${u.display_name}</div>
+            <div class="font-semibold text-white truncate">${escapeHtmlSafe(u.display_name)}</div>
             <div class="text-[10px] text-slate-400 truncate">${getUserPermDef(u).label}</div>
           </div>
         </label>
@@ -3082,6 +2978,8 @@
     }
 
     async function submitMultiFileSend() {
+      const btn = document.getElementById('btnSubmitMultiFile');
+      if (btn.disabled) return;
       const selectedIds = Array.from(document.querySelectorAll('input[name="multiFileTarget"]:checked')).map(b => b.value);
       if (selectedIds.length === 0) return showAppNotice('Vui lòng chọn ít nhất 1 thành viên nhận tài liệu!', '⚠️ Thiếu người nhận');
 
@@ -3095,6 +2993,9 @@
 
       const recipients = dbUsers.filter(u => selectedIds.includes(String(u.id)));
       const recipientNames = recipients.map(u => u.display_name).join(', ');
+
+      btn.disabled = true;
+      btn.textContent = 'Đang gửi tài liệu...';
 
       const dispatchToRecipients = async (fName, fUrl) => {
         for (const r of recipients) {
@@ -3131,12 +3032,16 @@
 
         closeModal('multiFileModal');
         renderMessages();
+        btn.disabled = false;
+        btn.textContent = '📤 Gửi File & Báo Telegram';
         showAppNotice(`Đã gửi tài liệu thành công cho ${recipients.length} thành viên!`, '📤 Gửi tài liệu thành công');
       };
 
       if (fileInput.files && fileInput.files[0]) {
         const f = fileInput.files[0];
         if (f.size > 3 * 1024 * 1024) {
+          btn.disabled = false;
+          btn.textContent = '📤 Gửi File & Báo Telegram';
           return showAppNotice('Tệp vượt quá 3MB, vui lòng tải lên Google Drive và dán link!', '⚠️ Giới hạn dung lượng');
         }
         const reader = new FileReader();
@@ -3474,7 +3379,7 @@
               <div class="text-[11px] text-slate-400">
                 Chức vụ: <b class="text-slate-200">${escapeHtmlSafe(u.role_title || 'Chuyên viên')}</b>
                 • PIN: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '')}</code>
-                • Telegram: <span class="${u.telegram_chat_id ? 'text-emerald-400' : 'text-rose-400'}">${u.telegram_chat_id || 'Chưa gắn'}</span>
+                • Telegram: <span class="${u.telegram_chat_id ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtmlSafe(u.telegram_chat_id || 'Chưa gắn')}</span>
               </div>
             </div>
 
@@ -3652,7 +3557,7 @@
       if (currentUser.telegram_chat_id) {
         statusEl.classList.remove('hidden', 'text-amber-300');
         statusEl.classList.add('text-emerald-400');
-        statusEl.innerHTML = `✅ Tài khoản đã liên kết Telegram ID: <b>${currentUser.telegram_chat_id}</b>`;
+        statusEl.innerHTML = `✅ Tài khoản đã liên kết Telegram ID: <b>${escapeHtmlSafe(currentUser.telegram_chat_id)}</b>`;
       } else {
         statusEl.classList.add('hidden');
       }
@@ -3689,7 +3594,7 @@
           document.getElementById('profileTelegramId').value = detectedId;
           statusEl.classList.remove('text-amber-300');
           statusEl.classList.add('text-emerald-400');
-          statusEl.innerHTML = `🎉 <b>Liên kết thành công!</b> Telegram ID (<b>${detectedId}</b>) đã được tự động lưu.`;
+          statusEl.innerHTML = `🎉 <b>Liên kết thành công!</b> Telegram ID (<b>${escapeHtmlSafe(detectedId)}</b>) đã được tự động lưu.`;
           updateTelegramIndicator();
           renderStaffPassPinIdTab();
           renderStaffRoleTab();
