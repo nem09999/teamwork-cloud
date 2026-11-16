@@ -2,1066 +2,843 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeamWork Cloud — Điều Hành Công Việc & Phê Duyệt Telegram</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TeamWork Cloud — Điều Hành Nhóm & Quản Lý Tiến Độ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    @keyframes spinOnce {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    @media (max-width: 640px) {
+      input, select, textarea { font-size: 16px !important; }
     }
-    .animate-spin-once { animation: spinOnce 0.55s ease-in-out; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen overflow-hidden flex flex-col select-none sm:select-auto" onclick="closeAllDropdowns()">
+<body class="bg-slate-950 text-slate-100 h-[100dvh] flex flex-col overflow-hidden select-none sm:select-auto">
 
-  <!-- HỆ THỐNG DIALOG NỘI BỘ -->
-  <div id="customDialogOverlay" class="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 id="customDialogTitle" class="text-sm font-bold text-white flex items-center gap-2">ℹ️ Thông báo hệ thống</h3>
-        <button type="button" onclick="resolveCustomDialog(false)" class="text-slate-400 hover:text-white text-sm">✕</button>
-      </div>
-      <div id="customDialogMessage" class="text-xs text-slate-200 leading-relaxed whitespace-pre-line"></div>
-      <div id="customDialogPromptBox" class="hidden">
-        <textarea id="customDialogInput" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
-      </div>
-      <div class="flex justify-end gap-2 pt-1">
-        <button id="customDialogCancelBtn" type="button" onclick="resolveCustomDialog(false)" class="hidden px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
-          Hủy bỏ
-        </button>
-        <button id="customDialogOkBtn" type="button" onclick="resolveCustomDialog(true)" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md">
-          Đồng ý
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MÀN HÌNH ĐĂNG NHẬP NHẬP TAY (TÊN TÀI KHOẢN + PASS/PIN CHỮ & SỐ + KHÓA 5 LẦN SAI) -->
-  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
-      <div class="text-center space-y-1.5">
-        <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto text-2xl font-bold">
-          ⚡
-        </div>
+  <!-- ======================================================================= -->
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
+  <!-- ======================================================================= -->
+  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 my-auto">
+      <div class="text-center space-y-1">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-2xl mb-1">🚀</div>
         <h1 class="text-xl font-bold text-white tracking-tight">TeamWork Cloud</h1>
-        <p class="text-xs text-slate-400">Điều hành dự án • Phân quyền 7 cấp • Phê duyệt Telegram</p>
+        <p class="text-xs text-slate-400">Hệ thống Điều hành Nhóm, Phê duyệt & Checklist Dự án</p>
       </div>
 
-      <!-- FORM ĐĂNG NHẬP NHẬP TAY -->
-      <div id="loginFormBox" class="space-y-4">
+      <!-- Khung đăng nhập chính -->
+      <div id="loginFormBox" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên tài khoản / Họ tên đăng ký</label>
-          <input id="loginUsernameInput" type="text" autocomplete="username"
-            placeholder="Nhập tên tài khoản được cấp..."
+          <label class="block text-xs font-medium text-slate-300 mb-1">Tên tài khoản</label>
+          <input id="loginUsernameInput" type="text" autocomplete="username" placeholder="Nhập chính xác tên tài khoản..."
             onkeydown="if(event.key==='Enter') document.getElementById('loginPassword').focus()"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-medium text-slate-300">Mật khẩu / Mã PIN (4–12 ký tự chữ & số)</label>
-            <button type="button" onclick="toggleForgotPassword(true)" class="text-[11px] font-medium text-blue-400 hover:text-blue-300 underline">
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-medium text-slate-300">Mật khẩu / Mã PIN (4–12 ký tự)</label>
+            <button type="button" onclick="toggleForgotPassword(true)" class="text-[11px] text-blue-400 hover:text-blue-300 underline">
               Quên mật khẩu / PIN?
             </button>
           </div>
           <div class="relative">
-            <input id="loginPassword" type="password" autocomplete="current-password"
-              placeholder="Nhập mật khẩu hoặc mã PIN..."
+            <input id="loginPassword" type="password" maxlength="12" autocomplete="current-password" placeholder="Nhập mật khẩu hoặc mã PIN..."
               onkeydown="if(event.key==='Enter') handleLogin()"
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-11 text-sm text-white focus:outline-none focus:border-blue-500" />
             <button type="button" onclick="toggleLoginPasswordVisibility()" title="Hiện/Ẩn mật khẩu"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">
-              👁️
-            </button>
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-sm">👁️</button>
           </div>
         </div>
 
-        <div class="flex items-center justify-between text-xs">
-          <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white">
-            <input id="rememberLoginCheck" type="checkbox" checked class="rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-0" />
-            <span>Ghi nhớ đăng nhập trên thiết bị này</span>
-          </label>
-        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+          <input id="rememberLoginCheck" type="checkbox" checked class="rounded bg-slate-800 border-slate-600 text-blue-500" />
+          <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+        </label>
 
-        <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-blue-600/25">
+        <div id="loginError" class="hidden text-xs text-rose-300 bg-rose-950/70 border border-rose-700/60 rounded-xl p-3 leading-relaxed"></div>
+
+        <button onclick="handleLogin()"
+          class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-lg shadow-blue-600/20">
           Đăng nhập hệ thống
         </button>
 
-        <div id="loginError" class="text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 rounded-xl p-3 text-center hidden leading-relaxed"></div>
+        <div class="text-[11px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-center leading-relaxed">
+          🛡️ Bảo mật: Nhập sai mật khẩu liên tiếp <b>5 lần</b> tài khoản sẽ tự động khóa. Chỉ <b>Quản trị hệ thống</b> mới có quyền mở khóa.
+        </div>
       </div>
 
-      <!-- FORM KHÔI PHỤC MẬT KHẨU QUA TELEGRAM -->
-      <div id="forgotPasswordBox" class="space-y-4 hidden">
-        <div class="bg-blue-950/40 border border-blue-800/60 rounded-xl p-3 text-xs text-blue-200 leading-relaxed">
-          🔐 Nhập <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ cấp ngẫu nhiên <b>Mã PIN mới (6 ký tự chữ + số)</b> qua Bot Telegram.
-          <br/><span class="text-amber-300 text-[11px]">* Nếu tài khoản đã bị khóa do nhập sai 5 lần, chỉ Quản trị hệ thống mới mở khóa được.</span>
+      <!-- Khung quên mật khẩu qua Telegram -->
+      <div id="forgotPasswordBox" class="hidden space-y-3.5 bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-amber-400 uppercase">🔐 Cấp lại Mã PIN qua Telegram</h3>
+          <button type="button" onclick="toggleForgotPassword(false)" class="text-xs text-slate-400 hover:text-white">✕ Quay lại</button>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Nhập đúng <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo mã PIN chữ + số ngẫu nhiên mới và gửi về Telegram của bạn.
+        </p>
+        <div>
+          <label class="block text-[11px] text-slate-300 mb-1">Tên tài khoản</label>
+          <input id="resetUsernameInput" type="text" placeholder="Nhập tên tài khoản của bạn..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên tài khoản cần cấp lại PIN</label>
-          <input id="resetUsernameInput" type="text" placeholder="Nhập chính xác tên tài khoản..."
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+          <label class="block text-[11px] text-slate-300 mb-1">Telegram Chat ID đã liên kết</label>
+          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 5919283746"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500" />
         </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Nhập Telegram Chat ID đã liên kết để xác minh</label>
-          <input id="resetTelegramIdInput" type="text" placeholder="Ví dụ: 522439752"
-            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-emerald-300 font-mono focus:outline-none focus:border-blue-500" />
-        </div>
-        <button id="btnResetSubmit" onclick="handleResetPasswordViaTelegram()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">
+        <div id="resetFeedback" class="hidden text-xs leading-relaxed"></div>
+        <button id="btnResetSubmit" type="button" onclick="handleResetPasswordViaTelegram()"
+          class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 rounded-lg text-xs transition">
           📩 Cấp Mã PIN Ngẫu Nhiên & Gửi Telegram
-        </button>
-        <p id="resetFeedback" class="text-xs text-center hidden leading-relaxed"></p>
-        <button type="button" onclick="toggleForgotPassword(false)" class="w-full text-xs text-slate-400 hover:text-white pt-1">
-          ← Quay lại màn hình đăng nhập
         </button>
       </div>
     </div>
   </div>
 
-  <!-- HEADER BAR GỌN GÀNG -->
-  <header class="h-14 bg-slate-900 border-b border-slate-800 px-3 lg:px-4 flex items-center justify-between gap-2 shrink-0 z-20">
+  <!-- ======================================================================= -->
+  <!-- THANH TIÊU ĐỀ TRÊN CÙNG (HEADER) -->
+  <!-- ======================================================================= -->
+  <header class="h-13 sm:h-14 bg-slate-900 border-b border-slate-800 px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
     <div class="flex items-center gap-2 min-w-0">
-      <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 shrink-0" title="Danh sách Nhóm/Dự án">
-        ☰
+      <button onclick="toggleMobileSidebar()" title="Danh sách Nhóm & Thành viên"
+        class="lg:hidden bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold shrink-0">
+        ☰ Nhóm
       </button>
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shrink-0">⚡</div>
-      <div class="min-w-0">
-        <div class="font-bold text-sm text-white leading-tight truncate">TeamWork Cloud</div>
-        <div id="syncStatus" class="text-[11px] text-emerald-400 flex items-center gap-1 truncate">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span> Đã kết nối trực tuyến
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-lg shrink-0">🚀</span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-sm text-white truncate">TeamWork Cloud</span>
+            <span id="syncStatusIndicator" class="hidden sm:inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-1.5 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px] text-slate-400 truncate">
+            <span id="currentUserName" class="font-semibold text-slate-200 truncate">Chưa đăng nhập</span>
+            <span id="currentUserPermBadge" class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-slate-800 text-slate-300">—</span>
+            <span id="currentUserRole" class="hidden md:inline truncate"></span>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <button id="btnManualRefresh" onclick="manualRefreshApp()" title="Làm mới dữ liệu ngay"
-        class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-        <span id="refreshIcon" class="inline-block">🔄</span>
-        <span class="hidden md:inline">Làm mới</span>
+      <!-- Nút Việc của tôi -->
+      <button onclick="openMyTasksModal()" title="Danh sách việc được giao cho tôi"
+        class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
+        <span>📌</span>
+        <span class="hidden sm:inline">Việc tôi</span>
+        <span id="myTaskBadge" class="bg-amber-500 text-slate-950 font-bold text-[10px] px-1.5 rounded-full">0</span>
       </button>
 
-      <button onclick="openMyTasksModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-        <span>📋</span>
-        <span class="hidden sm:inline">Việc của tôi</span>
-        <span id="myTaskBadge" class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+      <!-- Nút Giao việc mới -->
+      <button id="btnAssignTaskTop" onclick="openAssignModal()"
+        class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+        <span>➕</span><span class="hidden sm:inline">Giao việc</span>
       </button>
 
-      <div class="relative" onclick="event.stopPropagation()">
-        <button onclick="toggleDropdown('menuDataFiles')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-          <span>📁</span>
-          <span class="hidden sm:inline">Dữ liệu & File</span>
-          <span class="text-[10px] text-slate-400">▾</span>
+      <!-- Nút Trình phê duyệt -->
+      <button onclick="openApprovalModal()" title="Gửi tờ trình phê duyệt"
+        class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1">
+        <span>📋</span><span class="hidden md:inline">Trình duyệt</span>
+      </button>
+
+      <!-- Menu Tác vụ mở rộng -->
+      <div class="relative">
+        <button onclick="toggleHeaderDropdown('headerActionMenu', event)" title="Tác vụ điều hành & Dữ liệu"
+          class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+          ⚡ <span class="hidden md:inline">Tác vụ</span> ▾
         </button>
-        <div id="menuDataFiles" class="hidden absolute right-0 mt-1.5 w-60 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-          <button onclick="closeAllDropdowns(); openMultiFileModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-indigo-300 flex items-center gap-2 font-medium">
-            <span>📤</span><span>Gửi File cho nhiều người</span>
+        <div id="headerActionMenu" class="hidden absolute right-0 mt-1.5 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-40 text-xs">
+          <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal();" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">
+            <span>📅</span> Chốt lịch họp & Giao việc sau họp
           </button>
-          <button onclick="closeAllDropdowns(); openBackupModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-cyan-300 flex items-center gap-2 font-medium">
-            <span>💾</span><span>Backup / Restore & Digest 17:00</span>
+          <button onclick="closeAllDropdowns(); openMultiFileModal();" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">
+            <span>📤</span> Gửi tài liệu nhiều người
           </button>
-          <button id="menuBtnAuditLog" onclick="closeAllDropdowns(); openAuditLogModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2 font-medium border-t border-slate-800 mt-1 pt-2">
-            <span>📜</span><span>Nhật ký kiểm toán (Audit Log)</span>
+          <button onclick="closeAllDropdowns(); openProgressModal();" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-emerald-300 font-semibold">
+            <span>📊</span> Bảng tổng hợp tiến độ dự án
+          </button>
+          <div class="my-1 border-t border-slate-800"></div>
+          <button onclick="closeAllDropdowns(); openBackupModal();" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">
+            <span>💾</span> Backup / Restore & Báo cáo 17h
+          </button>
+          <button onclick="closeAllDropdowns(); manualSyncNow();" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-blue-300">
+            <span>🔄</span> Đồng bộ dữ liệu ngay
           </button>
         </div>
       </div>
 
-      <div class="relative" onclick="event.stopPropagation()">
-        <button onclick="toggleDropdown('menuAccountAdmin')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition">
-          <div class="text-right hidden md:block">
-            <div class="flex items-center justify-end gap-1.5">
-              <span id="currentUserName" class="text-xs font-semibold text-white leading-none">Lãnh Đạo / Quản Lý</span>
-              <span id="currentUserPermBadge" class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">Quản trị hệ thống</span>
-            </div>
-            <div id="currentUserRole" class="text-[10px] text-slate-400 leading-none mt-1">Trưởng Ban / Giám Đốc</div>
-          </div>
-          <span id="tgStatusDot" class="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Trạng thái liên kết Telegram"></span>
-          <span class="text-xs text-slate-300">⚙️</span>
+      <!-- Nút Cài đặt Nhân sự & Đăng xuất -->
+      <div class="relative">
+        <button onclick="toggleHeaderDropdown('headerSettingsMenu', event)" title="Quản lý Nhân sự & Tài khoản"
+          class="relative bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1">
+          <span>⚙️</span>
+          <span id="tgStatusDot" class="w-2 h-2 rounded-full bg-rose-500"></span>
         </button>
-
-        <div id="menuAccountAdmin" class="hidden absolute right-0 mt-1.5 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-          <button onclick="closeAllDropdowns(); openStaffModal('PASS_PIN_ID');" class="w-full text-left px-3.5 py-2.5 hover:bg-slate-800 text-amber-300 flex items-center gap-2 font-medium">
-            <span>👥</span><span>Quản lý Nhân sự - Phân quyền & Pass/PIN/ID</span>
+        <div id="headerSettingsMenu" class="hidden absolute right-0 mt-1.5 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-40 text-xs">
+          <button onclick="closeAllDropdowns(); openStaffModal('PASS_PIN_ID');" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-amber-300 font-semibold">
+            <span>🔑</span> Quản lý Nhân sự - Phân quyền & PIN
+          </button>
+          <button onclick="closeAllDropdowns(); openStaffModal('MY_TELEGRAM');" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-blue-300">
+            <span>📲</span> Liên kết Telegram & Đổi PIN cá nhân
+          </button>
+          <button id="menuBtnAuditLog" onclick="closeAllDropdowns(); openAuditLogModal();" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-300">
+            <span>📜</span> Nhật ký kiểm toán hệ thống
           </button>
           <div class="my-1 border-t border-slate-800"></div>
-          <button onclick="closeAllDropdowns(); handleLogout();" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 flex items-center gap-2 font-medium">
-            <span>🚪</span><span>Thoát đăng nhập</span>
+          <button onclick="closeAllDropdowns(); handleLogout();" class="w-full px-3.5 py-2 text-left hover:bg-rose-950/60 flex items-center gap-2 text-rose-400 font-semibold">
+            <span>🚪</span> Thoát đăng nhập
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- BỐ CỤC CHÍNH 3 CỘT -->
+  <!-- ======================================================================= -->
+  <!-- KHUNG NỘI DUNG CHÍNH 3 CỘT (TỐI ƯU MOBILE + DESKTOP) -->
+  <!-- ======================================================================= -->
   <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- CỘT 1 (TRÁI): DANH SÁCH NHÓM / DỰ ÁN & TRAO ĐỔI RIÊNG 1-1 -->
-    <aside id="leftSidebar" class="hidden lg:flex w-64 bg-slate-900 border-r border-slate-800 flex-col shrink-0 z-30 absolute lg:static inset-y-0 left-0 shadow-2xl lg:shadow-none">
+    <!-- CỘT 1: DANH SÁCH NHÓM / DỰ ÁN & CHAT RIÊNG 1-1 -->
+    <aside id="leftSidebar" class="hidden lg:flex flex-col w-72 bg-slate-900 border-r border-slate-800 shrink-0 z-30 fixed inset-y-0 left-0 lg:static pt-13 lg:pt-0 shadow-2xl lg:shadow-none">
       <div class="p-3 border-b border-slate-800 flex items-center justify-between">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nhóm / Dự án</span>
-        <button id="btnNewGroupSidebar" onclick="openProjectGroupModal()" class="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 px-2 py-0.5 rounded font-medium">+ Nhóm/Dự án</button>
-      </div>
-      <div id="channelList" class="p-2 space-y-1 overflow-y-auto flex-1"></div>
-
-      <div class="p-3 border-t border-slate-800 bg-slate-950/50 space-y-2 max-h-56 overflow-y-auto">
-        <div class="text-[10px] font-bold uppercase text-slate-400 flex items-center justify-between">
-          <span>💬 Trao đổi & Gửi file riêng 1-1</span>
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">🏗️ Nhóm / Dự án</span>
+        <div class="flex items-center gap-1">
+          <button id="btnNewGroupSidebar" onclick="openProjectGroupModal()"
+            class="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-2 py-1 rounded-lg text-[11px] font-semibold transition">
+            + Tạo nhóm
+          </button>
+          <button onclick="toggleMobileSidebar()" class="lg:hidden text-slate-400 hover:text-white px-2 py-1 text-xs">✕</button>
         </div>
-        <div id="dmUserList" class="space-y-1"></div>
       </div>
+
+      <div id="channelList" class="p-2 space-y-1 overflow-y-auto max-h-[48%]"></div>
+
+      <div class="px-3 py-2 border-y border-slate-800 bg-slate-950/40 flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">💬 Trao đổi riêng 1-1</span>
+      </div>
+      <div id="dmUserList" class="p-2 space-y-1 overflow-y-auto flex-1"></div>
     </aside>
 
-    <!-- CỘT 2 (GIỮA): KHUNG TRAO ĐỔI TRUNG TÂM & GHIM CHỈ ĐẠO -->
-    <main class="flex-1 flex flex-col bg-slate-950 min-w-0">
-      <div class="h-14 border-b border-slate-800 px-3 sm:px-4 flex items-center justify-between gap-2 bg-slate-900/40 shrink-0">
+    <!-- CỘT 2: KHU VỰC TRAO ĐỔI, PHIẾU TRÌNH & GỬI TIN NHẮN -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-950">
+
+      <!-- Thanh thông tin kênh đang mở (Gọn gàng trên điện thoại) -->
+      <div class="bg-slate-900/80 border-b border-slate-800 px-3 py-2 flex items-center justify-between gap-2 shrink-0">
         <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <h2 id="activeChannelTitle" class="text-sm font-bold text-white truncate"># Phòng Điều Hành Chung</h2>
-            <span id="channelMemberBadge" class="hidden sm:inline-block text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-full shrink-0">👥 3 thành viên</span>
-            <span id="dmBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0">Kênh riêng 1-1</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <h2 id="activeChannelTitle" class="font-bold text-xs sm:text-sm text-white truncate"># Phòng Điều Hành Chung</h2>
+            <span id="channelMemberBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full shrink-0">👥 0</span>
+            <span id="dmBadge" class="hidden text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full shrink-0">🔒 Kênh kín 1-1</span>
+            <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Cấu hình Nhóm/Dự án"
+              class="text-[11px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-slate-800">⚙️</button>
           </div>
-          <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate">Trao đổi công việc hàng ngày & thông báo chung của tập thể</p>
+          <p id="activeChannelDesc" class="text-[11px] text-slate-400 truncate">Trao đổi công việc, trình duyệt & theo dõi tiến độ</p>
         </div>
 
+        <!-- Nút mở nhanh Checklist & Bảng tiến độ trên Mobile -->
         <div class="flex items-center gap-1.5 shrink-0">
-          <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Thông tin Nhóm/Dự án, Thành viên & Tài nguyên"
-            class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
-            ⚙️ <span class="hidden xl:inline">Nhóm/Dự án</span>
+          <button onclick="openProgressModal()" title="Xem bảng tổng hợp tiến độ"
+            class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 px-2 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1">
+            <span>📊</span><span class="hidden sm:inline">Tiến độ</span>
           </button>
-
-          <button id="btnAssignTaskTop" onclick="openAssignModal()"
-            class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
-            ✅ Giao việc
+          <button onclick="toggleMobileRightPanel(true)"
+            class="xl:hidden bg-blue-600/25 hover:bg-blue-600/40 text-blue-200 border border-blue-500/40 px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1">
+            <span>✅ Checklist</span>
+            <span id="mobileTaskCountBadge" class="bg-blue-500 text-white text-[10px] px-1.5 rounded-full">0</span>
           </button>
-
-          <div class="relative" onclick="event.stopPropagation()">
-            <button onclick="toggleDropdown('menuChannelActions')"
-              class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 whitespace-nowrap">
-              <span>⚡ Tác vụ</span>
-              <span class="text-[10px]">▾</span>
-            </button>
-            <div id="menuChannelActions" class="hidden absolute right-0 mt-1.5 w-60 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-xs">
-              <button onclick="closeAllDropdowns(); openApprovalModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-indigo-300 flex items-center gap-2 font-medium">
-                <span>📋</span><span>Trình phê duyệt Telegram</span>
-              </button>
-              <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-teal-300 flex items-center gap-2 font-medium">
-                <span>📅</span><span>Chốt lịch họp & Xuất biên bản</span>
-              </button>
-              <button onclick="closeAllDropdowns(); openProgressModal();" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2 font-medium">
-                <span>📊</span><span>Bảng tiến độ & Xuất Excel/PDF</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- THANH GHIM CHỈ ĐẠO TRỌNG TÂM ĐẦU KÊNH -->
-      <div id="pinnedDirectivesBar" class="hidden bg-amber-950/40 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between gap-3 shrink-0">
-        <div class="min-w-0 flex-1 cursor-pointer" onclick="scrollToPinnedMessage()">
-          <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase text-amber-400">
-            <span>📌 CHỈ ĐẠO TRỌNG TÂM ĐÃ GHIM</span>
-            <span id="pinnedByLabel" class="font-normal text-amber-200/70"></span>
+      <!-- Thanh Ghim Chỉ Đạo Đầu Kênh -->
+      <div id="pinnedDirectivesBar" class="hidden bg-amber-950/50 border-b border-amber-600/40 px-3 py-2 flex items-center justify-between gap-2 text-xs shrink-0">
+        <div onclick="scrollToPinnedMessage()" class="min-w-0 flex-1 cursor-pointer">
+          <div class="flex items-center gap-1.5 text-[10px] font-bold text-amber-400">
+            <span>📌 CHỈ ĐẠO GHIM ĐẦU KÊNH</span>
+            <span id="pinnedByLabel" class="font-normal text-amber-300/80"></span>
           </div>
-          <div id="pinnedContentText" class="text-xs text-amber-100 truncate mt-0.5"></div>
+          <div id="pinnedContentText" class="text-amber-100 truncate font-medium"></div>
         </div>
-        <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" title="Bỏ ghim chỉ đạo này" class="text-[11px] bg-slate-900/80 hover:bg-rose-950 text-slate-300 hover:text-rose-300 px-2 py-1 rounded-lg border border-slate-700 shrink-0">
-          Bỏ ghim ✕
-        </button>
+        <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" title="Bỏ ghim"
+          class="text-amber-300 hover:text-white text-xs px-2 py-1 rounded bg-amber-900/50 shrink-0">✕</button>
       </div>
 
-      <div id="messageFeed" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+      <!-- Luồng tin nhắn & Phiếu trình -->
+      <div id="messageFeed" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3"></div>
 
-      <div id="chatActionBanner" class="hidden px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
+      <!-- Banner Trả lời / Chỉnh sửa tin nhắn -->
+      <div id="chatActionBanner" class="hidden bg-slate-900 border-t border-slate-800 px-3 py-1.5 flex items-center justify-between gap-2 text-xs">
         <div class="flex items-center gap-2 min-w-0">
-          <span id="chatActionIcon" class="text-blue-400 font-bold">↩️</span>
-          <div class="truncate">
-            <div id="chatActionTitle" class="font-bold text-blue-300 text-[11px]">Đang trả lời tin nhắn</div>
+          <span id="chatActionIcon">↩️</span>
+          <div class="min-w-0">
+            <div id="chatActionTitle" class="font-bold text-blue-400 text-[11px]"></div>
             <div id="chatActionPreview" class="text-slate-400 truncate text-[11px]"></div>
           </div>
         </div>
-        <button onclick="cancelChatActionBanner()" class="text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 shrink-0">✕ Hủy</button>
+        <button onclick="cancelChatActionBanner()" class="text-slate-400 hover:text-white px-2 py-0.5 text-xs">✕</button>
       </div>
 
-      <div class="p-3 border-t border-slate-800 bg-slate-900/60 shrink-0">
-        <div class="flex items-center gap-2">
-          <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl border border-slate-700 transition shrink-0" title="Đính kèm file trực tiếp">
+      <!-- Khung nhập tin nhắn dưới cùng -->
+      <div class="bg-slate-900 border-t border-slate-800 p-2 sm:p-3 shrink-0">
+        <div class="flex items-end gap-1.5 sm:gap-2 max-w-4xl mx-auto">
+          <label title="Đính kèm tệp tin (<3MB)" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-sm shrink-0">
             📎
-            <input id="quickChatFileInput" type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
+            <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
           </label>
-          <button type="button" onclick="insertQuickEmoji()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl border border-slate-700 transition shrink-0" title="Chèn biểu tượng cảm xúc">
-            😊
-          </button>
-          <input id="chatInput" type="text" placeholder="Nhập trao đổi, địa chỉ/tọa độ dự án... (Chuột phải tin nhắn để Ghim/Sửa/Xóa/Trả lời/Dịch)"
-            onkeydown="if(event.key==='Enter') sendChatMessage()"
-            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 min-w-0" />
-          <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition shrink-0">
+          <button type="button" onclick="insertQuickEmoji()" title="Chèn nhanh 👍"
+            class="hidden sm:inline-flex bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-sm shrink-0">👍</button>
+          <textarea id="chatInput" rows="1" placeholder="Nhập trao đổi, báo cáo hoặc dán tọa độ GPS..."
+            onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"
+            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 resize-none max-h-28"></textarea>
+          <button id="btnSendChat" onclick="sendChatMessage()"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm shrink-0">
             Gửi
           </button>
         </div>
       </div>
     </main>
 
-    <!-- CỘT 3 (PHẢI): CHECKLIST CÔNG VIỆC & KHO TÀI NGUYÊN / FILE -->
-    <aside class="w-80 bg-slate-900 border-l border-slate-800 hidden xl:flex flex-col shrink-0">
-      <div class="p-2.5 border-b border-slate-800 grid grid-cols-2 gap-1.5 bg-slate-950/40">
-        <button id="tabBtnChecklist" onclick="switchRightPanelTab('CHECKLIST')" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1">
-          <span>✅ Checklist</span>
-          <span id="channelTaskCount" class="bg-blue-600 text-white text-[10px] px-1.5 rounded-full">0</span>
-        </button>
-        <button id="tabBtnFiles" onclick="switchRightPanelTab('FILES')" class="py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1">
-          <span>📁 Tài nguyên</span>
-          <span id="channelFileCount" class="bg-slate-700 text-slate-200 text-[10px] px-1.5 rounded-full">0</span>
-        </button>
-      </div>
+    <!-- CỘT 3: CHECKLIST CÔNG VIỆC & TÀI NGUYÊN DỰ ÁN (NGĂN TRƯỢT TRÊN MOBILE) -->
+    <aside id="rightSidebarPanel" class="hidden xl:flex flex-col w-full sm:w-96 xl:w-96 bg-slate-900 border-l border-slate-800 shrink-0 z-30 fixed inset-0 sm:left-auto xl:static shadow-2xl xl:shadow-none">
+      <!-- Header ngăn Checklist / Tài nguyên -->
+      <div class="p-3 border-b border-slate-800 space-y-2.5 shrink-0 bg-slate-900">
+        <div class="flex items-center justify-between gap-2">
+          <div class="grid grid-cols-2 gap-1.5 flex-1">
+            <button id="tabBtnChecklist" onclick="switchRightPanelTab('CHECKLIST')"
+              class="py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1">
+              <span>✅ Checklist</span>
+              <span id="channelTaskCount" class="bg-blue-500/30 px-1.5 rounded-full text-[10px]">0</span>
+            </button>
+            <button id="tabBtnFiles" onclick="switchRightPanelTab('FILES')"
+              class="py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1">
+              <span>📁 Tài nguyên</span>
+              <span id="channelFileCount" class="bg-slate-800 px-1.5 rounded-full text-[10px]">0</span>
+            </button>
+          </div>
+          <button onclick="toggleMobileRightPanel(false)" title="Đóng ngăn Checklist"
+            class="xl:hidden bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-bold shrink-0">
+            ✕ Đóng
+          </button>
+        </div>
 
-      <div id="rightTabChecklist" class="flex-1 flex flex-col overflow-hidden">
-        <div class="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <label class="flex items-center gap-1.5 cursor-pointer">
-            <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="rounded bg-slate-800 border-slate-600 text-blue-500" />
+        <!-- Thanh công cụ gọn trong Checklist -->
+        <div id="rightTabChecklistToolbar" class="flex items-center justify-between gap-2 text-[11px]">
+          <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+            <input id="hideDoneToggle" type="checkbox" onchange="renderTasks()" class="rounded bg-slate-800 border-slate-600 text-emerald-500" />
             <span>Ẩn việc đã xong</span>
           </label>
-          <button onclick="openProgressModal()" class="text-blue-400 hover:text-blue-300 font-semibold">Mở bảng lớn ↗</button>
+          <button onclick="toggleMobileRightPanel(false); openProgressModal();"
+            class="text-emerald-400 hover:text-emerald-300 font-semibold underline">
+            📊 Mở bảng tiến độ ↗
+          </button>
         </div>
-        <div id="checklistContainer" class="p-3 space-y-2.5 overflow-y-auto flex-1"></div>
       </div>
 
-      <div id="rightTabFiles" class="hidden flex-1 flex-col overflow-hidden">
-        <div class="px-3.5 py-2 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <span>Tài nguyên & File đính kèm</span>
-          <div class="flex items-center gap-2">
-            <button id="btnAddResourceRightTab" onclick="openProjectGroupModal(activeChannelId)" class="text-emerald-400 hover:text-emerald-300 font-semibold">+ Thêm</button>
-            <button onclick="openMultiFileModal()" class="text-indigo-400 hover:text-indigo-300 font-semibold">Gửi nhiều người</button>
-          </div>
+      <!-- Danh sách thẻ Checklist gọn -->
+      <div id="rightTabChecklist" class="flex-1 overflow-y-auto p-3 space-y-2.5">
+        <div id="checklistContainer" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Danh sách Tài nguyên & Tệp -->
+      <div id="rightTabFiles" class="hidden flex-1 overflow-y-auto p-3 space-y-2.5">
+        <div class="flex justify-end">
+          <button id="btnAddResourceRightTab" onclick="openProjectGroupModal(activeChannelId)"
+            class="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold">
+            + Thêm tài nguyên dự án
+          </button>
         </div>
-        <div id="channelFilesContainer" class="p-3 space-y-2 overflow-y-auto flex-1"></div>
+        <div id="channelFilesContainer" class="space-y-2"></div>
       </div>
     </aside>
   </div>
 
-  <!-- CONTEXT MENU CHUỘT PHẢI CHO TỪNG TIN NHẮN -->
-  <div id="msgContextMenu" onclick="event.stopPropagation()" class="hidden fixed z-50 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 text-xs">
-    <button id="ctxBtnPin" onclick="ctxActionPin()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2.5 font-semibold">
-      <span>📌</span><span>Ghim chỉ đạo đầu kênh</span>
+  <!-- ======================================================================= -->
+  <!-- MENU NGỮ CẢNH TIN NHẮN -->
+  <!-- ======================================================================= -->
+  <div id="msgContextMenu" class="hidden fixed z-50 w-52 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl py-1.5 text-xs">
+    <button onclick="ctxActionReply()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">
+      <span>↩️</span> Trả lời tin nhắn
     </button>
-    <button onclick="ctxActionReply()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2.5">
-      <span>↩️</span><span>Trả lời tin nhắn</span>
+    <button onclick="ctxActionForward()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-slate-200">
+      <span>➡️</span> Chuyển tiếp sang kênh/người khác
     </button>
-    <button onclick="ctxActionForward()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2.5">
-      <span>➡️</span><span>Chuyển tiếp tin nhắn</span>
+    <button onclick="ctxActionTranslate()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-emerald-300">
+      <span>🌐</span> Dịch sang Tiếng Việt
     </button>
-    <button onclick="ctxActionTranslate()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-emerald-300 flex items-center gap-2.5">
-      <span>🌐</span><span>Dịch sang Tiếng Việt</span>
+    <button id="ctxBtnPin" onclick="ctxActionPin()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-amber-300">
+      <span>📌</span> Ghim chỉ đạo đầu kênh
     </button>
     <div id="ctxOwnerDivider" class="my-1 border-t border-slate-800"></div>
-    <button id="ctxBtnEdit" onclick="ctxActionEdit()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-blue-300 flex items-center gap-2.5">
-      <span>✏️</span><span>Sửa nội dung</span>
+    <button id="ctxBtnEdit" onclick="ctxActionEdit()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-blue-300">
+      <span>✏️</span> Chỉnh sửa nội dung
     </button>
-    <button id="ctxBtnRecall" onclick="ctxActionRecall()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 text-amber-300 flex items-center gap-2.5">
-      <span>🚫</span><span>Thu hồi với mọi người</span>
+    <button id="ctxBtnRecall" onclick="ctxActionRecall()" class="w-full px-3.5 py-2 text-left hover:bg-slate-800 flex items-center gap-2 text-amber-400">
+      <span>🚫</span> Thu hồi tin nhắn
     </button>
-    <button id="ctxBtnDelete" onclick="ctxActionDelete()" class="w-full text-left px-3.5 py-2 hover:bg-rose-950/60 text-rose-400 flex items-center gap-2.5">
-      <span>🗑️</span><span>Xóa tin nhắn</span>
+    <button id="ctxBtnDelete" onclick="ctxActionDelete()" class="w-full px-3.5 py-2 text-left hover:bg-rose-950/60 flex items-center gap-2 text-rose-400">
+      <span>🗑️</span> Xóa vĩnh viễn
     </button>
   </div>
 
-  <!-- MODAL NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG) -->
-  <div id="auditLogModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <div>
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">📜 Nhật Ký Kiểm Toán Hệ Thống (Audit Log)</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Ghi nhận khóa/mở khóa tài khoản, cấp đổi PIN chữ+số, phân quyền, duyệt/sửa/xóa tờ trình và xóa tài nguyên</p>
+  <!-- ======================================================================= -->
+  <!-- MODAL 1: BẢNG TỔNG HỢP TIẾN ĐỘ (THẺ DỌC TRÊN MOBILE + BẢNG TRÊN DESKTOP) -->
+  <!-- ======================================================================= -->
+  <div id="progressModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-2 sm:p-4">
+    <div class="bg-slate-100 text-slate-900 w-full max-w-6xl max-h-[92dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="bg-slate-900 text-white px-3.5 sm:px-5 py-3 flex items-center justify-between gap-2 shrink-0">
+        <div class="min-w-0">
+          <h3 class="font-bold text-sm sm:text-base truncate">📊 Bảng Tổng Hợp Tiến Độ Công Việc</h3>
+          <p id="progressModalSubtitle" class="text-[11px] text-slate-400 truncate">Nhóm / Dự án hiện tại</p>
         </div>
-        <button onclick="closeModal('auditLogModal')" class="text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div id="auditLogListContainer" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1"></div>
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
-        <button onclick="closeModal('auditLogModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs font-medium">Đóng cửa sổ</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL KHỞI TẠO & CHỈNH SỬA NHÓM / DỰ ÁN -->
-  <div id="projectGroupModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <div>
-          <h3 id="projectGroupModalTitle" class="text-sm font-bold text-white flex items-center gap-2">🏗️ Khởi tạo Nhóm/Dự án mới</h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Thiết lập thông tin chung, thành viên tham gia & kho tài nguyên dự án</p>
-        </div>
-        <button onclick="closeModal('projectGroupModal')" class="text-slate-400 hover:text-white">✕</button>
-      </div>
-
-      <input type="hidden" id="pgEditId" value="" />
-
-      <div class="space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-3">
-          <div class="font-bold text-blue-400">1. Thông tin Nhóm / Dự án</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-slate-400 mb-1">Tên Nhóm / Dự án <span class="text-rose-400">*</span></label>
-              <input id="pgNameInput" type="text" placeholder="Ví dụ: Dự án Khu Đô Thị Mới..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">Mô tả mục tiêu / Phạm vi công việc</label>
-              <input id="pgDescInput" type="text" placeholder="Ví dụ: Theo dõi pháp lý, GPMB & tiến độ thi công" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-emerald-400">2. Thành viên tham gia Nhóm/Dự án</span>
-            <div id="pgMemberBulkBtns" class="flex gap-2">
-              <button type="button" onclick="pgSelectAllMembers(true)" class="text-[11px] text-blue-400 hover:underline">Chọn tất cả</button>
-              <span class="text-slate-600">|</span>
-              <button type="button" onclick="pgSelectAllMembers(false)" class="text-[11px] text-slate-400 hover:underline">Bỏ chọn</button>
-            </div>
-          </div>
-          <div id="pgMembersChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto bg-slate-950/70 p-2.5 rounded-xl border border-slate-800"></div>
-        </div>
-
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-3">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <span class="font-bold text-amber-400">3. Kho Tài nguyên & Tài liệu dự án</span>
-            <div class="flex items-center gap-2">
-              <label id="pgAddFileLabel" class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
-                <span>📎 + Add File</span>
-                <input id="pgResourceFileInput" type="file" multiple class="hidden" onchange="handlePgAddFiles(event)" />
-              </label>
-            </div>
-          </div>
-
-          <div id="pgAddLinkRow" class="flex flex-col sm:flex-row gap-2">
-            <input id="pgLinkNameInput" type="text" placeholder="Tên tài liệu / Bản vẽ..." class="sm:w-1/3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500" />
-            <input id="pgLinkUrlInput" type="text" placeholder="Dán đường dẫn Google Drive / Link tài nguyên..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500" />
-            <button type="button" onclick="handlePgAddLink()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg shrink-0">
-              🔗 + Add Link
-            </button>
-          </div>
-
-          <div id="pgResourcesList" class="space-y-1.5 max-h-40 overflow-y-auto bg-slate-950/70 p-2.5 rounded-xl border border-slate-800"></div>
-        </div>
-      </div>
-
-      <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
-        <button id="btnDeleteProjectGroup" type="button" onclick="deleteProjectGroup()" class="hidden px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-semibold transition">
-          🗑️ Xóa Nhóm/Dự án
-        </button>
-        <div class="flex items-center gap-2 ml-auto">
-          <button type="button" onclick="closeModal('projectGroupModal')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Đóng</button>
-          <button id="btnSaveProjectGroup" type="button" onclick="saveProjectGroup()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25">
-            💾 Lưu Nhóm / Dự án
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="exportChecklistToExcel()" title="Xuất Excel" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+            📗 <span class="hidden sm:inline">Excel</span>
           </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL TÍCH HỢP: QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN & PASS / PIN (CHỮ+SỐ) / MỞ KHÓA -->
-  <div id="staffModal" class="fixed inset-0 z-40 bg-slate-950/85 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl p-5 shadow-2xl max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 shrink-0">
-        <div>
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
-            👥 Quản Lý Nhân Sự - Phân Quyền & Pass / PIN / ID
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Chuẩn Pass/PIN 4–12 ký tự (Chữ + Số) • Mở khóa tài khoản nhập sai 5 lần</p>
-        </div>
-        <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white">✕</button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 shrink-0 text-xs">
-        <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')"
-          class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40">
-          <span class="text-base">🔑</span>
-          <div>
-            <div>1. Pass / PIN / ID & Mở Khóa</div>
-            <div class="text-[10px] font-normal opacity-80">Cấp đổi PIN chữ+số & mở khóa tài khoản</div>
-          </div>
-        </button>
-
-        <button id="staffTabBtn_STAFF_ROLE" onclick="switchStaffModalTab('STAFF_ROLE')"
-          class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800">
-          <span class="text-base">🛡️</span>
-          <div>
-            <div>2. Nhân sự & Phân quyền</div>
-            <div class="text-[10px] font-normal opacity-80">Thêm/Sửa/Xóa & gán 7 cấp quyền</div>
-          </div>
-        </button>
-
-        <button id="staffTabBtn_MY_TELEGRAM" onclick="switchStaffModalTab('MY_TELEGRAM')"
-          class="py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800">
-          <span class="text-base">✈️</span>
-          <div>
-            <div>3. Liên kết Bot & Cá nhân</div>
-            <div class="text-[10px] font-normal opacity-80">Gắn Telegram 1 chạm & PIN riêng</div>
-          </div>
-        </button>
-      </div>
-
-      <!-- MỤC 1: PASS / PIN (CHỮ+SỐ) / ID TELEGRAM & MỞ KHÓA -->
-      <div id="staffSection_PASS_PIN_ID" class="space-y-3 overflow-y-auto flex-1 text-xs pr-1">
-        <div class="bg-amber-950/30 border border-amber-600/30 rounded-xl p-3 text-amber-200 leading-relaxed">
-          🔑 <b>Quy tắc bảo mật Pass / PIN:</b> Mật khẩu / Mã PIN bắt buộc dài <b>4 đến 12 ký tự, bao gồm cả chữ cái và chữ số</b> (VD: <code class="text-white">tv01ab</code>). Nếu tài khoản bị khóa do nhập sai 5 lần liên tiếp, Quản trị hệ thống bấm nút <b>🔓 Mở khóa</b> ngay tại danh sách bên dưới.
-        </div>
-
-        <div id="passPinIdListContainer" class="space-y-2"></div>
-      </div>
-
-      <!-- MỤC 2: QUẢN LÝ NHÂN SỰ & PHÂN QUYỀN -->
-      <div id="staffSection_STAFF_ROLE" class="hidden space-y-3 overflow-y-auto flex-1 text-xs pr-1">
-        <details class="bg-purple-950/30 border border-purple-500/30 rounded-xl p-3 text-purple-200">
-          <summary class="cursor-pointer font-bold text-purple-300">📖 Xem ma trận giải thích 7 cấp phân quyền hệ thống</summary>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2.5 text-[11px] text-slate-300">
-            <div>• <b class="text-amber-300">1. Quản trị hệ thống (Full):</b> Toàn quyền hệ thống, mở khóa tài khoản, thêm/xóa nhân sự, sửa/xóa mọi phiếu trình, xem Audit Log.</div>
-            <div>• <b class="text-blue-300">2. Quản trị:</b> Quản lý nhân sự trong Nhóm/Dự án, giao việc, phê duyệt nội bộ.</div>
-            <div>• <b class="text-teal-300">3. Trợ lý:</b> Điều phối lịch họp, lập checklist sau họp, nhắc việc & xuất báo cáo.</div>
-            <div>• <b class="text-emerald-300">4. Chủ trì / Phê duyệt:</b> Ký duyệt / từ chối tờ trình, hồ sơ đề xuất qua Web & Telegram.</div>
-            <div>• <b class="text-indigo-300">5. Điều phối Tài nguyên:</b> Quản lý kho tài liệu, bản vẽ, link dữ liệu của Nhóm/Dự án.</div>
-            <div>• <b class="text-cyan-300">6. Giám sát / Thanh tra:</b> Theo dõi toàn bộ tiến độ, lịch sử và xuất báo cáo kiểm tra.</div>
-            <div class="sm:col-span-2">• <b class="text-slate-300">7. Thành viên:</b> Thực hiện công việc được giao, báo cáo tiến độ, trình hồ sơ và trao đổi nghiệp vụ.</div>
-          </div>
-        </details>
-
-        <div id="addStaffFormBox" class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 space-y-2">
-          <div class="font-bold text-emerald-400">+ Thêm Nhân Sự / Thành Viên Mới & Gán Quyền</div>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <input id="newStaffName" type="text" placeholder="Tên tài khoản / Họ tên..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
-            <input id="newStaffRole" type="text" placeholder="Chức vụ / Phòng ban..." class="sm:col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-emerald-500" />
-            <input id="newStaffPin" type="text" maxlength="12" placeholder="PIN chữ+số (VD: tv01ab)" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500" />
-            <select id="newStaffPerm" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-white focus:outline-none focus:border-purple-500">
-              <option value="MEMBER">Thành viên</option>
-              <option value="ASSISTANT">Trợ lý</option>
-              <option value="APPROVER">Chủ trì / Phê duyệt</option>
-              <option value="MANAGER">Quản trị</option>
-              <option value="RESOURCE_LEAD">Điều phối Tài nguyên</option>
-              <option value="AUDITOR">Giám sát / Thanh tra</option>
-              <option value="FULL">Quản trị hệ thống (Full)</option>
-            </select>
-            <button type="button" onclick="addNewStaffMember()" class="sm:col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg py-2 transition">+ Thêm Mới</button>
-          </div>
-        </div>
-
-        <div id="staffRoleListContainer" class="space-y-2"></div>
-      </div>
-
-      <!-- MỤC 3: LIÊN KẾT BOT TELEGRAM 1 CHẠM & 3 TRƯỜNG BẢO MẬT CÁ NHÂN -->
-      <div id="staffSection_MY_TELEGRAM" class="hidden space-y-4 overflow-y-auto flex-1 text-xs pr-1">
-        <div class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-4 space-y-3">
-          <div class="font-bold text-blue-300 text-sm">Kết nối tự động với Bot @TeamWork_Duyet_Bot</div>
-          <p class="text-slate-300 leading-relaxed">
-            Bấm nút bên dưới để mở Telegram và bấm <b>START</b>. Hệ thống sẽ tự động nhận diện và lưu <b>Telegram Chat ID</b> cho tài khoản đang đăng nhập mà không cần nhập thủ công.
-          </p>
-          <div class="flex flex-wrap items-center gap-2">
-            <a id="telegramAutoLinkBtn" href="https://t.me/TeamWork_Duyet_Bot" target="_blank" rel="noopener noreferrer"
-               onclick="startTelegramAutoLinkListener()"
-               class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl transition shadow-md shadow-blue-600/25">
-              <span>✈️ Liên kết 1 chạm qua @TeamWork_Duyet_Bot</span>
-            </a>
-          </div>
-          <div id="tgAutoLinkStatus" class="hidden text-[11px] bg-slate-900/90 border border-slate-700/80 rounded-lg px-3 py-2 text-amber-300">
-            ⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự điền ID ngay khi nhận tín hiệu.
-          </div>
-        </div>
-
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-4 space-y-3">
-          <div class="font-bold text-white">3 Trường bảo mật tài khoản đang đăng nhập</div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block text-slate-400 mb-1">1. Chức vụ / Vị trí</label>
-              <input id="profileRoleTitle" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">2. Telegram Chat ID cá nhân</label>
-              <input id="profileTelegramId" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">3. Mật khẩu / PIN (4–12 ký tự chữ+số)</label>
-              <input id="profileNewPass" type="text" maxlength="12" placeholder="VD: tv01ab" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono focus:outline-none focus:border-blue-500" />
-            </div>
-          </div>
-          <div class="flex justify-end">
-            <button onclick="saveProfileSettings()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold">
-              💾 Lưu 3 Trường Cá Nhân
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
-        <button onclick="closeStaffModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium">Đóng cửa sổ</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL CHUYỂN TIẾP TIN NHẮN -->
-  <div id="forwardModal" class="fixed inset-0 z-50 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-        <h3 class="text-sm font-bold text-white">➡️ Chuyển Tiếp Tin Nhắn</h3>
-        <button onclick="closeModal('forwardModal')" class="text-slate-400 hover:text-white">✕</button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div id="forwardPreviewBox" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-300 max-h-24 overflow-y-auto whitespace-pre-line"></div>
-        <div>
-          <label class="block text-slate-400 mb-1.5 font-medium">Chọn Nhóm / Dự án hoặc Thành viên nhận:</label>
-          <select id="forwardTargetSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></select>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('forwardModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-          <button onclick="submitForwardMessage()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold">Chuyển Tiếp Ngay</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL BẢNG THEO DÕI TIẾN ĐỘ CHECKLIST & XUẤT EXCEL / PDF -->
-  <div id="progressModal" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white text-slate-800 rounded-2xl w-full max-w-5xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-wrap gap-2">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">📊 Bảng Theo Dõi Tiến Độ Checklist & Xuất Báo Cáo</h3>
-          <p id="progressModalSubtitle" class="text-xs text-slate-500 mt-0.5">Nhóm / Dự án: Phòng Điều Hành Chung</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="exportChecklistToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
-            📥 Xuất Excel (.xls)
+          <button onclick="exportChecklistToPDF()" title="In / Xuất PDF" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold">
+            📕 <span class="hidden sm:inline">PDF</span>
           </button>
-          <button onclick="exportChecklistToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition">
-            🖨️ Xuất PDF / In trình ký
-          </button>
-          <button onclick="closeModal('progressModal')" class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold">✕</button>
+          <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-bold">✕</button>
         </div>
       </div>
 
-      <div class="overflow-auto flex-1">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-slate-100 sticky top-0 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
+      <!-- Khung thẻ dọc tối ưu màn hình điện thoại (< 768px) -->
+      <div id="progressMobileCards" class="md:hidden flex-1 overflow-y-auto p-3 space-y-2.5 bg-slate-100"></div>
+
+      <!-- Khung bảng đầy đủ cho máy tính (>= 768px) -->
+      <div class="hidden md:block flex-1 overflow-auto bg-white">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-200 text-slate-700 uppercase text-[11px] sticky top-0">
             <tr>
-              <th class="py-3 px-4">Thành viên</th>
+              <th class="py-3 px-4">Người thực hiện</th>
               <th class="py-3 px-4">Nội dung công việc</th>
-              <th class="py-3 px-4">Bắt đầu → Hoàn thành</th>
-              <th class="py-3 px-4">Chủ trì / Trợ lý</th>
-              <th class="py-3 px-4">Trạng thái hạn</th>
-              <th class="py-3 px-4">Lý do & Hồi đáp</th>
-              <th class="py-3 px-4 text-right">Tác vụ & Nhắc việc</th>
+              <th class="py-3 px-4">Thời gian BĐ / KT</th>
+              <th class="py-3 px-4">Người giao / Chủ trì</th>
+              <th class="py-3 px-4">Trạng thái</th>
+              <th class="py-3 px-4">Ghi chú / Hồi đáp</th>
+              <th class="py-3 px-4 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody id="progressTableBody" class="divide-y divide-slate-200 text-xs"></tbody>
+          <tbody id="progressTableBody" class="divide-y divide-slate-200"></tbody>
         </table>
-      </div>
-
-      <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-        <span class="text-xs text-slate-500">* Trợ lý & Quản lý có thể bấm 🔔 Nhắc việc qua Telegram hoặc xuất file Excel/PDF lưu hồ sơ.</span>
-        <button onclick="closeModal('progressModal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">Đóng bảng</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL GIAO VIỆC MỚI -->
-  <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">✅ Giao Công Việc Mới</h3>
-        <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white">✕</button>
+  <!-- ======================================================================= -->
+  <!-- MODAL 2: GIAO VIỆC MỚI -->
+  <!-- ======================================================================= -->
+  <div id="assignModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-sm text-white">📌 Giao Công Việc Mới & Đặt Deadline</h3>
+        <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white text-sm">✕</button>
       </div>
-      <div class="space-y-3.5 text-xs">
+      <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1.5">Người thực hiện</label>
-          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></select>
+          <label class="block text-slate-300 mb-1">Thành viên thực hiện</label>
+          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1.5">Nội dung công việc</label>
-          <textarea id="taskContent" rows="3" placeholder="Nhập chi tiết đầu việc cần triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></textarea>
+          <label class="block text-slate-300 mb-1">Nội dung công việc chi tiết</label>
+          <textarea id="taskContent" rows="3" placeholder="Mô tả rõ đầu việc, yêu cầu đầu ra..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white"></textarea>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-emerald-400 mb-1.5">🟢 Thời gian bắt đầu</label>
-            <input type="datetime-local" id="taskStartTime" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+            <label class="block text-slate-300 mb-1">🟢 Thời gian bắt đầu</label>
+            <input id="taskStartTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-rose-400 mb-1.5">🔴 Thời hạn hoàn thành</label>
-            <input type="datetime-local" id="taskDueTime" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500" />
+            <label class="block text-slate-300 mb-1">🔴 Thời hạn hoàn thành</label>
+            <input id="taskDueTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
           </div>
         </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('assignModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">Hủy</button>
-          <button onclick="submitNewTask()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-600/25">Giao Việc & Gửi Telegram</button>
-        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('assignModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button onclick="submitNewTask()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">Giao việc & Báo Telegram</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL TRÌNH PHÊ DUYỆT & SỬA PHIẾU TRÌNH -->
-  <div id="approvalModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 id="approvalModalTitle" class="text-sm font-bold text-white">📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình</h3>
-        <button onclick="closeModal('approvalModal')" class="text-slate-400 hover:text-white">✕</button>
+  <!-- ======================================================================= -->
+  <!-- MODAL 3: TRÌNH PHÊ DUYỆT -->
+  <!-- ======================================================================= -->
+  <div id="approvalModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="approvalModalTitle" class="font-bold text-sm text-white">📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình</h3>
+        <button onclick="closeModal('approvalModal')" class="text-slate-400 hover:text-white text-sm">✕</button>
       </div>
-      <input type="hidden" id="editingApprovalId" value="" />
+      <input id="editingApprovalId" type="hidden" />
       <div class="space-y-3 text-xs">
         <div id="approvalApproverBox">
-          <label class="block text-slate-400 mb-1">Lãnh đạo / Chủ trì phê duyệt</label>
-          <select id="approvalApprover" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></select>
+          <label class="block text-slate-300 mb-1">Người có thẩm quyền phê duyệt</label>
+          <select id="approvalApprover" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Nội dung trình phê duyệt</label>
-          <textarea id="approvalContent" rows="4" placeholder="Ví dụ: Tờ trình phê duyệt phương án đền bù đợt 2..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
+          <label class="block text-slate-300 mb-1">Nội dung tờ trình / đề xuất</label>
+          <textarea id="approvalContent" rows="4" placeholder="Nhập nội dung cần phê duyệt..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white"></textarea>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Link tài liệu / File đính kèm (tùy chọn)</label>
-          <input id="approvalFileUrl" type="text" placeholder="Dán link Google Drive hoặc chọn tệp bên dưới..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white mb-1.5" />
-          <input id="approvalFileInput" type="file" class="text-[11px] text-slate-400" />
+          <label class="block text-slate-300 mb-1">Đường dẫn tài liệu (Google Drive / Link)</label>
+          <input id="approvalFileUrl" type="url" placeholder="https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
         </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('approvalModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-          <button id="btnSubmitApproval" onclick="submitApprovalRequest()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">Gửi Trình Duyệt & Báo Telegram</button>
+        <div>
+          <label class="block text-slate-300 mb-1">Hoặc tải tệp đính kèm trực tiếp (&lt;3MB)</label>
+          <input id="approvalFileInput" type="file" class="w-full text-slate-300 bg-slate-800 border border-slate-700 rounded-xl p-2" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('approvalModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button id="btnSubmitApproval" onclick="submitApprovalRequest()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs">Gửi Trình Duyệt & Báo Telegram</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL 4: QUẢN LÝ NHÂN SỰ, PHÂN QUYỀN, PASS/PIN & MỞ KHÓA -->
+  <!-- ======================================================================= -->
+  <div id="staffModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-2 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[92dvh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">🛡️ Quản Lý Nhân Sự, Phân Quyền 7 Cấp & Bảo Mật</h3>
+        <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white text-sm px-2">✕</button>
+      </div>
+
+      <div class="p-3 bg-slate-950/60 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs shrink-0">
+        <button id="staffTabBtn_PASS_PIN_ID" onclick="switchStaffModalTab('PASS_PIN_ID')">🔑 1. Pass / PIN / ID & Mở Khóa</button>
+        <button id="staffTabBtn_STAFF_ROLE" onclick="switchStaffModalTab('STAFF_ROLE')">👥 2. Nhân sự & Phân quyền 7 cấp</button>
+        <button id="staffTabBtn_MY_TELEGRAM" onclick="switchStaffModalTab('MY_TELEGRAM')">📲 3. Liên kết Telegram 1 chạm</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 text-xs space-y-4">
+        <!-- Tab 1 -->
+        <div id="staffSection_PASS_PIN_ID" class="space-y-3">
+          <div class="text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl p-2.5">
+            Chuẩn Mật khẩu / Mã PIN: <b>4–12 ký tự chữ + số</b> (không khoảng trắng). Khi tài khoản bị khóa do sai 5 lần, Quản trị hệ thống bấm nút <b>Mở khóa & Cấp lại PIN mới</b>.
+          </div>
+          <div id="passPinIdListContainer" class="space-y-2.5"></div>
+        </div>
+
+        <!-- Tab 2 -->
+        <div id="staffSection_STAFF_ROLE" class="hidden space-y-4">
+          <div id="addStaffFormBox" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-3">
+            <div class="font-bold text-emerald-400">➕ Thêm thành viên mới</div>
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+              <input id="newStaffName" type="text" placeholder="Tên tài khoản (VD: Nguyễn Văn A)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+              <input id="newStaffRole" type="text" placeholder="Chức vụ (VD: Chuyên viên)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+              <input id="newStaffPin" type="text" maxlength="12" placeholder="Mã PIN (4-12 chữ+số)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono" />
+              <select id="newStaffPerm" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white">
+                <option value="MEMBER">Cấp 1: Thành viên cơ bản</option>
+                <option value="TASK_MGR">Cấp 2: Quản lý công việc</option>
+                <option value="GROUP_RES">Cấp 3: Quản trị tài nguyên nhóm</option>
+                <option value="GROUP_MEM">Cấp 4: Quản trị thành viên nhóm</option>
+                <option value="ASSISTANT">Cấp 5: Trợ lý điều hành</option>
+                <option value="APPROVER">Cấp 6: Chủ trì / Phê duyệt</option>
+                <option value="FULL">Cấp 7: Quản trị hệ thống (Full)</option>
+              </select>
+            </div>
+            <div class="flex justify-end">
+              <button onclick="addNewStaffMember()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg">Thêm nhân sự</button>
+            </div>
+          </div>
+          <div id="staffRoleListContainer" class="space-y-2.5"></div>
+        </div>
+
+        <!-- Tab 3 -->
+        <div id="staffSection_MY_TELEGRAM" class="hidden space-y-4">
+          <div class="bg-blue-950/30 border border-blue-800/50 rounded-xl p-4 space-y-3">
+            <div class="font-bold text-blue-300 text-sm">📲 Liên kết Telegram 1 chạm nhận thông báo & duyệt việc</div>
+            <p class="text-slate-300 leading-relaxed">Bấm nút bên dưới để mở Bot Telegram, sau đó bấm <b>START</b>. Hệ thống sẽ tự động lấy Chat ID và lưu vào tài khoản của bạn.</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <a id="telegramAutoLinkBtn" href="#" target="_blank" onclick="startTelegramAutoLinkListener()"
+                class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-2 shadow-lg">
+                <span>✈️ Mở Bot Telegram & Bấm START</span>
+              </a>
+            </div>
+            <div id="tgAutoLinkStatus" class="hidden text-xs font-medium"></div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div class="font-bold text-slate-200">Cập nhật thông tin cá nhân</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1">Chức vụ</label>
+                <input id="profileRoleTitle" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
+                <input id="profileTelegramId" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-emerald-300 font-mono" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Đổi Mật khẩu / PIN (4–12 chữ+số)</label>
+                <input id="profileNewPass" type="text" maxlength="12" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-amber-300 font-mono" />
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <button onclick="saveProfileSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg">💾 Lưu thông tin cá nhân</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL CHỐT LỊCH HỌP & XUẤT BIÊN BẢN -->
-  <div id="meetingModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">📅 Chốt Lịch Họp, Phân Công & Xuất Biên Bản</h3>
-        <button onclick="closeModal('meetingModal')" class="text-slate-400 hover:text-white">✕</button>
+  <!-- ======================================================================= -->
+  <!-- CÁC MODAL PHỤ TRỢ (NHÓM/DỰ ÁN, VIỆC CỦA TÔI, HỌP, GỬI NHIỀU NGƯỜI, BACKUP, CHUYỂN TIẾP, AUDIT, DIALOG) -->
+  <!-- ======================================================================= -->
+  <div id="projectGroupModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl max-h-[90dvh] rounded-2xl flex flex-col overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="projectGroupModalTitle" class="font-bold text-sm text-white">🏗️ Nhóm / Dự án</h3>
+        <button onclick="closeModal('projectGroupModal')" class="text-slate-400 hover:text-white text-sm">✕</button>
       </div>
-      <div class="space-y-3 text-xs">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
+        <input id="pgEditId" type="hidden" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-slate-400 mb-1">Thời gian họp</label>
-            <input id="meetingTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+            <label class="block text-slate-300 mb-1">Tên Nhóm / Dự án</label>
+            <input id="pgNameInput" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
           </div>
           <div>
-            <label class="block text-slate-400 mb-1">Địa điểm / Link họp trực tuyến</label>
-            <input id="meetingLocation" type="text" placeholder="Phòng họp tầng 3 / Google Meet" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+            <label class="block text-slate-300 mb-1">Mô tả ngắn</label>
+            <input id="pgDescInput" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
           </div>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Nội dung chốt cuộc họp</label>
-          <textarea id="meetingAgenda" rows="2" placeholder="Nhập nội dung chính & kết luận cuộc họp..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-semibold text-slate-300">Thành viên tham gia</span>
+            <div id="pgMemberBulkBtns" class="flex gap-2">
+              <button type="button" onclick="pgSelectAllMembers(true)" class="text-blue-400 underline">Chọn tất cả</button>
+              <button type="button" onclick="pgSelectAllMembers(false)" class="text-slate-400 underline">Bỏ chọn</button>
+            </div>
+          </div>
+          <div id="pgMembersChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-1"></div>
         </div>
-
-        <div class="bg-teal-950/30 border border-teal-700/40 rounded-xl p-3 space-y-2">
+        <div class="border-t border-slate-800 pt-3 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-teal-300">⚡ Tự động tạo Checklist công việc sau họp</span>
-            <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
-              <input id="meetingAutoTasksCheck" type="checkbox" checked class="rounded bg-slate-900 border-slate-600 text-teal-500" />
-              <span>Kích hoạt</span>
+            <span class="font-semibold text-slate-300">Tài nguyên & Tài liệu dự án</span>
+            <label id="pgAddFileLabel" class="cursor-pointer bg-blue-600/20 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg">
+              + Tải tệp (&lt;3MB)
+              <input id="pgResourceFileInput" type="file" multiple class="hidden" onchange="handlePgAddFiles(event)" />
             </label>
           </div>
-          <p class="text-[11px] text-slate-400 leading-relaxed">
-            Nhập mỗi dòng: <code class="text-teal-300">@Tên thành viên: Nội dung đầu việc</code>
-          </p>
-          <textarea id="meetingAutoTasksLines" rows="3" placeholder="Ví dụ:&#10;@Thành Viên 01: Hoàn thiện hồ sơ đo đạc thực địa&#10;@Thành Viên 02: Tổng hợp bảng giá đền bù trình duyệt" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-white font-mono text-[11px]"></textarea>
+          <div id="pgAddLinkRow" class="flex flex-col sm:flex-row gap-2">
+            <input id="pgLinkNameInput" type="text" placeholder="Tên tài liệu..." class="sm:w-1/3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            <input id="pgLinkUrlInput" type="url" placeholder="Dán link Google Drive..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            <button type="button" onclick="handlePgAddLink()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 px-3 py-1.5 rounded-lg font-semibold">+ Add Link</button>
+          </div>
+          <div id="pgResourcesList" class="space-y-1.5"></div>
+        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-slate-800 flex items-center justify-between">
+        <button id="btnDeleteProjectGroup" onclick="deleteProjectGroup()" class="hidden bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold">🗑️ Xóa nhóm</button>
+        <div class="flex gap-2 ml-auto">
+          <button onclick="closeModal('projectGroupModal')" class="px-4 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs">Đóng</button>
+          <button id="btnSaveProjectGroup" onclick="saveProjectGroup()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">💾 Lưu Nhóm/Dự án</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="myTasksModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl max-h-[85dvh] rounded-2xl flex flex-col overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">📌 Danh Sách Công Việc Được Giao Cho Tôi</h3>
+        <button onclick="closeModal('myTasksModal')" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <div id="myTasksListContainer" class="flex-1 overflow-y-auto p-4 space-y-2.5 text-xs"></div>
+    </div>
+  </div>
+
+  <div id="meetingModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl max-h-[90dvh] rounded-2xl flex flex-col overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">📅 Chốt Lịch Họp & Phân Công Sau Họp</h3>
+        <button onclick="closeModal('meetingModal')" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-slate-400 mb-1">Hạn hoàn thành chung cho các việc sau họp (tùy chọn)</label>
+            <label class="block text-slate-300 mb-1">Thời gian họp</label>
+            <input id="meetingTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">Địa điểm / Link họp</label>
+            <input id="meetingLocation" type="text" placeholder="Phòng họp A / Google Meet..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1">Nội dung / Kết luận cuộc họp</label>
+          <textarea id="meetingAgenda" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"></textarea>
+        </div>
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+          <label class="flex items-center gap-2 font-semibold text-blue-300 cursor-pointer">
+            <input id="meetingAutoTasksCheck" type="checkbox" checked class="rounded bg-slate-800 border-slate-600" />
+            <span>Tự động tách đầu việc vào Checklist (Cú pháp: @Tên: Nội dung việc)</span>
+          </label>
+          <textarea id="meetingAutoTasksLines" rows="3" placeholder="@Nguyễn Văn A: Hoàn thiện báo cáo tài chính&#10;@Trần Thị B: Rà soát hồ sơ pháp lý" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"></textarea>
+          <div>
+            <label class="block text-slate-400 mb-1">Thời hạn chung cho các việc sau họp</label>
             <input id="meetingTasksDue" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white" />
           </div>
         </div>
-
-        <div class="pt-2 flex items-center justify-between flex-wrap gap-2">
-          <button type="button" onclick="exportMeetingMinutesPDF()" class="px-3.5 py-2 rounded-xl bg-amber-600/25 hover:bg-amber-600/40 text-amber-300 border border-amber-500/40 font-semibold">
-            🖨️ Xuất Biên Bản Họp (PDF/In)
-          </button>
-          <div class="flex gap-2">
-            <button onclick="closeModal('meetingModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Hủy</button>
-            <button onclick="submitMeetingNotice()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold">📅 Chốt Lịch & Giao Việc</button>
-          </div>
-        </div>
+      </div>
+      <div class="px-4 py-3 border-t border-slate-800 flex justify-between gap-2">
+        <button onclick="exportMeetingMinutesPDF()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold">🖨️ Xuất Biên Bản PDF</button>
+        <button onclick="submitMeetingNotice()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold">Đăng Lịch Họp & Giao Việc</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL GỬI FILE NHIỀU NGƯỜI -->
-  <div id="multiFileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">📤 Gửi File & Tài Liệu Cho Nhiều Thành Viên</h3>
+  <div id="multiFileModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-4 space-y-3 text-xs">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <h3 class="font-bold text-sm text-white">📤 Gửi Tài Liệu Kín Cho Nhiều Thành Viên</h3>
         <button onclick="closeModal('multiFileModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <div class="space-y-3 text-xs">
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-slate-400 font-medium">Chọn người nhận (từ 1 đến nhiều thành viên):</label>
-            <button type="button" onclick="toggleSelectAllRecipients()" class="text-blue-400 hover:text-blue-300 font-semibold">Chọn / Bỏ chọn tất cả</button>
-          </div>
-          <div id="multiFileRecipientsList" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto bg-slate-950/70 p-2.5 rounded-xl border border-slate-800"></div>
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Chọn tệp tin từ máy tính / điện thoại</label>
-          <input id="multiFileUploadInput" type="file" multiple class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Hoặc dán đường link tài liệu (Google Drive / OneDrive)</label>
-          <input id="multiFileLinkInput" type="text" placeholder="https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Lời nhắn / Ghi chú kèm theo</label>
-          <textarea id="multiFileNoteInput" rows="2" placeholder="Nhập ghi chú gửi các thành viên được chọn..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('multiFileModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300">Đóng</button>
-          <button onclick="submitMultiFileSend()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">📤 Gửi File & Báo Telegram</button>
-        </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-300 font-semibold">Chọn người nhận:</span>
+        <button type="button" onclick="toggleSelectAllRecipients()" class="text-blue-400 underline">Chọn / Bỏ tất cả</button>
+      </div>
+      <div id="multiFileRecipientsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto"></div>
+      <input id="multiFileUploadInput" type="file" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300" />
+      <input id="multiFileLinkInput" type="url" placeholder="Hoặc dán link tài liệu Google Drive..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+      <input id="multiFileNoteInput" type="text" placeholder="Ghi chú kèm theo..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('multiFileModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300">Hủy</button>
+        <button onclick="submitMultiFileSend()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">Gửi Tài Liệu</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL BACKUP & RESTORE + DAILY DIGEST 17:00 -->
-  <div id="backupModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">💾 Backup, Restore & Báo Cáo Tự Động 17:00</h3>
+  <div id="backupModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-4 space-y-3.5 text-xs">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <h3 class="font-bold text-sm text-white">💾 Sao Lưu, Khôi Phục & Báo Cáo Tự Động 17h</h3>
         <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
-
-      <div class="space-y-4 text-xs">
-        <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="font-bold text-emerald-400">1. Sao lưu dữ liệu ngay (Backup Now)</div>
-          <div>
-            <label class="block text-slate-400 mb-1">Phạm vi dữ liệu sao lưu:</label>
-            <select id="backupScopeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
-          </div>
-          <div class="flex flex-wrap gap-2 pt-1">
-            <button onclick="downloadBackupNow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2 rounded-lg transition">
-              ⬇️ Tải file JSON về máy
-            </button>
-            <button onclick="backupToGoogleDriveNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2 rounded-lg transition">
-              ☁️ Đẩy Backup lên Google Drive
-            </button>
-          </div>
-        </div>
-
-        <div id="systemBackupScheduleBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-blue-400">2. Báo cáo tiến độ cuối ngày (Daily Digest 17:00)</span>
-          </div>
-          <p class="text-[11px] text-slate-300 leading-relaxed">
-            Hệ thống tự động tổng hợp công việc trễ hạn, sắp đến hạn và tờ trình chờ duyệt lúc <b>17:00 hàng ngày</b> gửi 1 bản tóm tắt về Telegram của Lãnh đạo và Trợ lý.
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="triggerDailyDigestNow()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3.5 py-2 rounded-lg">
-              📩 Gửi thử Báo cáo Daily Digest ngay
-            </button>
-          </div>
-        </div>
-
-        <div id="systemRestoreBox" class="bg-slate-800/70 border border-slate-700 rounded-xl p-3.5 space-y-2">
-          <div class="font-bold text-amber-400">3. Khôi phục dữ liệu toàn hệ thống từ bản sao lưu (Restore)</div>
-          <div class="flex items-center gap-2">
-            <input id="restoreFileInput" type="file" accept=".json" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-300" />
-            <button onclick="restoreFromJsonFile()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3.5 py-2 rounded-lg shrink-0">
-              ♻️ Khôi Phục
-            </button>
-          </div>
-        </div>
+      <div>
+        <label class="block text-slate-300 mb-1">Phạm vi sao lưu</label>
+        <select id="backupScopeSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button onclick="downloadBackupNow()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-xl">⬇️ Tải file .JSON về máy</button>
+        <button onclick="backupToGoogleDriveNow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-xl">☁️ Đẩy Backup lên Drive</button>
+      </div>
+      <div id="systemBackupScheduleBox" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="font-bold text-amber-300">📊 Báo cáo tổng hợp cuối ngày (Daily Digest 17:00)</div>
+        <button onclick="triggerDailyDigestNow()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 rounded-lg">📨 Gửi ngay bản tóm tắt cuối ngày về Telegram</button>
+      </div>
+      <div id="systemRestoreBox" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="font-bold text-rose-300">♻️ Khôi phục dữ liệu từ file .JSON</div>
+        <input id="restoreFileInput" type="file" accept=".json" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-slate-300" />
+        <button onclick="restoreFromJsonFile()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded-lg">Khôi phục hệ thống</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL VIỆC CỦA TÔI -->
-  <div id="myTasksModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <h3 class="text-sm font-bold text-white">📋 Danh Sách Công Việc Được Giao Cho Tôi</h3>
-        <button onclick="closeModal('myTasksModal')" class="text-slate-400 hover:text-white">✕</button>
+  <div id="forwardModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-4 space-y-3 text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">➡️ Chuyển tiếp tin nhắn</h3>
+        <button onclick="closeModal('forwardModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <div id="myTasksListContainer" class="space-y-2.5 overflow-y-auto flex-1 text-xs"></div>
-      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
-        <button onclick="closeModal('myTasksModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs">Đóng</button>
+      <div id="forwardPreviewBox" class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-300 max-h-28 overflow-y-auto"></div>
+      <select id="forwardTargetSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('forwardModal')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">Hủy</button>
+        <button onclick="submitForwardMessage()" class="px-4 py-1.5 rounded-lg bg-blue-600 text-white font-semibold">Chuyển tiếp</button>
       </div>
     </div>
   </div>
 
+  <div id="auditLogModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-3xl max-h-[85dvh] rounded-2xl flex flex-col overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">📜 Nhật Ký Kiểm Toán Hệ Thống (Audit Log)</h3>
+        <button onclick="closeModal('auditLogModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div id="auditLogListContainer" class="flex-1 overflow-y-auto p-4 space-y-2 text-xs"></div>
+    </div>
+  </div>
+
+  <div id="appDialogModal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-xs items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-4">
+      <h4 id="appDialogTitle" class="font-bold text-sm text-white">Thông báo</h4>
+      <p id="appDialogMessage" class="text-xs text-slate-300 leading-relaxed whitespace-pre-line"></p>
+      <input id="appDialogInput" type="text" class="hidden w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" />
+      <div class="flex justify-end gap-2">
+        <button id="appDialogCancelBtn" class="hidden px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Hủy</button>
+        <button id="appDialogOkBtn" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs">Đồng ý</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- LOGIC JAVASCRIPT -->
+  <!-- ======================================================================= -->
   <script>
     // =========================================================================
-    // 1. CẤU HÌNH KẾT NỐI SUPABASE, TELEGRAM BOT & MA TRẬN 7 CẤP QUYỀN
+    // 1. CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT
     // =========================================================================
-    const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_nsWuzttdNahchU8khc-D6g_wsvttJb9';
-    const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
+    const SUPABASE_URL = 'https://zuzlbfmsyfqfchhqugqr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1emxiZm1zeWZxZmNoaHF1Z3FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MTQ3OTAsImV4cCI6MjA5MTI5MDc5MH0.4g6xH729-7L6jE_g6F61S5Z9p2Z86aQ7G0_p4cW_98U';
+    const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxK1c5rV_N5Y9q8sE03_z7-B_iM9_m7fF1sW3W2C4L5X6z_2-P3V8n_5Q7-K9R2T1_W4/exec';
     const TELEGRAM_BOT_USERNAME = 'TeamWork_Duyet_Bot';
-    const DEFAULT_APPROVER_CHAT_ID = '522439752';
+    const DEFAULT_APPROVER_CHAT_ID = '5919283746';
 
-    const SESSION_STORAGE_KEY = 'tw_cloud_session_uid_v7';
-    const CHANNEL_STORAGE_KEY = 'tw_cloud_active_channel_v7';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const SESSION_STORAGE_KEY = 'tw_cloud_user_id_v8';
+    const CHANNEL_STORAGE_KEY = 'tw_cloud_active_chan_v8';
     const MAX_FAILED_ATTEMPTS = 5;
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentUser = null;
+    let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || '';
+    let activeDmPeer = null;
 
-    // HỆ THỐNG DIALOG NỘI BỘ
-    let customDialogResolver = null;
-    let customDialogMode = 'ALERT';
-
-    function showAppNotice(message, title = 'ℹ️ Thông báo TeamWork Cloud') {
-      return new Promise(resolve => {
-        customDialogMode = 'ALERT';
-        customDialogResolver = resolve;
-        document.getElementById('customDialogTitle').textContent = title;
-        document.getElementById('customDialogMessage').textContent = message;
-        document.getElementById('customDialogPromptBox').classList.add('hidden');
-        document.getElementById('customDialogCancelBtn').classList.add('hidden');
-        document.getElementById('customDialogOkBtn').textContent = 'Đồng ý';
-        const overlay = document.getElementById('customDialogOverlay');
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-      });
-    }
-
-    function showAppConfirm(message, title = '⚠️ Xác nhận thao tác') {
-      return new Promise(resolve => {
-        customDialogMode = 'CONFIRM';
-        customDialogResolver = resolve;
-        document.getElementById('customDialogTitle').textContent = title;
-        document.getElementById('customDialogMessage').textContent = message;
-        document.getElementById('customDialogPromptBox').classList.add('hidden');
-        document.getElementById('customDialogCancelBtn').classList.remove('hidden');
-        document.getElementById('customDialogOkBtn').textContent = 'Xác nhận';
-        const overlay = document.getElementById('customDialogOverlay');
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-      });
-    }
-
-    function showAppPrompt(message, defaultValue = '', title = '✏️ Nhập thông tin') {
-      return new Promise(resolve => {
-        customDialogMode = 'PROMPT';
-        customDialogResolver = resolve;
-        document.getElementById('customDialogTitle').textContent = title;
-        document.getElementById('customDialogMessage').textContent = message;
-        const inp = document.getElementById('customDialogInput');
-        inp.value = defaultValue || '';
-        document.getElementById('customDialogPromptBox').classList.remove('hidden');
-        document.getElementById('customDialogCancelBtn').classList.remove('hidden');
-        document.getElementById('customDialogOkBtn').textContent = 'Lưu thông tin';
-        const overlay = document.getElementById('customDialogOverlay');
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-        setTimeout(() => inp.focus(), 50);
-      });
-    }
-
-    function resolveCustomDialog(isOk) {
-      const overlay = document.getElementById('customDialogOverlay');
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
-      if (!customDialogResolver) return;
-      const resFn = customDialogResolver;
-      customDialogResolver = null;
-      if (customDialogMode === 'PROMPT') {
-        resFn(isOk ? document.getElementById('customDialogInput').value : null);
-      } else {
-        resFn(Boolean(isOk));
-      }
-    }
-
-    const PERMISSION_DEFS = {
-      FULL: { code: 'FULL', label: 'Quản trị hệ thống', shortTitle: 'Full (Quản trị hệ thống)', badgeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40' },
-      MANAGER: { code: 'MANAGER', label: 'Quản trị', shortTitle: 'Quản trị (Nhóm/Dự án)', badgeClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/40' },
-      ASSISTANT: { code: 'ASSISTANT', label: 'Trợ lý', shortTitle: 'Trợ lý (Lịch họp & Checklist)', badgeClass: 'bg-teal-500/20 text-teal-300 border border-teal-500/40' },
-      APPROVER: { code: 'APPROVER', label: 'Chủ trì / Phê duyệt', shortTitle: 'Chủ trì / Phê duyệt', badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' },
-      RESOURCE_LEAD: { code: 'RESOURCE_LEAD', label: 'Điều phối Tài nguyên', shortTitle: 'Điều phối Tài nguyên', badgeClass: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' },
-      AUDITOR: { code: 'AUDITOR', label: 'Giám sát / Thanh tra', shortTitle: 'Giám sát / Thanh tra', badgeClass: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' },
-      MEMBER: { code: 'MEMBER', label: 'Thành viên', shortTitle: 'Thành viên', badgeClass: 'bg-slate-700/80 text-slate-300 border border-slate-600' }
-    };
-
-    let dbUsers = [
-      { id: 'u_admin', display_name: 'Lãnh Đạo / Quản Lý', role_title: 'Trưởng Ban / Giám Đốc', is_admin: true, pin_code: '123456', telegram_chat_id: '522439752' },
-      { id: 'u_tv1', display_name: 'Thành Viên 01', role_title: 'Chuyên viên Dự án', is_admin: false, pin_code: 'tv01ab', telegram_chat_id: '' },
-      { id: 'u_tv2', display_name: 'Thành Viên 02', role_title: 'Chuyên viên Hồ sơ', is_admin: false, pin_code: 'tv02ab', telegram_chat_id: '' }
-    ];
-    let dbChannels = [
-      { id: 'c_general', name: 'Phòng Điều Hành Chung', description: 'Trao đổi công việc hàng ngày & thông báo chung của tập thể' },
-      { id: 'c_docs', name: 'Trình Duyệt Hồ Sơ - Tờ Trình', description: 'Kênh gửi báo cáo, tờ trình & phê duyệt nhanh' },
-      { id: 'c_project', name: 'Dự Án Trọng Điểm', description: 'Theo dõi tiến độ thực địa, hồ sơ pháp lý & GPMB' }
-    ];
+    let dbUsers = [];
+    let dbChannels = [];
     let dbMessages = [];
     let dbTasks = [];
-
     let dbGroupMetaMap = {};
     let dbUserPermsMap = {};
     let dbAuditLogs = [];
     let dbPinnedMap = {};
     let dbApprovalHistoryMap = {};
-    let dbAccountLocksMap = {}; // Lưu trạng thái sai & khóa: { [userId]: { fails: 0, locked: false, lockedAt: '' } }
-
-    let currentUser = null;
-    let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || 'c_general';
-    let activeDmPeer = null;
-    let tgPollTimer = null;
-    let tempPgResources = [];
+    let dbAccountLocksMap = {};
 
     let selectedContextMsgId = null;
     let replyToMsgObj = null;
     let editingMsgId = null;
     let forwardingMsgObj = null;
     let translatedCache = {};
+    let tempPgResources = [];
+    let tgPollTimer = null;
 
     // =========================================================================
-    // 2. KIỂM TRA ĐỊNH DẠNG PASS/PIN CHỮ + SỐ (4 - 12 KÝ TỰ) & SINH MÃ NGẪU NHIÊN
+    // 2. PHÂN QUYỀN 7 CẤP & KIỂM TRA QUYỀN HẠN
     // =========================================================================
-    function validateAlphanumericPin(pinStr) {
-      const val = String(pinStr || '').trim();
-      if (val.length < 4 || val.length > 12) {
-        return { ok: false, msg: 'Mật khẩu / Mã PIN phải có độ dài từ 4 đến 12 ký tự!' };
-      }
-      if (!/^[A-Za-z0-9]+$/.test(val)) {
-        return { ok: false, msg: 'Mật khẩu / Mã PIN chỉ được chứa chữ cái không dấu (A-Z, a-z) và chữ số (0-9)!' };
-      }
-      if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) {
-        return { ok: false, msg: 'Mật khẩu / Mã PIN bắt buộc phải bao gồm CẢ CHỮ CÁI VÀ CHỮ SỐ (Ví dụ: tv01ab, ql2026)!' };
-      }
-      return { ok: true, value: val };
-    }
+    const PERMISSION_DEFS = {
+      MEMBER:    { code: 'MEMBER',    label: 'Thành viên',           shortTitle: 'Cấp 1: Thành viên cơ bản',         badgeClass: 'bg-slate-700 text-slate-200' },
+      TASK_MGR:  { code: 'TASK_MGR',  label: 'Quản lý việc',         shortTitle: 'Cấp 2: Quản lý công việc',         badgeClass: 'bg-sky-500/20 text-sky-300 border border-sky-500/30' },
+      GROUP_RES: { code: 'GROUP_RES', label: 'QT Tài nguyên',        shortTitle: 'Cấp 3: Quản trị tài nguyên nhóm',  badgeClass: 'bg-teal-500/20 text-teal-300 border border-teal-500/30' },
+      GROUP_MEM: { code: 'GROUP_MEM', label: 'QT Thành viên',        shortTitle: 'Cấp 4: Quản trị thành viên nhóm',  badgeClass: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' },
+      ASSISTANT: { code: 'ASSISTANT', label: 'Trợ lý điều hành',     shortTitle: 'Cấp 5: Trợ lý điều hành',          badgeClass: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' },
+      APPROVER:  { code: 'APPROVER',  label: 'Chủ trì / Duyệt',      shortTitle: 'Cấp 6: Chủ trì / Phê duyệt',       badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/30' },
+      FULL:      { code: 'FULL',      label: 'Quản trị hệ thống',    shortTitle: 'Cấp 7: Quản trị hệ thống (Full)', badgeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40' }
+    };
 
-    function generateRandomAlphanumericPin(length = 6) {
-      const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
-      const digits = '23456789';
-      const all = letters + digits;
-      let chars = [
-        letters.charAt(Math.floor(Math.random() * letters.length)),
-        digits.charAt(Math.floor(Math.random() * digits.length))
-      ];
-      for (let i = 2; i < length; i++) {
-        chars.push(all.charAt(Math.floor(Math.random() * all.length)));
-      }
-      for (let i = chars.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [chars[i], chars[j]] = [chars[j], chars[i]];
-      }
-      return chars.join('');
-    }
-
-    function isAccountLocked(userId) {
-      const info = dbAccountLocksMap[String(userId)];
-      return Boolean(info && info.locked === true);
-    }
-
-    function getAccountFailCount(userId) {
-      const info = dbAccountLocksMap[String(userId)];
-      return info ? (Number(info.fails) || 0) : 0;
-    }
-
-    // =========================================================================
-    // 3. PHÂN QUYỀN & KHÓA CỨNG QUYỀN QUẢN TRỊ HỆ THỐNG CHO TÀI KHOẢN GỐC
-    // =========================================================================
     function isPrimarySystemOwner(user) {
       if (!user) return false;
-      const nameNorm = String(user.display_name || '').trim().toLowerCase();
-      return String(user.id) === 'u_admin' ||
-             nameNorm === 'lãnh đạo / quản lý' ||
-             String(user.telegram_chat_id || '').trim() === DEFAULT_APPROVER_CHAT_ID;
+      const n = String(user.display_name || '').trim().toLowerCase();
+      return n === 'lãnh đạo / quản lý' || n === 'admin';
     }
 
     function getUserPermCode(user) {
@@ -1069,8 +846,7 @@
       if (isPrimarySystemOwner(user)) return 'FULL';
       const mapped = dbUserPermsMap[String(user.id)];
       if (mapped && PERMISSION_DEFS[mapped]) return mapped;
-      if (user.is_admin === true) return 'FULL';
-      return 'MEMBER';
+      return user.is_admin ? 'FULL' : 'MEMBER';
     }
 
     function getUserPermDef(user) {
@@ -1081,78 +857,183 @@
       return getUserPermCode(user) === 'FULL';
     }
 
-    function canApproveItems(user) {
-      return ['FULL', 'MANAGER', 'APPROVER'].includes(getUserPermCode(user));
-    }
-
-    function canManageGroupMembers(user) {
-      return ['FULL', 'MANAGER'].includes(getUserPermCode(user));
-    }
-
-    function canManageGroupResources(user) {
-      return ['FULL', 'MANAGER', 'RESOURCE_LEAD'].includes(getUserPermCode(user));
-    }
-
     function canAssignOrManageTasks(user) {
-      return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
+      return ['FULL', 'APPROVER', 'ASSISTANT', 'TASK_MGR'].includes(getUserPermCode(user));
+    }
+
+    function canApproveItems(user) {
+      return ['FULL', 'APPROVER'].includes(getUserPermCode(user));
     }
 
     function canScheduleMeetings(user) {
-      return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
+      return ['FULL', 'APPROVER', 'ASSISTANT'].includes(getUserPermCode(user));
     }
 
     function canPinDirectives(user) {
-      return ['FULL', 'MANAGER', 'ASSISTANT', 'APPROVER'].includes(getUserPermCode(user));
+      return ['FULL', 'APPROVER', 'ASSISTANT'].includes(getUserPermCode(user));
+    }
+
+    function canManageGroupMembers(user) {
+      return ['FULL', 'ASSISTANT', 'GROUP_MEM'].includes(getUserPermCode(user));
+    }
+
+    function canManageGroupResources(user) {
+      return ['FULL', 'ASSISTANT', 'GROUP_RES'].includes(getUserPermCode(user));
     }
 
     function canEditApprovalItem(msg) {
-      if (!currentUser || !msg) return false;
+      if (!currentUser || !msg || msg.msg_type !== 'APPROVAL') return false;
       if (isSystemFullAdmin(currentUser)) return true;
-      const isSubmitter = String(currentUser.display_name || '').trim() === String(msg.sender_name || '').trim();
-      return isSubmitter && msg.approval_status === 'PENDING';
+      return msg.sender_name === currentUser.display_name && msg.approval_status === 'PENDING';
     }
 
     function canDeleteApprovalItem(msg) {
-      if (!currentUser || !msg) return false;
+      if (!currentUser || !msg || msg.msg_type !== 'APPROVAL') return false;
       return isSystemFullAdmin(currentUser);
     }
 
     // =========================================================================
-    // 4. NHẬT KÝ KIỂM TOÁN HỆ THỐNG (AUDIT LOG)
+    // 3. CHUẨN HÓA MÃ PIN CHỮ + SỐ (4-12 KÝ TỰ) & KHÓA TÀI KHOẢN 5 LẦN SAI
     // =========================================================================
-    async function recordAuditLog(actionType, detailText, customActor = null) {
-      try {
-        const entry = {
-          id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 999),
-          at: new Date().toISOString(),
-          actor: customActor || (currentUser ? `${currentUser.display_name} [${getUserPermDef(currentUser).label}]` : 'Hệ thống bảo mật'),
-          action: actionType,
-          detail: detailText
+    function validateAlphanumericPin(rawPin) {
+      const val = String(rawPin || '').trim();
+      if (val.length < 4 || val.length > 12) {
+        return { ok: false, msg: 'Mật khẩu / Mã PIN phải có độ dài từ 4 đến 12 ký tự!' };
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(val)) {
+        return { ok: false, msg: 'Mật khẩu / Mã PIN chỉ được chứa chữ cái không dấu (a-z, A-Z) và chữ số (0-9), không dấu cách!' };
+      }
+      return { ok: true, value: val };
+    }
+
+    function generateRandomAlphanumericPin(len = 6) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+      let out = '';
+      for (let i = 0; i < len; i++) {
+        out += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return out;
+    }
+
+    function isAccountLocked(userId) {
+      const rec = dbAccountLocksMap[String(userId)];
+      return Boolean(rec && rec.locked === true);
+    }
+
+    function getAccountFailCount(userId) {
+      const rec = dbAccountLocksMap[String(userId)];
+      return rec ? (Number(rec.fails) || 0) : 0;
+    }
+
+    // =========================================================================
+    // 4. HỘP THOẠI TÙY CHỈNH & NHẬT KÝ KIỂM TOÁN
+    // =========================================================================
+    function showAppNotice(message, title = 'Thông báo hệ thống') {
+      return new Promise(resolve => {
+        const modal = document.getElementById('appDialogModal');
+        document.getElementById('appDialogTitle').textContent = title;
+        document.getElementById('appDialogMessage').textContent = message;
+        const inp = document.getElementById('appDialogInput');
+        const cancelBtn = document.getElementById('appDialogCancelBtn');
+        const okBtn = document.getElementById('appDialogOkBtn');
+
+        inp.classList.add('hidden');
+        cancelBtn.classList.add('hidden');
+        okBtn.textContent = 'Đồng ý';
+
+        const cleanup = () => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          okBtn.onclick = null;
+          resolve(true);
         };
-        dbAuditLogs.unshift(entry);
-        if (dbAuditLogs.length > 150) dbAuditLogs = dbAuditLogs.slice(0, 150);
-        await persistSystemConfigRow('__AUDIT_LOGS__', dbAuditLogs);
-      } catch (e) {}
+        okBtn.onclick = cleanup;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+    }
+
+    function showAppConfirm(message, title = 'Xác nhận thao tác') {
+      return new Promise(resolve => {
+        const modal = document.getElementById('appDialogModal');
+        document.getElementById('appDialogTitle').textContent = title;
+        document.getElementById('appDialogMessage').textContent = message;
+        const inp = document.getElementById('appDialogInput');
+        const cancelBtn = document.getElementById('appDialogCancelBtn');
+        const okBtn = document.getElementById('appDialogOkBtn');
+
+        inp.classList.add('hidden');
+        cancelBtn.classList.remove('hidden');
+        okBtn.textContent = 'Xác nhận';
+
+        const finish = (val) => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          okBtn.onclick = null;
+          cancelBtn.onclick = null;
+          resolve(val);
+        };
+        okBtn.onclick = () => finish(true);
+        cancelBtn.onclick = () => finish(false);
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+    }
+
+    function showAppPrompt(message, defaultVal = '', title = 'Nhập thông tin') {
+      return new Promise(resolve => {
+        const modal = document.getElementById('appDialogModal');
+        document.getElementById('appDialogTitle').textContent = title;
+        document.getElementById('appDialogMessage').textContent = message;
+        const inp = document.getElementById('appDialogInput');
+        const cancelBtn = document.getElementById('appDialogCancelBtn');
+        const okBtn = document.getElementById('appDialogOkBtn');
+
+        inp.value = defaultVal;
+        inp.classList.remove('hidden');
+        cancelBtn.classList.remove('hidden');
+        okBtn.textContent = 'Lưu';
+
+        const finish = (val) => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          okBtn.onclick = null;
+          cancelBtn.onclick = null;
+          resolve(val);
+        };
+        okBtn.onclick = () => finish(inp.value);
+        cancelBtn.onclick = () => finish(null);
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => inp.focus(), 50);
+      });
+    }
+
+    async function recordAuditLog(actionName, detailText, actorOverride = null) {
+      const entry = {
+        at: new Date().toISOString(),
+        actor: actorOverride || (currentUser ? currentUser.display_name : 'Hệ thống'),
+        action: actionName,
+        detail: detailText
+      };
+      dbAuditLogs.unshift(entry);
+      if (dbAuditLogs.length > 150) dbAuditLogs = dbAuditLogs.slice(0, 150);
+      await persistSystemConfigRow('__AUDIT_LOGS__', dbAuditLogs);
     }
 
     function openAuditLogModal() {
-      if (!isSystemFullAdmin(currentUser)) {
-        return showAppNotice('Chỉ tài khoản quyền Quản trị hệ thống (Full) mới được xem Nhật ký kiểm toán.', '🔒 Giới hạn quyền truy cập');
-      }
       const box = document.getElementById('auditLogListContainer');
       if (!dbAuditLogs.length) {
-        box.innerHTML = `<div class="text-center text-slate-400 py-8">Chưa có bản ghi kiểm toán nào.</div>`;
+        box.innerHTML = `<div class="text-center text-slate-500 py-8">Chưa có bản ghi nhật ký kiểm toán nào.</div>`;
       } else {
         box.innerHTML = dbAuditLogs.map(log => `
-          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="space-y-0.5">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold">${escapeHtmlSafe(log.action)}</span>
-                <span class="font-semibold text-white">${escapeHtmlSafe(log.actor)}</span>
-              </div>
-              <div class="text-slate-300">${escapeHtmlSafe(log.detail)}</div>
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-amber-300">${escapeHtmlSafe(log.action)}</span>
+              <span class="text-[10px] text-slate-400">${formatDateTimeVN(log.at)}</span>
             </div>
-            <div class="text-[11px] text-slate-400 font-mono shrink-0">${formatDateTimeVN(log.at)}</div>
+            <div class="text-slate-200">${escapeHtmlSafe(log.detail)}</div>
+            <div class="text-[10px] text-slate-400">Thực hiện bởi: <b class="text-blue-300">${escapeHtmlSafe(log.actor)}</b></div>
           </div>
         `).join('');
       }
@@ -1160,9 +1041,10 @@
     }
 
     // =========================================================================
-    // 5. TIỆN ÍCH DROPDOWN, REFRESH & GIAO DIỆN
+    // 5. ĐIỀU KHIỂN MENU, MOBILE PANELS & TIỆN ÍCH HIỂN THỊ
     // =========================================================================
-    function toggleDropdown(menuId) {
+    function toggleHeaderDropdown(menuId, event) {
+      if (event) event.stopPropagation();
       const target = document.getElementById(menuId);
       const isHidden = target.classList.contains('hidden');
       closeAllDropdowns();
@@ -1170,32 +1052,44 @@
     }
 
     function closeAllDropdowns() {
-      ['menuDataFiles', 'menuAccountAdmin', 'menuChannelActions', 'msgContextMenu'].forEach(id => {
+      ['headerActionMenu', 'headerSettingsMenu', 'msgContextMenu'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
     }
 
-    async function manualRefreshApp() {
-      const icon = document.getElementById('refreshIcon');
-      const statusEl = document.getElementById('syncStatus');
-      if (icon) {
-        icon.classList.remove('animate-spin-once');
-        void icon.offsetWidth;
-        icon.classList.add('animate-spin-once');
-      }
+    document.addEventListener('click', () => closeAllDropdowns());
+
+    async function manualSyncNow() {
+      const statusEl = document.getElementById('syncStatusIndicator');
       if (statusEl) {
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Đang đồng bộ mới...`;
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Đang đồng bộ...`;
       }
       await syncAllFromSupabase(false);
       if (statusEl) {
-        const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã cập nhật ${nowTime}`;
+        const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${nowTime}`;
       }
     }
 
     function toggleMobileSidebar() {
-      document.getElementById('leftSidebar').classList.toggle('hidden');
+      const left = document.getElementById('leftSidebar');
+      const right = document.getElementById('rightSidebarPanel');
+      if (right && !right.classList.contains('hidden')) right.classList.add('hidden');
+      left.classList.toggle('hidden');
+    }
+
+    function toggleMobileRightPanel(show) {
+      const right = document.getElementById('rightSidebarPanel');
+      const left = document.getElementById('leftSidebar');
+      if (left && !left.classList.contains('hidden')) left.classList.add('hidden');
+      if (show) {
+        right.classList.remove('hidden');
+        right.classList.add('flex');
+      } else {
+        right.classList.add('hidden');
+        right.classList.remove('flex');
+      }
     }
 
     function switchRightPanelTab(tab) {
@@ -1203,17 +1097,20 @@
       const btnF = document.getElementById('tabBtnFiles');
       const boxC = document.getElementById('rightTabChecklist');
       const boxF = document.getElementById('rightTabFiles');
+      const toolC = document.getElementById('rightTabChecklistToolbar');
 
       if (tab === 'CHECKLIST') {
         btnC.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
         btnF.className = 'py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
         boxC.classList.remove('hidden');
         boxF.classList.add('hidden');
+        if (toolC) toolC.classList.remove('hidden');
       } else {
         btnF.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1';
         btnC.className = 'py-1.5 px-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 flex items-center justify-center gap-1';
         boxF.classList.remove('hidden');
         boxC.classList.add('hidden');
+        if (toolC) toolC.classList.add('hidden');
       }
     }
 
@@ -1248,7 +1145,7 @@
     }
 
     // =========================================================================
-    // 6. NHẬN DIỆN CHÍNH XÁC TỌA ĐỘ / ĐỊA CHỈ CỤ THỂ CHO GOOGLE MAPS
+    // 6. NHẬN DIỆN TỌA ĐỘ / ĐỊA CHỈ CHO GOOGLE MAPS
     // =========================================================================
     function extractLocationForMap(text) {
       if (!text || text.includes('Tin nhắn đã được thu hồi') || text.startsWith('⚙️') || text.startsWith('🏗️')) return null;
@@ -1290,7 +1187,7 @@
       return `
         <div class="mt-2.5 rounded-xl overflow-hidden border border-slate-700/90 bg-slate-950">
           <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
-            <span class="text-emerald-400 font-semibold truncate">📍 Bản đồ vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
+            <span class="text-emerald-400 font-semibold truncate">📍 Vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
             <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">
               Mở Google Maps ↗
             </a>
@@ -1427,7 +1324,7 @@
       if (btnNewGroup) btnNewGroup.style.display = isSystemFullAdmin(currentUser) ? 'inline-block' : 'none';
 
       const btnAssign = document.getElementById('btnAssignTaskTop');
-      if (btnAssign) btnAssign.style.display = canAssignOrManageTasks(currentUser) ? 'inline-block' : 'none';
+      if (btnAssign) btnAssign.style.display = canAssignOrManageTasks(currentUser) ? 'inline-flex' : 'none';
 
       const btnMeet = document.getElementById('btnMenuMeeting');
       if (btnMeet) btnMeet.style.display = canScheduleMeetings(currentUser) ? 'flex' : 'none';
@@ -1502,7 +1399,6 @@
         return;
       }
 
-      // 1. Kiểm tra tài khoản đã bị khóa (LOCKED) hay chưa
       if (isAccountLocked(user.id)) {
         errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA (LOCKED)!</b><br/>Tài khoản <b>${escapeHtmlSafe(user.display_name)}</b> đã nhập sai mật khẩu liên tục ${MAX_FAILED_ATTEMPTS} lần.<br/>Chỉ <b>Quản trị hệ thống</b> mới có quyền mở khóa tài khoản này.`;
         errEl.classList.remove('hidden');
@@ -1511,7 +1407,6 @@
 
       const isValid = (pass === String(user.pin_code || ''));
 
-      // 2. Xử lý khi nhập SAI Pass/PIN -> Tăng bộ đếm & khóa ngay ở lần thứ 5
       if (!isValid) {
         const prevFails = getAccountFailCount(user.id);
         const newFails = prevFails + 1;
@@ -1531,7 +1426,6 @@
             'Hệ thống Bảo mật'
           );
 
-          // Cảnh báo qua Telegram cho Quản trị hệ thống gốc
           await callGasWebhook({
             action: 'SECURITY_ALERT',
             chatId: DEFAULT_APPROVER_CHAT_ID,
@@ -1547,7 +1441,6 @@
         return;
       }
 
-      // 3. Đăng nhập thành công -> Xóa bộ đếm sai (nếu có)
       if (dbAccountLocksMap[String(user.id)]) {
         delete dbAccountLocksMap[String(user.id)];
         await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
@@ -1557,7 +1450,6 @@
       document.getElementById('loginPassword').value = '';
       applyLoggedInUI(user, rememberMe);
 
-      // Vừa đăng nhập xong, nếu chưa liên kết Telegram -> Tự động bật hộp thoại link Telegram để cấp ID
       if (!user.telegram_chat_id) {
         setTimeout(() => openStaffModal('MY_TELEGRAM', true), 300);
       }
@@ -1593,7 +1485,6 @@
         return;
       }
 
-      // Nếu đã bị khóa do nhập sai 5 lần -> Không cho tự reset, bắt buộc Quản trị hệ thống mở khóa
       if (isAccountLocked(user.id)) {
         fbEl.innerHTML = '🔒 Tài khoản này đã bị <b>KHÓA</b> do nhập sai 5 lần liên tiếp. Chỉ <b>Quản trị hệ thống</b> mới có thể mở khóa!';
         fbEl.classList.add('text-rose-400');
@@ -1659,7 +1550,7 @@
       const meta = (isEdit && dbGroupMetaMap[String(editChannelId)]) ? dbGroupMetaMap[String(editChannelId)] : { members: [], resources: [] };
 
       document.getElementById('projectGroupModalTitle').textContent = isEdit
-        ? `⚙️ Thông tin Nhóm / Dự án: ${chan ? chan.name : ''}`
+        ? `⚙️ Nhóm / Dự án: ${chan ? chan.name : ''}`
         : '🏗️ Khởi tạo Nhóm/Dự án mới';
 
       document.getElementById('pgEditId').value = isEdit ? String(editChannelId) : '';
@@ -1962,8 +1853,8 @@
 
       if (activeDmPeer) {
         const peerPerm = getUserPermDef(activeDmPeer);
-        document.getElementById('activeChannelTitle').textContent = `👤 Trao đổi riêng: ${activeDmPeer.display_name} (${peerPerm.label})`;
-        document.getElementById('activeChannelDesc').textContent = `Kênh trao đổi & gửi file kín 1-1`;
+        document.getElementById('activeChannelTitle').textContent = `👤 Riêng: ${activeDmPeer.display_name}`;
+        document.getElementById('activeChannelDesc').textContent = `Kênh trao đổi & gửi file kín 1-1 (${peerPerm.label})`;
         dmBadge.classList.remove('hidden');
         memBadge.classList.add('hidden');
         editBtn.classList.add('hidden');
@@ -1974,7 +1865,7 @@
         if (activeChan) {
           const meta = dbGroupMetaMap[String(activeChan.id)];
           const memCount = (meta && Array.isArray(meta.members)) ? meta.members.length : dbUsers.length;
-          memBadge.textContent = `👥 ${memCount} thành viên`;
+          memBadge.textContent = `👥 ${memCount}`;
           memBadge.classList.remove('hidden');
 
           document.getElementById('activeChannelTitle').textContent = `# ${activeChan.name}`;
@@ -2224,8 +2115,8 @@
         const transHtml = transText ? `
           <div class="mt-2 pt-2 border-t border-slate-700/80 bg-emerald-950/30 rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-200">
             <div class="flex items-center justify-between text-[10px] text-emerald-400 font-semibold mb-0.5">
-              <span>🌐 Bản dịch Tiếng Việt (Google Translate):</span>
-              <a href="${googleTransLink}" target="_blank" class="underline text-blue-300">Mở Google Dịch ↗</a>
+              <span>🌐 Bản dịch Tiếng Việt:</span>
+              <a href="${googleTransLink}" target="_blank" class="underline text-blue-300">Google Dịch ↗</a>
             </div>
             <div class="leading-relaxed">${escapeHtmlSafe(transText)}</div>
           </div>
@@ -2253,7 +2144,7 @@
           const canDeleteThisApproval = canDeleteApprovalItem(m);
 
           return `
-            <div id="msg_card_${m.id}" ${ctxAttr} class="bg-slate-900 border border-indigo-500/40 rounded-2xl p-4 max-w-2xl shadow-md space-y-2.5 cursor-context-menu">
+            <div id="msg_card_${m.id}" ${ctxAttr} class="bg-slate-900 border border-indigo-500/40 rounded-2xl p-3.5 sm:p-4 max-w-2xl shadow-md space-y-2.5 cursor-context-menu">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-[11px] font-bold text-indigo-300 uppercase">📋 PHIẾU TRÌNH PHÊ DUYỆT</span>
                 <div class="flex items-center gap-2">
@@ -2276,10 +2167,10 @@
                     <button onclick="quickApproveOnWeb('${m.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold">❌ Từ chối</button>
                   ` : ''}
                   ${canEditThisApproval ? `
-                    <button onclick="openEditApprovalModal('${m.id}')" class="bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold">✏️ Sửa nội dung</button>
+                    <button onclick="openEditApprovalModal('${m.id}')" class="bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold">✏️ Sửa</button>
                   ` : ''}
                   ${canDeleteThisApproval ? `
-                    <button onclick="deleteApprovalItem('${m.id}')" class="bg-rose-600/25 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition">🗑️ Xóa phiếu</button>
+                    <button onclick="deleteApprovalItem('${m.id}')" class="bg-rose-600/25 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition">🗑️ Xóa</button>
                   ` : ''}
                 </div>
               </div>
@@ -2304,17 +2195,17 @@
         return `
           <div id="msg_card_${m.id}" ${ctxAttr} class="group bg-slate-900/90 hover:border-slate-700 border border-slate-800 rounded-xl p-3 max-w-2xl transition cursor-context-menu relative">
             <div class="flex items-center justify-between mb-1 gap-2">
-              <span class="text-xs font-bold text-blue-400">${m.sender_name} <span class="font-normal text-slate-500 text-[10px]">${m.sender_role ? '• ' + m.sender_role : ''}</span></span>
-              <div class="flex items-center gap-2">
-                <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn tin nhắn" class="opacity-60 hover:opacity-100 text-slate-400 hover:text-white text-xs px-1">⋮</button>
+              <span class="text-xs font-bold text-blue-400 truncate">${m.sender_name} <span class="font-normal text-slate-500 text-[10px]">${m.sender_role ? '• ' + m.sender_role : ''}</span></span>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn tin nhắn" class="opacity-70 hover:opacity-100 text-slate-400 hover:text-white text-xs px-1">⋮</button>
                 <span class="text-[10px] text-slate-500">${timeStr}</span>
               </div>
             </div>
             <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line">${m.content}</div>
             ${m.file_url ? `
               <div class="mt-2 pt-2 border-t border-slate-800">
-                <a href="${m.file_url}" download="${m.file_name || 'tai_lieu'}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs">
-                  <span>📎</span><span>${m.file_name || 'Tệp đính kèm'}</span>
+                <a href="${m.file_url}" download="${m.file_name || 'tai_lieu'}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full truncate">
+                  <span>📎</span><span class="truncate">${m.file_name || 'Tệp đính kèm'}</span>
                 </a>
               </div>
             ` : ''}
@@ -2430,7 +2321,7 @@
     }
 
     // =========================================================================
-    // 11. CHECKLIST, BẢNG TIẾN ĐỘ & XUẤT EXCEL / PDF
+    // 11. CHECKLIST, BẢNG TIẾN ĐỘ (THẺ DỌC MOBILE + BẢNG DESKTOP) & XUẤT FILE
     // =========================================================================
     function renderTasks() {
       const container = document.getElementById('checklistContainer');
@@ -2438,6 +2329,9 @@
       let tasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
 
       document.getElementById('channelTaskCount').textContent = tasks.length;
+      const mobileBadge = document.getElementById('mobileTaskCountBadge');
+      if (mobileBadge) mobileBadge.textContent = tasks.length;
+
       const myPending = dbTasks.filter(t => currentUser && t.assignee_name === currentUser.display_name && t.status !== 'DONE').length;
       document.getElementById('myTaskBadge').textContent = myPending;
 
@@ -2456,7 +2350,7 @@
         const dueStr = t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn';
 
         return `
-          <div class="bg-slate-800/90 border ${isDone ? 'border-emerald-800/60' : 'border-slate-700'} rounded-xl p-3 space-y-2 transition hover:border-slate-600">
+          <div class="bg-slate-800/90 border ${isDone ? 'border-emerald-800/60' : 'border-slate-700'} rounded-xl p-2.5 sm:p-3 space-y-2 transition hover:border-slate-600">
             <div class="flex items-start justify-between gap-2">
               <div class="text-xs font-bold text-blue-300 truncate">👤 ${t.assignee_name}</div>
               <div class="flex items-center gap-1 shrink-0">
@@ -2466,11 +2360,14 @@
               </div>
             </div>
             <div class="text-xs text-white font-medium leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${t.task_title}</div>
-            <div class="text-[11px] text-slate-400 space-y-0.5 pt-1.5 border-t border-slate-700/70">
+            <div class="text-[11px] text-slate-400 space-y-1 pt-1.5 border-t border-slate-700/70">
               <div class="text-emerald-400/90">🟢 BĐ: ${startStr}</div>
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
                 <span class="text-rose-400/90">🔴 KT: ${dueStr}</span>
-                ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-semibold">✓ Xong</button>` : ''}
+                <div class="flex items-center gap-1.5">
+                  <button onclick="replyTask('${t.id}')" class="bg-blue-600/25 hover:bg-blue-600 text-blue-300 hover:text-white px-2 py-0.5 rounded text-[10px] font-semibold">Hồi đáp</button>
+                  ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-semibold">✓ Xong</button>` : ''}
+                </div>
               </div>
             </div>
             ${(t.delay_reason || t.progress_note) ? `<div class="text-[11px] text-slate-300 bg-slate-900/70 px-2 py-1 rounded">💬 ${t.delay_reason || t.progress_note}</div>` : ''}
@@ -2481,43 +2378,50 @@
 
     function renderProgressTable() {
       const tbody = document.getElementById('progressTableBody');
+      const mobileContainer = document.getElementById('progressMobileCards');
       const tasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
       const nowMs = Date.now();
       const canRemind = canAssignOrManageTasks(currentUser);
 
       if (tasks.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">Chưa có công việc nào trong dự án này.</td></tr>`;
+        if (mobileContainer) {
+          mobileContainer.innerHTML = `<div class="py-10 text-center text-xs text-slate-500">Chưa có công việc nào trong dự án này.</div>`;
+        }
         return;
       }
 
-      tbody.innerHTML = tasks.map(t => {
+      const desktopRows = [];
+      const mobileCards = [];
+
+      tasks.forEach(t => {
         const isDone = t.status === 'DONE';
         const canDelete = currentUser && (isSystemFullAdmin(currentUser) || currentUser.display_name === t.assigned_by);
         const startStr = formatDateTimeVN(t.start_at || t.created_at);
         const dueStr = t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn';
 
-        let statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-600 text-white">⏳ ĐANG TRIỂN KHAI</span>`;
+        let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shrink-0">⏳ ĐANG LÀM</span>`;
         if (isDone) {
-          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-600 text-white">✓ ĐÃ XONG (DONE)</span>`;
+          statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white shrink-0">✓ ĐÃ XONG</span>`;
         } else if (t.due_at) {
           const diff = new Date(t.due_at).getTime() - nowMs;
-          if (diff < 0) statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-600 text-white">🚨 QUÁ DEADLINE</span>`;
-          else if (diff <= 30 * 60 * 1000) statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white">🔔 ĐẾN DEADLINE</span>`;
+          if (diff < 0) statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-600 text-white shrink-0">🚨 QUÁ HẠN</span>`;
+          else if (diff <= 30 * 60 * 1000) statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white shrink-0">🔔 SẮP HẠN</span>`;
         }
 
-        const noteDisplay = [t.delay_reason, t.progress_note].filter(Boolean).join(' — ') || '—';
+        const noteDisplay = [t.delay_reason, t.progress_note].filter(Boolean).join(' — ');
 
-        return `
+        desktopRows.push(`
           <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-4 font-semibold text-slate-900">${t.assignee_name}</td>
-            <td class="py-3 px-4 text-slate-800 max-w-xs">${t.task_title}</td>
+            <td class="py-3 px-4 font-semibold text-slate-900">${escapeHtmlSafe(t.assignee_name)}</td>
+            <td class="py-3 px-4 text-slate-800 max-w-xs">${escapeHtmlSafe(t.task_title)}</td>
             <td class="py-3 px-4 text-[11px] text-slate-600">
               <div class="text-emerald-600 font-medium">🟢 ${startStr}</div>
               <div class="text-rose-600 font-medium">🔴 ${dueStr}</div>
             </td>
-            <td class="py-3 px-4 text-slate-700">${t.meeting_chair || t.assigned_by || 'Lãnh Đạo'} ✅</td>
+            <td class="py-3 px-4 text-slate-700">${escapeHtmlSafe(t.meeting_chair || t.assigned_by || 'Lãnh Đạo')} ✅</td>
             <td class="py-3 px-4">${statusBadge}</td>
-            <td class="py-3 px-4 text-slate-600 max-w-xs">${noteDisplay}</td>
+            <td class="py-3 px-4 text-slate-600 max-w-xs">${escapeHtmlSafe(noteDisplay || '—')}</td>
             <td class="py-3 px-4 text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-1.5">
                 ${(!isDone && canRemind) ? `<button onclick="sendTaskReminder('${t.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">🔔 Nhắc việc</button>` : ''}
@@ -2526,8 +2430,32 @@
               </div>
             </td>
           </tr>
-        `;
-      }).join('');
+        `);
+
+        mobileCards.push(`
+          <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="font-bold text-xs text-slate-900 truncate">👤 ${escapeHtmlSafe(t.assignee_name)}</div>
+              ${statusBadge}
+            </div>
+            <div class="text-xs font-medium text-slate-800 leading-relaxed ${isDone ? 'line-through text-slate-400' : ''}">${escapeHtmlSafe(t.task_title)}</div>
+            <div class="bg-slate-50 rounded-lg p-2 text-[11px] text-slate-600 space-y-0.5 border border-slate-100">
+              <div class="text-emerald-700">🟢 Bắt đầu: <b>${startStr}</b></div>
+              <div class="text-rose-700">🔴 Hạn xong: <b>${dueStr}</b></div>
+              <div>👔 Chủ trì: ${escapeHtmlSafe(t.meeting_chair || t.assigned_by || 'Lãnh Đạo')}</div>
+              ${noteDisplay ? `<div class="text-slate-700 pt-1 border-t border-slate-200/80">💬 ${escapeHtmlSafe(noteDisplay)}</div>` : ''}
+            </div>
+            <div class="flex items-center justify-end gap-1.5 pt-1">
+              ${(!isDone && canRemind) ? `<button onclick="sendTaskReminder('${t.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">🔔 Nhắc việc</button>` : ''}
+              <button onclick="replyTask('${t.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">💬 Hồi đáp</button>
+              ${canDelete ? `<button onclick="deleteTask('${t.id}')" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">🗑️</button>` : ''}
+            </div>
+          </div>
+        `);
+      });
+
+      tbody.innerHTML = desktopRows.join('');
+      if (mobileContainer) mobileContainer.innerHTML = mobileCards.join('');
     }
 
     function exportChecklistToExcel() {
@@ -2783,12 +2711,12 @@
         box.innerHTML = `<div class="text-center text-slate-400 py-8">Hiện tại bạn không có công việc nào được giao.</div>`;
       } else {
         box.innerHTML = myTasks.map(t => `
-          <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <div class="font-bold text-white">${t.task_title}</div>
               <div class="text-[11px] text-slate-400 mt-0.5">Giao bởi: ${t.assigned_by} • Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</div>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
+            <div class="flex items-center justify-end gap-1.5 shrink-0">
               ${t.status !== 'DONE' ? `<button onclick="markTaskDone('${t.id}'); openMyTasksModal();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg font-semibold">✓ Xong</button>` : `<span class="text-emerald-400 font-bold">✓ DONE</span>`}
               <button onclick="replyTask('${t.id}'); openMyTasksModal();" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg font-semibold">Hồi đáp</button>
             </div>
@@ -3286,12 +3214,12 @@
         const sec = document.getElementById('staffSection_' + t);
         if (t === tabKey) {
           sec.classList.remove('hidden');
-          if (t === 'PASS_PIN_ID') btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40';
-          else if (t === 'STAFF_ROLE') btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-purple-500/20 text-purple-300 border-purple-500/40';
-          else btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-blue-500/20 text-blue-300 border-blue-500/40';
+          if (t === 'PASS_PIN_ID') btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40';
+          else if (t === 'STAFF_ROLE') btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-purple-500/20 text-purple-300 border-purple-500/40';
+          else btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-blue-500/20 text-blue-300 border-blue-500/40';
         } else {
           sec.classList.add('hidden');
-          btn.className = 'py-2.5 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800';
+          btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800';
         }
       });
     }
@@ -3751,7 +3679,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
       await syncAllFromSupabase();
 
-      sb.channel('teamwork_realtime_v7')
+      sb.channel('teamwork_realtime_v8')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => syncAllFromSupabase(true))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'team_tasks' }, () => syncAllFromSupabase(true))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'team_users' }, () => syncAllFromSupabase(true))
