@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#0f172a" />
 
   <!-- KHAI BÁO ICON MẶC ĐỊNH & TỰ ĐỘNG RENDER ICON PNG 512x512 CHO MÀN HÌNH CHÍNH -->
-  <link id="appAppleIcon" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%230ea5e9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23g)'/%3E%3Cpath d='M368 296H156c-37.5 0-68-30.5-68-68 0-34.8 26.2-63.5 60-67.5C161.5 117.5 201.8 88 248 88c53.5 0 97.6 39.8 103.3 91.5 34.4 5.2 60.7 34.9 60.7 70.5 0 25.4-20.6 46-44 46z' fill='%23ffffff' fill-opacity='0.22'/%3E%3Ctext x='256' y='305' font-family='Arial,sans-serif' font-weight='900' font-size='175' fill='%23ffffff' text-anchor='middle' letter-spacing='-6'%3ETW%3C/text%3E%3Ccircle cx='392' cy='132' r='26' fill='%2310b981' stroke='%23ffffff' stroke-width='8'/%3E%3C/svg%3E" />
+  <link id="appAppleIcon" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23g)'/%3E%3Ctext x='256' y='285' font-family='Arial,sans-serif' font-weight='900' font-size='190' fill='%23ffffff' text-anchor='middle' letter-spacing='-6'%3ETW%3C/text%3E%3C/svg%3E" />
   <link id="appFavicon" rel="icon" type="image/png" href="" />
   <link id="appManifest" rel="manifest" href="" />
 
@@ -27,63 +27,35 @@
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
 
-        // 1. Nền Gradient Xanh Cobalt - Cyan hiện đại
+        // 1. Nền Gradient Xanh Cobalt hiện đại, đồng bộ phong cách App thực thụ
         const grad = ctx.createLinearGradient(0, 0, 512, 512);
-        grad.addColorStop(0, '#1d4ed8');
-        grad.addColorStop(0.55, '#2563eb');
-        grad.addColorStop(1, '#06b6d4');
+        grad.addColorStop(0, '#2563eb');
+        grad.addColorStop(1, '#1d4ed8');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 512, 512);
 
-        // 2. Vòng sáng trang trí góc trên
-        const glow = ctx.createRadialGradient(130, 110, 20, 130, 110, 320);
-        glow.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+        // 2. Ánh sáng nhẹ phía trên tạo chiều sâu
+        const glow = ctx.createRadialGradient(256, 80, 20, 256, 120, 340);
+        glow.addColorStop(0, 'rgba(255, 255, 255, 0.18)');
         glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, 512, 512);
 
-        // 3. Khung viền kính mờ bên trong
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-        ctx.lineWidth = 10;
-        ctx.beginPath();
-        ctx.roundRect(36, 36, 440, 440, 88);
-        ctx.stroke();
-
-        // 4. Chữ TW đậm nét, đổ bóng nổi khối 3D
-        ctx.shadowColor = 'rgba(15, 23, 42, 0.35)';
-        ctx.shadowBlur = 24;
-        ctx.shadowOffsetY = 12;
+        // 3. Chữ TW trắng đậm tinh gọn, cân đối chính giữa
+        ctx.shadowColor = 'rgba(15, 23, 42, 0.25)';
+        ctx.shadowBlur = 16;
+        ctx.shadowOffsetY = 8;
         ctx.fillStyle = '#ffffff';
-        ctx.font = '900 185px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.font = '900 195px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('TW', 250, 258);
-
-        // 5. Chấm xanh trạng thái Online (đặc trưng Cloud Sync)
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetY = 4;
-        ctx.beginPath();
-        ctx.arc(395, 125, 30, 0, Math.PI * 2);
-        ctx.fillStyle = '#10b981';
-        ctx.fill();
-        ctx.lineWidth = 8;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-
-        // 6. Nhãn nhỏ CLOUD bên dưới
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-        ctx.font = '700 34px Inter, -apple-system, sans-serif';
-        ctx.fillText('CLOUD', 256, 392);
+        ctx.fillText('TW', 256, 266);
 
         const pngDataUrl = canvas.toDataURL('image/png');
 
-        // Gắn ảnh PNG 512x512 vào apple-touch-icon & favicon
         document.getElementById('appAppleIcon').setAttribute('href', pngDataUrl);
         document.getElementById('appFavicon').setAttribute('href', pngDataUrl);
 
-        // Tạo Web App Manifest động cho Android & Desktop PWA
         const manifestObj = {
           name: 'TeamWork Cloud',
           short_name: 'TeamWork',
@@ -157,6 +129,9 @@
           Đăng Nhập Hệ Thống
         </button>
         <p id="loginError" class="text-xs text-rose-400 text-center hidden"></p>
+        <div class="bg-slate-800/60 border border-slate-700/70 rounded-xl p-2.5 text-[11px] text-slate-400 leading-relaxed">
+          📱 <b>Lưu ý lần đầu:</b> Anh/chị nên đăng nhập trên <b>điện thoại đã cài sẵn Telegram</b> để liên kết tự động 1 chạm với Bot thông báo công việc.
+        </div>
       </div>
 
       <!-- FORM KHÔI PHỤC MẬT KHẨU QUA TELEGRAM -->
@@ -337,55 +312,83 @@
     </div>
   </div>
 
-  <!-- MODAL 2: GIAO VIỆC MỚI -->
+  <!-- MODAL 2: GIAO VIỆC MỚI (ĐẦY ĐỦ THỜI GIAN BẮT ĐẦU & DEADLINE) -->
   <div id="assignModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-white">✅ Giao Công Việc Mới</h3>
         <button onclick="closeModal('assignModal')" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <div class="space-y-3 text-xs">
+      <div class="space-y-3.5 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1">Người thực hiện</label>
-          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
+          <label class="block text-slate-400 mb-1.5">Người thực hiện</label>
+          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></select>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Nội dung công việc</label>
-          <textarea id="taskContent" rows="3" placeholder="Nhập chi tiết đầu việc cần triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+          <label class="block text-slate-400 mb-1.5">Nội dung công việc</label>
+          <textarea id="taskContent" rows="3" placeholder="Nhập chi tiết đầu việc cần triển khai..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"></textarea>
         </div>
-        <div>
-          <label class="block text-slate-400 mb-1">Thời hạn hoàn thành (Deadline)</label>
-          <input id="taskDeadline" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-emerald-400 mb-1.5">🟢 Thời gian bắt đầu</label>
+            <input type="datetime-local" id="taskStartTime"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-rose-400 mb-1.5">🔴 Thời hạn hoàn thành</label>
+            <input type="datetime-local" id="taskDueTime"
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500" />
+          </div>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('assignModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300">Hủy</button>
-          <button onclick="submitNewTask()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">Giao Việc & Gửi Telegram</button>
+          <button onclick="closeModal('assignModal')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">Hủy</button>
+          <button onclick="submitNewTask()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-600/25">Giao Việc & Gửi Telegram</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL 3: HỒ SƠ CÁ NHÂN & TELEGRAM CHAT ID -->
+  <!-- MODAL 3: HỒ SƠ CÁ NHÂN & LIÊN KẾT 1 CHẠM TELEGRAM CHAT ID -->
   <div id="profileModal" class="fixed inset-0 z-40 bg-slate-950/80 hidden items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-white">⚙️ Cài Đặt Telegram ID & Mật Khẩu</h3>
-        <button onclick="closeModal('profileModal')" class="text-slate-400 hover:text-white">✕</button>
+        <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <div class="space-y-3 text-xs">
-        <p class="text-slate-400 leading-relaxed">
-          Nhập <b>Telegram Chat ID</b> của anh (lấy qua bot <code class="text-blue-400">@userinfobot</code> trên Telegram) để nhận thông báo giao việc và dùng khi cần khôi phục mã PIN đăng nhập.
-        </p>
+      <div class="space-y-3.5 text-xs">
+        <div class="bg-blue-950/50 border border-blue-800/60 rounded-xl p-3.5 text-slate-200 leading-relaxed space-y-2.5">
+          <div>
+            📱 <b>Khuyến nghị lần đầu đăng nhập:</b> Anh/chị nên mở ứng dụng trên <b>điện thoại đã cài sẵn Telegram</b> để liên kết tự động chỉ với 1 chạm.
+          </div>
+          <div>
+            👉 Nhấn nút bên dưới để mở thẳng <b>@TeamWork_Duyet_Bot</b> kèm lệnh khởi tạo — hệ thống sẽ <b>tự động nhận và lưu Telegram Chat ID</b> cho tài khoản của bạn ngay lập tức:
+          </div>
+          <div class="pt-0.5 flex flex-wrap items-center gap-2">
+            <a id="telegramAutoLinkBtn" href="https://t.me/TeamWork_Duyet_Bot?start=link_u_admin" target="_blank" rel="noopener noreferrer"
+               onclick="startTelegramAutoLinkListener()"
+               class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-2 rounded-xl transition shadow-md shadow-blue-600/25">
+              <span>✈️ Liên kết 1 chạm qua @TeamWork_Duyet_Bot</span>
+            </a>
+            <a href="https://t.me/userinfobot?start=getid" target="_blank" rel="noopener noreferrer"
+               class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 font-medium px-2.5 py-2 rounded-xl transition">
+              <span>@userinfobot</span>
+            </a>
+          </div>
+          <div id="tgAutoLinkStatus" class="hidden text-[11px] bg-slate-900/90 border border-slate-700/80 rounded-lg px-2.5 py-2 text-amber-300">
+            ⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự điền ID ngay khi nhận tín hiệu.
+          </div>
+        </div>
+
         <div>
-          <label class="block text-slate-400 mb-1">Telegram Chat ID</label>
-          <input id="profileTelegramId" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+          <label class="block text-slate-400 mb-1">Telegram Chat ID (tự điền hoặc nhập tay)</label>
+          <input id="profileTelegramId" type="text" placeholder="Ví dụ: 522439752" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
         </div>
         <div>
           <label class="block text-slate-400 mb-1">Mật khẩu / Mã PIN mới (để trống nếu giữ nguyên)</label>
-          <input id="profileNewPass" type="password" placeholder="••••••" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+          <input id="profileNewPass" type="password" placeholder="••••••" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button onclick="closeModal('profileModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300">Đóng</button>
+          <button onclick="closeProfileModal()" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300">Đóng</button>
           <button onclick="saveProfileSettings()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold">Lưu Cài Đặt</button>
         </div>
       </div>
@@ -408,12 +411,13 @@
 
   <script>
     // =========================================================================
-    // 1. CẤU HÌNH KẾT NỐI SUPABASE & TELEGRAM / WEBHOOK
+    // 1. CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT WEBHOOK
     // =========================================================================
     const SUPABASE_URL = 'https://fswvvriiqgkshkpqnahb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzd3Z2cmlpcWdrc2hrcHFuYWhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4ODc1NDYsImV4cCI6MjA1ODQ2MzU0Nn0.23uW0h7d-fE6Q8x_aY1s6hZ9pQ0w8vR4kL2mN5bV7cX';
-    const GAS_WEBHOOK_URL = ''; // Dán URL Google Apps Script Web App (/exec) nếu dùng trung gian
-    const TELEGRAM_BOT_TOKEN = ''; // Hoặc dán Token Bot Telegram để gửi trực tiếp
+    const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzwjS-hWLLnmG5UuJRhii8_LhK2Ky9XdGscTxDA9gSaoruN2RVH8_Me39Og1HoOQFLXFA/exec';
+    const TELEGRAM_BOT_USERNAME = 'TeamWork_Duyet_Bot';
+    const TELEGRAM_BOT_TOKEN = '';
 
     const SESSION_STORAGE_KEY = 'tw_cloud_session_uid';
     const CHANNEL_STORAGE_KEY = 'tw_cloud_active_channel';
@@ -430,7 +434,7 @@
     // =========================================================================
     const DEFAULT_STATE = {
       users: [
-        { id: 'u_admin', name: 'Lãnh Đạo / Quản Lý', role: 'Trưởng Ban / Giám Đốc', isAdmin: true, pass: '123456', telegramId: '' },
+        { id: 'u_admin', name: 'Lãnh Đạo / Quản Lý', role: 'Trưởng Ban / Giám Đốc', isAdmin: true, pass: '123456', telegramId: '522439752' },
         { id: 'u_tv1', name: 'Thành Viên 01', role: 'Chuyên viên Dự án', isAdmin: false, pass: '123456', telegramId: '' },
         { id: 'u_tv2', name: 'Thành Viên 02', role: 'Chuyên viên Hồ sơ', isAdmin: false, pass: '123456', telegramId: '' }
       ],
@@ -448,6 +452,7 @@
     let appState = JSON.parse(localStorage.getItem('tw_cloud_state_v2')) || DEFAULT_STATE;
     let currentUser = null;
     let activeChannelId = localStorage.getItem(CHANNEL_STORAGE_KEY) || 'c_general';
+    let tgPollTimer = null;
 
     // =========================================================================
     // 3. KHÔI PHỤC PHIÊN ĐĂNG NHẬP & ĐỒNG BỘ SUPABASE
@@ -658,6 +663,11 @@
 
       errEl.classList.add('hidden');
       applyLoggedInUI(user);
+
+      // Nếu thành viên đăng nhập lần đầu chưa gắn Telegram ID -> tự động mở hộp thoại liên kết 1 chạm
+      if (!user.telegramId) {
+        setTimeout(() => openProfileSettings(true), 350);
+      }
     }
 
     function handleLogout() {
@@ -813,9 +823,10 @@
               ${t.content}
             </div>
 
-            <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-700/70">
-              <span>⏰ Hạn: ${t.deadlineDisplay || 'Chưa đặt hạn'}</span>
-              <div class="flex items-center gap-1.5">
+            <div class="text-[11px] text-slate-400 space-y-0.5 pt-1.5 border-t border-slate-700/70">
+              <div class="text-emerald-400/90">🟢 Bắt đầu: ${t.startDisplay || t.createdAt || 'Ngay lập tức'}</div>
+              <div class="flex items-center justify-between">
+                <span class="text-rose-400/90">🔴 Hoàn thành: ${t.deadlineDisplay || 'Chưa đặt hạn'}</span>
                 ${!isDone ? `
                   <button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-semibold">
                     ✓ Xong
@@ -846,7 +857,7 @@
             <td class="py-3 px-4 font-semibold text-slate-900">${t.assigneeName}</td>
             <td class="py-3 px-4 text-slate-800 max-w-xs">${t.content}</td>
             <td class="py-3 px-4 text-[11px] text-slate-600">
-              <div class="text-emerald-600 font-medium">🟢 ${t.createdAt}</div>
+              <div class="text-emerald-600 font-medium">🟢 ${t.startDisplay || t.createdAt}</div>
               <div class="text-rose-600 font-medium">🔴 ${t.deadlineDisplay || 'Chưa đặt hạn'}</div>
             </td>
             <td class="py-3 px-4 text-slate-700">${t.approverName || 'Lãnh Đạo / Quản Lý'} ✅</td>
@@ -874,29 +885,49 @@
     }
 
     // =========================================================================
-    // 6. CÁC THAO TÁC CÔNG VIỆC
+    // 6. CÁC THAO TÁC CÔNG VIỆC (ĐẦY ĐỦ BẮT ĐẦU -> HOÀN THÀNH)
     // =========================================================================
+    function formatDateTimeVN(isoLocalStr) {
+      if (!isoLocalStr) return '';
+      const d = new Date(isoLocalStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' +
+             d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
     function openAssignModal() {
       const sel = document.getElementById('taskAssignee');
       sel.innerHTML = appState.users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('');
       document.getElementById('taskContent').value = '';
+
+      // Tự động điền sẵn thời điểm hiện tại cho ô Thời gian bắt đầu
+      const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      document.getElementById('taskStartTime').value = nowLocal;
+      document.getElementById('taskDueTime').value = '';
+
       openModal('assignModal');
     }
 
     async function submitNewTask() {
       const assigneeId = document.getElementById('taskAssignee').value;
       const content = document.getElementById('taskContent').value.trim();
-      const deadlineRaw = document.getElementById('taskDeadline').value;
+      const startRaw = document.getElementById('taskStartTime').value;
+      const dueRaw = document.getElementById('taskDueTime').value;
+
       if (!content) return alert('Anh vui lòng nhập nội dung công việc!');
 
-      const assignee = appState.users.find(u => u.id === assigneeId);
-      const now = new Date();
-      const createdStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
-      let deadlineDisplay = 'Chưa đặt hạn';
-      if (deadlineRaw) {
-        const d = new Date(deadlineRaw);
-        deadlineDisplay = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('vi-VN');
+      if (startRaw && dueRaw && new Date(dueRaw).getTime() < new Date(startRaw).getTime()) {
+        return alert('⚠️ Thời hạn hoàn thành không được sớm hơn Thời gian bắt đầu!');
       }
+
+      const assignee = appState.users.find(u => u.id === assigneeId);
+      const activeChan = appState.channels.find(c => c.id === activeChannelId);
+      const now = new Date();
+      const createdStr = formatDateTimeVN(now.toISOString());
+
+      const startDisplay = formatDateTimeVN(startRaw) || createdStr;
+      const deadlineDisplay = formatDateTimeVN(dueRaw) || 'Chưa đặt hạn';
+      const fullTimelineStr = `${startDisplay} → ${deadlineDisplay}`;
 
       const newTask = {
         id: 't_' + Date.now(),
@@ -907,6 +938,9 @@
         assigneeName: assignee.name,
         content,
         createdAt: createdStr,
+        startAt: startRaw || now.toISOString(),
+        startDisplay,
+        dueAt: dueRaw || '',
         deadlineDisplay,
         status: 'PENDING',
         note: ''
@@ -917,7 +951,7 @@
         id: 'm_' + Date.now(),
         channelId: activeChannelId,
         sender: '📌 Hệ Thống Giao Việc',
-        text: `Đã giao việc cho @${assignee.name}: "${content}" (Hạn: ${deadlineDisplay})`,
+        text: `Đã giao việc cho @${assignee.name}: "${content}"\n⏰ Thời gian: ${fullTimelineStr}`,
         time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       });
 
@@ -929,11 +963,15 @@
         const taskMsg = `📌 <b>GIAO VIỆC MỚI — TEAMWORK CLOUD</b>\n\n` +
                         `👤 Người nhận: <b>${assignee.name}</b>\n` +
                         `📝 Nội dung: ${content}\n` +
-                        `⏰ Hạn hoàn thành: <b>${deadlineDisplay}</b>`;
+                        `⏰ Bắt đầu → Hoàn thành: <b>${fullTimelineStr}</b>`;
         sendTelegramMessage(assignee.telegramId, taskMsg, 'NOTIFY_TASK', {
-          assignee: assignee.name,
-          task: content,
-          deadline: deadlineDisplay
+          assigneeChatId: assignee.telegramId,
+          assigneeName: assignee.name,
+          assignedBy: currentUser.name,
+          channelName: activeChan ? activeChan.name : 'Dự án',
+          taskTitle: content,
+          dueDate: fullTimelineStr,
+          taskId: newTask.id
         });
       }
     }
@@ -971,13 +1009,90 @@
     }
 
     // =========================================================================
-    // 7. CÀI ĐẶT TELEGRAM ID & QUẢN LÝ NHÂN SỰ
+    // 7. CÀI ĐẶT TELEGRAM ID 1 CHẠM & QUẢN LÝ NHÂN SỰ
     // =========================================================================
-    function openProfileSettings() {
+    function openProfileSettings(autoListen = false) {
       if (!currentUser) return;
       document.getElementById('profileTelegramId').value = currentUser.telegramId || '';
       document.getElementById('profileNewPass').value = '';
+
+      // Tạo Deep Link tự động đính kèm ID tài khoản hiện tại (?start=link_<userId>)
+      const deepLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=link_${encodeURIComponent(currentUser.id)}`;
+      const btn = document.getElementById('telegramAutoLinkBtn');
+      if (btn) btn.setAttribute('href', deepLink);
+
+      const statusEl = document.getElementById('tgAutoLinkStatus');
+      if (statusEl) {
+        if (currentUser.telegramId) {
+          statusEl.classList.remove('hidden', 'text-amber-300');
+          statusEl.classList.add('text-emerald-400');
+          statusEl.innerHTML = `✅ Tài khoản đã liên kết Telegram ID: <b>${currentUser.telegramId}</b>`;
+        } else {
+          statusEl.classList.add('hidden');
+        }
+      }
+
       openModal('profileModal');
+      if (autoListen && !currentUser.telegramId) {
+        startTelegramAutoLinkListener();
+      }
+    }
+
+    function startTelegramAutoLinkListener() {
+      if (!currentUser || !sb) return;
+      const targetUserId = currentUser.id;
+      const statusEl = document.getElementById('tgAutoLinkStatus');
+      if (statusEl) {
+        statusEl.classList.remove('hidden', 'text-emerald-400');
+        statusEl.classList.add('text-amber-300');
+        statusEl.innerHTML = '⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự điền ID ngay khi nhận tín hiệu.';
+      }
+
+      if (tgPollTimer) clearInterval(tgPollTimer);
+      let attempts = 0;
+
+      tgPollTimer = setInterval(async () => {
+        attempts++;
+        if (attempts > 45) { // Dừng lắng nghe sau 90 giây
+          clearInterval(tgPollTimer);
+          tgPollTimer = null;
+          return;
+        }
+        try {
+          const { data } = await sb.from('teamwork_state').select('payload').eq('id', 'main').single();
+          if (data && data.payload && Array.isArray(data.payload.users)) {
+            const updatedUser = data.payload.users.find(u => u.id === targetUserId);
+            if (updatedUser && updatedUser.telegramId) {
+              clearInterval(tgPollTimer);
+              tgPollTimer = null;
+
+              appState = { ...DEFAULT_STATE, ...data.payload };
+              localStorage.setItem('tw_cloud_state_v2', JSON.stringify(appState));
+              currentUser = updatedUser;
+
+              document.getElementById('profileTelegramId').value = updatedUser.telegramId;
+              updateTelegramIndicator();
+              renderChannels();
+
+              if (statusEl) {
+                statusEl.classList.remove('hidden', 'text-amber-300');
+                statusEl.classList.add('text-emerald-400');
+                statusEl.innerHTML = `🎉 <b>Liên kết thành công!</b> Đã tự động nhận Telegram Chat ID: <b>${updatedUser.telegramId}</b>`;
+              }
+            }
+          }
+        } catch (e) {
+          // Bỏ qua lỗi mạng tạm thời trong lúc polling
+        }
+      }, 2000);
+    }
+
+    function closeProfileModal() {
+      if (tgPollTimer) {
+        clearInterval(tgPollTimer);
+        tgPollTimer = null;
+      }
+      closeModal('profileModal');
     }
 
     async function saveProfileSettings() {
@@ -993,7 +1108,7 @@
       }
       await saveCloudState();
       updateTelegramIndicator();
-      closeModal('profileModal');
+      closeProfileModal();
       alert('Đã lưu cài đặt cá nhân & Telegram ID thành công!');
     }
 
