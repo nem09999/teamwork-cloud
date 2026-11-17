@@ -28,8 +28,8 @@
       <!-- FORM ĐĂNG NHẬP -->
       <div id="loginFormBox" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên tài khoản / Họ tên đăng nhập</label>
-          <input id="loginUsernameInput" type="text" placeholder="Nhập chính xác tên tài khoản được cấp..."
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên đăng nhập (User) hoặc Họ và tên</label>
+          <input id="loginUsernameInput" type="text" placeholder="Nhập tên đăng nhập (user) được cấp..."
             class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
         </div>
 
@@ -62,10 +62,10 @@
       <!-- FORM QUÊN MẬT KHẨU -->
       <div id="forgotPasswordBox" class="hidden space-y-4">
         <div class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-3 text-xs text-blue-200 leading-relaxed">
-          Nhập chính xác <b>Tên tài khoản</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo mã PIN ngẫu nhiên (chữ + số) và gửi thẳng về Telegram của bạn.
+          Nhập chính xác <b>Tên đăng nhập (User)</b> và <b>Telegram Chat ID</b> đã liên kết. Hệ thống sẽ tạo mã PIN ngẫu nhiên (chữ + số) và gửi thẳng về Telegram của bạn.
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên tài khoản</label>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên đăng nhập (User)</label>
           <input id="resetUsernameInput" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white" />
         </div>
         <div>
@@ -196,7 +196,6 @@
 
       <!-- Ô NHẬP TIN NHẮN & BẢNG CHỌN EMOJI -->
       <div class="relative p-2.5 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
-        <!-- Bảng thả xuống chứa nhiều biểu tượng cảm xúc -->
         <div id="emojiPickerPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-3 z-50 w-72 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
           <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
             <span>Chọn biểu tượng cảm xúc</span>
@@ -283,9 +282,32 @@
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1">Người thực hiện</label>
-          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
+          <label class="block text-slate-400 mb-1">Chọn Nhóm / Dự án giao việc</label>
+          <select id="taskProjectSelect" onchange="onAssignProjectChange()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold"></select>
         </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-slate-400">Người thực hiện (Họ và tên thành viên)</label>
+            <button type="button" onclick="toggleQuickAddMemberToTaskGroup()" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold">
+              + Add thành viên
+            </button>
+          </div>
+          <select id="taskAssignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white"></select>
+          <div class="text-[11px] text-slate-400 mt-1">
+            Người giao việc (phiên hiện tại): <b id="assignSessionUserLabel" class="text-blue-300"></b>
+          </div>
+
+          <!-- KHUNG THÊM NHANH THÀNH VIÊN VÀO NHÓM DỰ ÁN -->
+          <div id="quickAddMemberBox" class="hidden mt-2 p-2.5 bg-slate-950 border border-emerald-500/40 rounded-xl space-y-2">
+            <div class="text-[11px] font-bold text-emerald-300">➕ Thêm thành viên vào Nhóm / Dự án này:</div>
+            <div class="flex gap-2">
+              <select id="quickAddMemberSelect" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white"></select>
+              <button type="button" onclick="confirmQuickAddMemberToTaskGroup()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg shrink-0">Thêm ngay</button>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label class="block text-slate-400 mb-1">Nội dung công việc yêu cầu</label>
           <textarea id="taskContent" rows="3" placeholder="Mô tả chi tiết đầu việc cần hoàn thành..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"></textarea>
@@ -464,19 +486,37 @@
 
         <!-- TAB 2: DANH SÁCH & PHÂN QUYỀN -->
         <div id="staffSection_STAFF_ROLE" class="hidden space-y-4">
-          <div id="addStaffFormBox" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-2.5">
-            <div class="font-bold text-emerald-400">+ Thêm Nhân Sự Mới</div>
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-              <input id="newStaffName" type="text" placeholder="Họ tên / Tên đăng nhập" class="sm:col-span-3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
-              <input id="newStaffRole" type="text" placeholder="Chức vụ (VD: Kỹ sư)" class="sm:col-span-3 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
-              <input id="newStaffPin" type="text" maxlength="12" placeholder="PIN (4-12 chữ+số)" class="sm:col-span-2 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono" />
-              <select id="newStaffPerm" class="sm:col-span-2 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-white">
-                <option value="MEMBER">Thành viên</option>
-                <option value="ASSISTANT">Trợ lý</option>
-                <option value="CHAIR">Chủ trì</option>
-                <option value="FULL">Quản trị (Full)</option>
-              </select>
-              <button onclick="addNewStaffMember()" class="sm:col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg py-2">+ Thêm</button>
+          <div id="addStaffFormBox" class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 space-y-3">
+            <div class="font-bold text-emerald-400">+ Thêm Nhân Sự Mới (Tách bạch Họ và tên & Tên đăng nhập)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+              <div class="sm:col-span-4">
+                <label class="block text-[10px] text-slate-400 mb-0.5">1. Họ và tên (Nhãn hiển thị)</label>
+                <input id="newStaffFullName" type="text" placeholder="VD: Nguyễn Văn Minh" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-[10px] text-slate-400 mb-0.5">2. Tên đăng nhập (User)</label>
+                <input id="newStaffUsername" type="text" placeholder="VD: minh.nv" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-blue-300 font-mono" />
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-[10px] text-slate-400 mb-0.5">3. Chức vụ / Vị trí</label>
+                <input id="newStaffRole" type="text" placeholder="VD: Kỹ sư dự án" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-white" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-[10px] text-slate-400 mb-0.5">4. Mã PIN (Chữ+Số)</label>
+                <input id="newStaffPin" type="text" maxlength="12" placeholder="VD: nv01ab" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono" />
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400 text-[11px]">Phân quyền:</span>
+                <select id="newStaffPerm" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white">
+                  <option value="MEMBER">Thành viên</option>
+                  <option value="ASSISTANT">Trợ lý</option>
+                  <option value="CHAIR">Chủ trì</option>
+                  <option value="FULL">Quản trị (Full)</option>
+                </select>
+              </div>
+              <button onclick="addNewStaffMember()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg px-4 py-2 transition">+ Thêm Nhân Sự</button>
             </div>
           </div>
           <div id="staffRoleListContainer" class="space-y-2.5"></div>
@@ -530,7 +570,6 @@
         </div>
       </div>
 
-      <!-- THẺ KPI TỔNG QUAN & BỘ LỌC -->
       <div class="p-4 bg-slate-50 border-b border-slate-200 space-y-3 shrink-0">
         <div id="dashboardKpiCards" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs"></div>
 
@@ -713,6 +752,7 @@
     let dbTasks = [];
     let dbGroupMetaMap = {};
     let dbUserPermsMap = {};
+    let dbUserAliasesMap = {};
     let dbAuditLogs = [];
     let dbPinnedMap = {};
     let dbApprovalHistoryMap = {};
@@ -730,7 +770,7 @@
     let tgPollTimer = null;
 
     // =========================================================================
-    // 3. HỆ THỐNG PHÂN QUYỀN 4 CẤP & KIỂM TRA BẢO MẬT
+    // 3. HỆ THỐNG PHÂN QUYỀN 4 CẤP & TIỆN ÍCH HIỂN THỊ HỌ TÊN / USER
     // =========================================================================
     const PERMISSION_DEFS = {
       FULL: {
@@ -759,6 +799,20 @@
       }
     };
 
+    function getUserFullName(user) {
+      if (!user) return 'Thành viên';
+      const alias = dbUserAliasesMap[String(user.id)];
+      if (alias && alias.fullName) return alias.fullName;
+      return user.display_name || user.username || 'Thành viên';
+    }
+
+    function getUserLoginAccount(user) {
+      if (!user) return '';
+      const alias = dbUserAliasesMap[String(user.id)];
+      if (alias && alias.loginUser) return alias.loginUser;
+      return user.username || user.display_name || '';
+    }
+
     function removeVietnameseTones(str) {
       return String(str || '')
         .normalize('NFD')
@@ -771,7 +825,7 @@
 
     function isPrimarySystemOwner(user) {
       if (!user) return false;
-      const cleanName = removeVietnameseTones(user.display_name || user.username);
+      const cleanName = removeVietnameseTones(getUserFullName(user) + ' ' + getUserLoginAccount(user));
       return (
         cleanName.includes('tao thanh tai') ||
         cleanName.includes('tai thanh') ||
@@ -825,7 +879,7 @@
     function canEditApprovalItem(msg) {
       if (!currentUser || !msg || msg.msg_type !== 'APPROVAL') return false;
       if (isSystemFullAdmin(currentUser)) return true;
-      return msg.approval_status === 'PENDING' && currentUser.display_name === msg.sender_name;
+      return msg.approval_status === 'PENDING' && getUserFullName(currentUser) === msg.sender_name;
     }
 
     function canDeleteApprovalItem(msg) {
@@ -964,7 +1018,7 @@
     // 5. NHẬT KÝ KIỂM TOÁN (AUDIT LOG) & ĐIỀU HƯỚNG UI + EMOJI PICKER
     // =========================================================================
     async function recordAuditLog(actionName, detailText, actorOverride = null) {
-      const actor = actorOverride || (currentUser ? currentUser.display_name : 'Hệ thống');
+      const actor = actorOverride || (currentUser ? getUserFullName(currentUser) : 'Hệ thống');
       dbAuditLogs.unshift({
         time: new Date().toISOString(),
         actor,
@@ -1183,12 +1237,12 @@
 
         if (uRes.data && uRes.data.length > 0) {
           dbUsers = uRes.data.sort((a, b) =>
-            String(a.display_name || a.username || '').localeCompare(String(b.display_name || b.username || ''), 'vi')
+            String(getUserFullName(a)).localeCompare(String(getUserFullName(b)), 'vi')
           );
         }
 
         if (cRes.data && cRes.data.length > 0) {
-          const systemNames = ['__BACKUP_SCHEDULE__', '__GROUP_META__', '__USER_PERMS__', '__AUDIT_LOGS__', '__PINNED_DIRECTIVES__', '__APPROVAL_HISTORY__', '__ACCOUNT_LOCKS__'];
+          const systemNames = ['__BACKUP_SCHEDULE__', '__GROUP_META__', '__USER_PERMS__', '__USER_ALIASES__', '__AUDIT_LOGS__', '__PINNED_DIRECTIVES__', '__APPROVAL_HISTORY__', '__ACCOUNT_LOCKS__'];
           dbChannels = cRes.data.filter(c => !systemNames.includes(c.name));
 
           const metaRow = cRes.data.find(c => c.name === '__GROUP_META__');
@@ -1199,6 +1253,11 @@
           const permRow = cRes.data.find(c => c.name === '__USER_PERMS__');
           if (permRow && permRow.description) {
             try { dbUserPermsMap = JSON.parse(permRow.description) || {}; } catch (e) {}
+          }
+
+          const aliasRow = cRes.data.find(c => c.name === '__USER_ALIASES__');
+          if (aliasRow && aliasRow.description) {
+            try { dbUserAliasesMap = JSON.parse(aliasRow.description) || {}; } catch (e) {}
           }
 
           const auditRow = cRes.data.find(c => c.name === '__AUDIT_LOGS__');
@@ -1282,12 +1341,13 @@
     function applyPermissionUI() {
       if (!currentUser) return;
       const pDef = getUserPermDef(currentUser);
-      document.getElementById('currentUserName').textContent = currentUser.display_name || currentUser.username || 'Thành viên';
+      const fullName = getUserFullName(currentUser);
+      document.getElementById('currentUserName').textContent = fullName;
       document.getElementById('currentUserRole').textContent = currentUser.role_title || 'Thành viên';
 
       const mobName = document.getElementById('mobileMenuUserName');
       const mobRole = document.getElementById('mobileMenuUserRole');
-      if (mobName) mobName.textContent = currentUser.display_name || currentUser.username || 'Thành viên';
+      if (mobName) mobName.textContent = fullName;
       if (mobRole) mobRole.textContent = `${pDef.label} • ${currentUser.role_title || 'Thành viên'}`;
 
       const badgeEl = document.getElementById('currentUserPermBadge');
@@ -1352,20 +1412,24 @@
       const qNoTone = normalizeLoginKey(rawName);
       if (!qExact) return null;
 
-      // Ưu tiên khớp chính xác (display_name, username hoặc id)
+      // Ưu tiên khớp chính xác (Tên đăng nhập user, Họ và tên, display_name hoặc id)
       const exactMatch = dbUsers.find(u => {
         const dName = String(u.display_name || '').replace(/\s+/g, ' ').trim().toLowerCase();
         const uName = String(u.username || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const fName = String(getUserFullName(u)).replace(/\s+/g, ' ').trim().toLowerCase();
+        const lAcc = String(getUserLoginAccount(u)).replace(/\s+/g, ' ').trim().toLowerCase();
         const uId = String(u.id || '').trim().toLowerCase();
-        return dName === qExact || (uName && uName === qExact) || uId === qExact;
+        return dName === qExact || (uName && uName === qExact) || (fName && fName === qExact) || (lAcc && lAcc === qExact) || uId === qExact;
       });
       if (exactMatch) return exactMatch;
 
-      // Dự phòng khớp không dấu tiếng Việt (VD: "Tao Thanh Tai" -> "Tào Thành Tài")
+      // Dự phòng khớp không dấu tiếng Việt
       return dbUsers.find(u => {
         const dNoTone = normalizeLoginKey(u.display_name);
         const uNoTone = normalizeLoginKey(u.username);
-        return (dNoTone && dNoTone === qNoTone) || (uNoTone && uNoTone === qNoTone);
+        const fNoTone = normalizeLoginKey(getUserFullName(u));
+        const lNoTone = normalizeLoginKey(getUserLoginAccount(u));
+        return (dNoTone && dNoTone === qNoTone) || (uNoTone && uNoTone === qNoTone) || (fNoTone && fNoTone === qNoTone) || (lNoTone && lNoTone === qNoTone);
       }) || null;
     }
 
@@ -1379,7 +1443,7 @@
       errEl.classList.add('hidden');
 
       if (!rawUsername || !pass) {
-        errEl.innerHTML = '⚠️ Vui lòng nhập đầy đủ <b>Tên tài khoản</b> và <b>Mật khẩu / Mã PIN</b>!';
+        errEl.innerHTML = '⚠️ Vui lòng nhập đầy đủ <b>Tên đăng nhập (User)</b> và <b>Mật khẩu / Mã PIN</b>!';
         errEl.classList.remove('hidden');
         return;
       }
@@ -1388,7 +1452,6 @@
       btn.textContent = 'Đang xác thực...';
 
       try {
-        // Bắt buộc đồng bộ lại danh sách nhân sự nếu dbUsers chưa tải xong
         if (!dbUsers || dbUsers.length === 0) {
           await syncAllFromSupabase(false);
         }
@@ -1401,13 +1464,15 @@
 
         const user = findUserByLoginName(rawUsername);
         if (!user) {
-          errEl.innerHTML = `❌ Không tìm thấy tài khoản <b>"${escapeHtmlSafe(rawUsername)}"</b> trong hệ thống (${dbUsers.length} nhân sự đã tải). Vui lòng kiểm tra lại đúng Họ tên hoặc Tên đăng nhập.`;
+          errEl.innerHTML = `❌ Không tìm thấy tài khoản <b>"${escapeHtmlSafe(rawUsername)}"</b> trong hệ thống (${dbUsers.length} nhân sự đã tải). Vui lòng kiểm tra lại đúng Tên đăng nhập hoặc Họ và tên.`;
           errEl.classList.remove('hidden');
           return;
         }
 
+        const displayFull = getUserFullName(user);
+
         if (isAccountLocked(user.id)) {
-          errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA (LOCKED)!</b><br/>Tài khoản <b>${escapeHtmlSafe(user.display_name)}</b> đã nhập sai mật khẩu liên tục ${MAX_FAILED_ATTEMPTS} lần.<br/>Chỉ <b>Quản trị hệ thống</b> mới có quyền mở khóa tài khoản này.`;
+          errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA (LOCKED)!</b><br/>Tài khoản <b>${escapeHtmlSafe(displayFull)}</b> đã nhập sai mật khẩu liên tục ${MAX_FAILED_ATTEMPTS} lần.<br/>Chỉ <b>Quản trị hệ thống</b> mới có quyền mở khóa tài khoản này.`;
           errEl.classList.remove('hidden');
           return;
         }
@@ -1430,20 +1495,20 @@
           if (shouldLock) {
             await recordAuditLog(
               'KHÓA TÀI KHOẢN TỰ ĐỘNG',
-              `Tài khoản "${user.display_name}" bị khóa (LOCKED) do nhập sai mật khẩu liên tiếp ${MAX_FAILED_ATTEMPTS} lần.`,
+              `Tài khoản "${displayFull}" bị khóa (LOCKED) do nhập sai mật khẩu liên tiếp ${MAX_FAILED_ATTEMPTS} lần.`,
               'Hệ thống Bảo mật'
             );
 
             await callGasWebhook({
               action: 'SECURITY_ALERT',
               chatId: DEFAULT_APPROVER_CHAT_ID,
-              message: `🚨 <b>CẢNH BÁO BẢO MẬT — KHÓA TÀI KHOẢN</b>\n\n• Tài khoản: <b>${user.display_name}</b>\n• Lý do: Nhập sai mật khẩu liên tiếp <b>${MAX_FAILED_ATTEMPTS} lần</b>.\n• Trạng thái: <b>ĐÃ KHÓA (LOCKED)</b>. Vào mục Quản lý Nhân sự trên Web App để mở khóa.`
+              message: `🚨 <b>CẢNH BÁO BẢO MẬT — KHÓA TÀI KHOẢN</b>\n\n• Tài khoản: <b>${displayFull}</b>\n• Lý do: Nhập sai mật khẩu liên tiếp <b>${MAX_FAILED_ATTEMPTS} lần</b>.\n• Trạng thái: <b>ĐÃ KHÓA (LOCKED)</b>. Vào mục Quản lý Nhân sự trên Web App để mở khóa.`
             });
 
-            errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA!</b><br/>Bạn đã nhập sai mật khẩu <b>5/5 lần</b>. Hệ thống đã khóa tài khoản <b>${escapeHtmlSafe(user.display_name)}</b>.<br/>Vui lòng liên hệ <b>Quản trị hệ thống</b> để mở khóa và cấp lại mã PIN.`;
+            errEl.innerHTML = `🔒 <b>TÀI KHOẢN ĐÃ BỊ KHÓA!</b><br/>Bạn đã nhập sai mật khẩu <b>5/5 lần</b>. Hệ thống đã khóa tài khoản <b>${escapeHtmlSafe(displayFull)}</b>.<br/>Vui lòng liên hệ <b>Quản trị hệ thống</b> để mở khóa và cấp lại mã PIN.`;
           } else {
             const remain = MAX_FAILED_ATTEMPTS - newFails;
-            errEl.innerHTML = `❌ Sai Mật khẩu / Mã PIN cho tài khoản <b>${escapeHtmlSafe(user.display_name)}</b> (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).<br/>Còn <b>${remain} lần thử</b> trước khi tài khoản bị khóa tự động. Nếu quên, hãy bấm <b>"Quên mật khẩu / PIN?"</b> phía trên.`;
+            errEl.innerHTML = `❌ Sai Mật khẩu / Mã PIN cho tài khoản <b>${escapeHtmlSafe(displayFull)}</b> (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).<br/>Còn <b>${remain} lần thử</b> trước khi tài khoản bị khóa tự động. Nếu quên, hãy bấm <b>"Quên mật khẩu / PIN?"</b> phía trên.`;
           }
           errEl.classList.remove('hidden');
           return;
@@ -1485,7 +1550,7 @@
 
       fbEl.classList.remove('hidden', 'text-rose-400', 'text-emerald-400');
       if (!rawUsername || !inputTgId) {
-        fbEl.textContent = '⚠️ Vui lòng nhập đầy đủ Tên tài khoản và Telegram Chat ID!';
+        fbEl.textContent = '⚠️ Vui lòng nhập đầy đủ Tên đăng nhập (User) và Telegram Chat ID!';
         fbEl.classList.add('text-rose-400');
         return;
       }
@@ -1496,10 +1561,13 @@
 
       const user = findUserByLoginName(rawUsername);
       if (!user) {
-        fbEl.textContent = '❌ Không tìm thấy tên tài khoản này trong hệ thống!';
+        fbEl.textContent = '❌ Không tìm thấy tài khoản này trong hệ thống!';
         fbEl.classList.add('text-rose-400');
         return;
       }
+
+      const displayFull = getUserFullName(user);
+      const loginAcc = getUserLoginAccount(user);
 
       if (isAccountLocked(user.id)) {
         fbEl.innerHTML = '🔒 Tài khoản này đã bị <b>KHÓA</b> do nhập sai 5 lần liên tiếp. Chỉ <b>Quản trị hệ thống</b> mới có thể mở khóa!';
@@ -1524,12 +1592,12 @@
         await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
       }
 
-      await recordAuditLog('CẤP LẠI PIN QUA TELEGRAM', `Thành viên "${user.display_name}" tự yêu cầu cấp lại mã PIN ngẫu nhiên qua Telegram.`, user.display_name);
+      await recordAuditLog('CẤP LẠI PIN QUA TELEGRAM', `Thành viên "${displayFull}" tự yêu cầu cấp lại mã PIN ngẫu nhiên qua Telegram.`, displayFull);
 
       await callGasWebhook({
         action: 'RESET_PIN',
         chatId: String(user.telegram_chat_id),
-        message: `🔐 <b>TEAMWORK CLOUD — CẤP LẠI MÃ PIN MỚI</b>\n\n👤 Tên tài khoản: <b>${user.display_name}</b>\n🔑 Mã PIN mới (Chữ + Số): <code>${newPin}</code>\n\nHãy dùng tên tài khoản và mã PIN trên để đăng nhập lại.`
+        message: `🔐 <b>TEAMWORK CLOUD — CẤP LẠI MÃ PIN MỚI</b>\n\n👤 Họ và tên: <b>${displayFull}</b>\n🆔 Tên đăng nhập: <code>${loginAcc}</code>\n🔑 Mã PIN mới (Chữ + Số): <code>${newPin}</code>\n\nHãy dùng Tên đăng nhập và Mã PIN trên để đăng nhập lại.`
       });
 
       btn.disabled = false;
@@ -1539,14 +1607,21 @@
     }
 
     async function callGasWebhook(payloadObj) {
-      if (!GAS_WEBHOOK_URL) return;
+      if (!GAS_WEBHOOK_URL) return false;
       try {
         await fetch(GAS_WEBHOOK_URL, {
           method: 'POST',
           mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
           body: JSON.stringify(payloadObj)
         });
-      } catch (e) {}
+        return true;
+      } catch (e) {
+        console.error('Lỗi gửi Webhook Telegram GAS:', e);
+        return false;
+      }
     }
 
     // =========================================================================
@@ -1596,12 +1671,12 @@
 
       document.getElementById('pgMembersChecklist').innerHTML = dbUsers.map(u => {
         const checked = selectedMembers.includes(String(u.id)) ? 'checked' : '';
-        const pDef = getUserPermDef(u);
+        const fullName = getUserFullName(u);
         return `
           <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 ${canMembers ? 'cursor-pointer hover:border-slate-700' : 'opacity-75'}">
             <input type="checkbox" name="pgMemberCheck" value="${u.id}" ${checked} ${canMembers ? '' : 'disabled'} class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-blue-500" />
             <div class="truncate">
-              <div class="font-semibold text-white truncate">${escapeHtmlSafe(u.display_name)} <span class="text-[9px] text-slate-400">[${pDef.label}]</span></div>
+              <div class="font-semibold text-white truncate">${escapeHtmlSafe(fullName)} <span class="text-[10px] text-slate-400">(${escapeHtmlSafe(u.role_title || 'Thành viên')})</span></div>
             </div>
           </label>
         `;
@@ -1633,7 +1708,7 @@
             name: file.name,
             url: e.target.result,
             sizeText: `${Math.round(file.size / 1024)} KB`,
-            addedBy: currentUser ? currentUser.display_name : 'Quản lý',
+            addedBy: currentUser ? getUserFullName(currentUser) : 'Quản lý',
             addedAt: new Date().toISOString()
           });
           renderPgResourcesList();
@@ -1656,7 +1731,7 @@
         name,
         url,
         sizeText: 'Liên kết ngoài',
-        addedBy: currentUser ? currentUser.display_name : 'Quản lý',
+        addedBy: currentUser ? getUserFullName(currentUser) : 'Quản lý',
         addedAt: new Date().toISOString()
       });
       nameInp.value = '';
@@ -1786,7 +1861,7 @@
       dbPinnedMap[convKey] = {
         msgId: String(msg.id),
         content: cleanText,
-        pinnedBy: currentUser.display_name,
+        pinnedBy: getUserFullName(currentUser),
         pinnedAt: new Date().toISOString()
       };
       await persistSystemConfigRow('__PINNED_DIRECTIVES__', dbPinnedMap);
@@ -1853,12 +1928,12 @@
 
       document.getElementById('dmUserList').innerHTML = dbUsers.filter(u => !currentUser || String(u.id) !== String(currentUser.id)).map(u => {
         const isActiveDm = activeDmPeer && String(activeDmPeer.id) === String(u.id);
-        const pDef = getUserPermDef(u);
+        const fullName = getUserFullName(u);
         return `
           <button onclick="selectDirectMessage('${u.id}')" class="w-full px-2.5 py-2 rounded-lg text-left text-xs flex items-center justify-between transition ${isActiveDm ? 'bg-amber-600/30 text-amber-200 border border-amber-500/40' : 'hover:bg-slate-800 text-slate-300'}">
             <div class="truncate min-w-0 pr-1">
-              <div class="font-medium truncate">👤 ${escapeHtmlSafe(u.display_name)}</div>
-              <div class="text-[10px] text-slate-400 truncate">${pDef.label}</div>
+              <div class="font-medium truncate">👤 ${escapeHtmlSafe(fullName)}</div>
+              <div class="text-[10px] text-slate-400 truncate">${escapeHtmlSafe(u.role_title || 'Thành viên')}</div>
             </div>
             <span class="text-[11px] shrink-0 text-amber-400">🔒</span>
           </button>
@@ -1870,9 +1945,8 @@
       const editBtn = document.getElementById('btnEditCurrentGroup');
 
       if (activeDmPeer) {
-        const peerPerm = getUserPermDef(activeDmPeer);
-        document.getElementById('activeChannelTitle').textContent = `👤 ${activeDmPeer.display_name} (${peerPerm.label})`;
-        document.getElementById('activeChannelDesc').textContent = `Kênh trao đổi & gửi file kín 1-1`;
+        document.getElementById('activeChannelTitle').textContent = `👤 ${getUserFullName(activeDmPeer)}`;
+        document.getElementById('activeChannelDesc').textContent = `Kênh trao đổi & gửi file kín 1-1 (${activeDmPeer.role_title || 'Thành viên'})`;
         dmBadge.classList.remove('hidden');
         memBadge.classList.add('hidden');
         editBtn.classList.add('hidden');
@@ -1930,16 +2004,17 @@
       if (!msg) return;
       selectedContextMsgId = String(msgId);
 
+      const myFullName = currentUser ? getUserFullName(currentUser) : '';
       const isApprovalMsg = msg.msg_type === 'APPROVAL';
       const canEdit = isApprovalMsg
         ? canEditApprovalItem(msg)
-        : (currentUser && (isSystemFullAdmin(currentUser) || currentUser.display_name === msg.sender_name));
+        : (currentUser && (isSystemFullAdmin(currentUser) || myFullName === msg.sender_name));
 
       const canDelete = isApprovalMsg
         ? canDeleteApprovalItem(msg)
-        : (currentUser && (isSystemFullAdmin(currentUser) || currentUser.display_name === msg.sender_name));
+        : (currentUser && (isSystemFullAdmin(currentUser) || myFullName === msg.sender_name));
 
-      const canRecall = !isApprovalMsg && currentUser && (isSystemFullAdmin(currentUser) || currentUser.display_name === msg.sender_name);
+      const canRecall = !isApprovalMsg && currentUser && (isSystemFullAdmin(currentUser) || myFullName === msg.sender_name);
 
       document.getElementById('ctxBtnPin').style.display = canPinDirectives(currentUser) ? 'flex' : 'none';
       document.getElementById('ctxOwnerDivider').style.display = (canEdit || canDelete || canRecall) ? 'block' : 'none';
@@ -2049,7 +2124,7 @@
       const chanOpts = visibleChans.map(c => `<option value="CHAN:${c.id}"># Nhóm/Dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
       const userOpts = dbUsers
         .filter(u => !currentUser || String(u.id) !== String(currentUser.id))
-        .map(u => `<option value="USER:${u.id}">👤 Riêng 1-1: ${escapeHtmlSafe(u.display_name)} (${getUserPermDef(u).label})</option>`)
+        .map(u => `<option value="USER:${u.id}">👤 Riêng 1-1: ${escapeHtmlSafe(getUserFullName(u))} (${escapeHtmlSafe(u.role_title || 'Thành viên')})</option>`)
         .join('');
 
       document.getElementById('forwardTargetSelect').innerHTML = chanOpts + userOpts;
@@ -2074,8 +2149,8 @@
 
       const { data } = await sb.from('team_messages').insert([{
         channel_id: targetChannelKey,
-        sender_name: currentUser.display_name,
-        sender_role: getUserPermDef(currentUser).label,
+        sender_name: getUserFullName(currentUser),
+        sender_role: currentUser.role_title || 'Thành viên',
         msg_type: forwardingMsgObj.file_url ? 'FILE' : 'CHAT',
         content: fwdContent,
         file_name: forwardingMsgObj.file_name || null,
@@ -2132,7 +2207,7 @@
         const mapHtml = locInfo ? renderGoogleMapEmbedHtml(locInfo) : '';
 
         const transText = translatedCache[String(m.id)];
-        const googleTransLink = `https://translate.google.com/?sl=auto&tl=vi&text=${encodeURIComponent(String(m.content || '').replace(/<[^>]*>/g, ' '))}&op=translate`;
+        const googleTransLink = `https://translate.googleapis.com/?sl=auto&tl=vi&text=${encodeURIComponent(String(m.content || '').replace(/<[^>]*>/g, ' '))}&op=translate`;
         const transHtml = transText ? `
           <div class="mt-2 pt-2 border-t border-slate-700/80 bg-emerald-950/30 rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-200">
             <div class="flex items-center justify-between text-[10px] text-emerald-400 font-semibold mb-0.5">
@@ -2271,8 +2346,8 @@
         input.value = '';
         const { data } = await sb.from('team_messages').insert([{
           channel_id: convKey,
-          sender_name: currentUser.display_name,
-          sender_role: `${getUserPermDef(currentUser).label}`,
+          sender_name: getUserFullName(currentUser),
+          sender_role: currentUser.role_title || 'Thành viên',
           msg_type: 'CHAT',
           content: finalContent
         }]).select();
@@ -2296,8 +2371,8 @@
         const convKey = getCurrentConversationChannelKey();
         const { data } = await sb.from('team_messages').insert([{
           channel_id: convKey,
-          sender_name: currentUser.display_name,
-          sender_role: getUserPermDef(currentUser).label,
+          sender_name: getUserFullName(currentUser),
+          sender_role: currentUser.role_title || 'Thành viên',
           msg_type: 'FILE',
           content: `📎 Đã gửi tệp tin: ${file.name} (${Math.round(file.size / 1024)} KB)`,
           file_name: file.name,
@@ -2350,7 +2425,7 @@
     }
 
     // =========================================================================
-    // 11. CHECKLIST, DASHBOARD TIẾN ĐỘ DỰ ÁN CHUNG & CÁ NHÂN + XUẤT EXCEL/PDF
+    // 11. CHECKLIST, GIAO VIỆC (CHỌN NHÓM DỰ ÁN + ADD THÀNH VIÊN) & DASHBOARD
     // =========================================================================
     function renderTasks() {
       const container = document.getElementById('checklistContainer');
@@ -2361,7 +2436,8 @@
       const mobTaskBadge = document.getElementById('mobTaskBadge');
       if (mobTaskBadge) mobTaskBadge.textContent = tasks.length;
 
-      const myPending = dbTasks.filter(t => currentUser && t.assignee_name === currentUser.display_name && t.status !== 'DONE').length;
+      const myFullName = currentUser ? getUserFullName(currentUser) : '';
+      const myPending = dbTasks.filter(t => currentUser && (t.assignee_name === myFullName || t.assignee_name === currentUser.display_name) && t.status !== 'DONE').length;
       document.getElementById('myTaskBadge').textContent = myPending;
 
       if (hideDone) tasks = tasks.filter(t => t.status !== 'DONE');
@@ -2374,7 +2450,7 @@
       const canManageTasks = canAssignOrManageTasks(currentUser);
       container.innerHTML = tasks.map(t => {
         const isDone = t.status === 'DONE';
-        const canDelete = currentUser && (isSystemFullAdmin(currentUser) || currentUser.display_name === t.assigned_by);
+        const canDelete = currentUser && (isSystemFullAdmin(currentUser) || myFullName === t.assigned_by || currentUser.display_name === t.assigned_by);
         const startStr = formatDateTimeVN(t.start_at || t.created_at);
         const dueStr = t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn';
 
@@ -2384,7 +2460,7 @@
               <div class="text-xs font-bold text-blue-300 truncate">👤 ${escapeHtmlSafe(t.assignee_name)}</div>
               <div class="flex items-center gap-1 shrink-0">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${isDone ? 'DONE' : 'ĐANG LÀM'}</span>
-                ${(!isDone && canManageTasks) ? `<button onclick="sendTaskReminder('${t.id}')" title="Gửi nhắc việc qua Telegram" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[11px] transition">🔔</button>` : ''}
+                ${(!isDone && canManageTasks) ? `<button onclick="sendTaskReminder('${t.id}')" title="Gửi nhắc việc / cảnh báo qua Telegram" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[11px] transition">🔔</button>` : ''}
                 ${canDelete ? `<button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2 py-0.5 rounded text-[11px] transition">🗑️</button>` : ''}
               </div>
             </div>
@@ -2412,7 +2488,10 @@
       const assigneeSel = document.getElementById('dashFilterAssignee');
       if (assigneeSel) {
         assigneeSel.innerHTML = `<option value="">👥 Tất cả nhân sự</option>` +
-          dbUsers.map(u => `<option value="${escapeHtmlSafe(u.display_name)}">${escapeHtmlSafe(u.display_name)}</option>`).join('');
+          dbUsers.map(u => {
+            const fullName = getUserFullName(u);
+            return `<option value="${escapeHtmlSafe(fullName)}">${escapeHtmlSafe(fullName)}</option>`;
+          }).join('');
       }
       renderProgressTable();
       openModal('progressModal');
@@ -2423,13 +2502,14 @@
       const assigneeFilter = (document.getElementById('dashFilterAssignee') || {}).value || '';
       const statusFilter = (document.getElementById('dashFilterStatus') || {}).value || '';
       const nowMs = Date.now();
+      const myFullName = currentUser ? getUserFullName(currentUser) : '';
 
       const visibleChanIds = getVisibleChannelsForCurrentUser().map(c => String(c.id));
 
       return dbTasks.filter(t => {
         if (!isSystemFullAdmin(currentUser) && !visibleChanIds.includes(String(t.channel_id))) return false;
         if (scope === 'CURRENT' && String(t.channel_id) !== String(activeChannelId)) return false;
-        if (scope === 'MINE' && (!currentUser || t.assignee_name !== currentUser.display_name)) return false;
+        if (scope === 'MINE' && (!currentUser || (t.assignee_name !== myFullName && t.assignee_name !== currentUser.display_name))) return false;
         if (assigneeFilter && t.assignee_name !== assigneeFilter) return false;
 
         if (statusFilter === 'DONE' && t.status !== 'DONE') return false;
@@ -2486,9 +2566,11 @@
         return;
       }
 
+      const myFullName = currentUser ? getUserFullName(currentUser) : '';
+
       tbody.innerHTML = tasks.map(t => {
         const isDone = t.status === 'DONE';
-        const canDelete = currentUser && (isSystemFullAdmin(currentUser) || currentUser.display_name === t.assigned_by);
+        const canDelete = currentUser && (isSystemFullAdmin(currentUser) || myFullName === t.assigned_by || currentUser.display_name === t.assigned_by);
         const startStr = formatDateTimeVN(t.start_at || t.created_at);
         const dueStr = t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn';
         const chanObj = dbChannels.find(c => String(c.id) === String(t.channel_id));
@@ -2596,7 +2678,7 @@
           </tbody>
         </table>
         <div class="sign">
-          <div><b>NGƯỜI LẬP BIỂU</b><br/><br/><br/>${escapeHtmlSafe(currentUser ? currentUser.display_name : '')}</div>
+          <div><b>NGƯỜI LẬP BIỂU</b><br/><br/><br/>${escapeHtmlSafe(currentUser ? getUserFullName(currentUser) : '')}</div>
           <div><b>LÃNH ĐẠO / CHỦ TRÌ DUYỆT</b><br/><br/><br/>........................................</div>
         </div>
         <script>window.onload = function() { window.print(); };<\/script>
@@ -2632,7 +2714,7 @@
         <h4>II. Phân công nhiệm vụ sau cuộc họp:</h4>
         <div class="box">${escapeHtmlSafe(tasksLines || 'Theo bảng phân công chi tiết.')}</div>
         <div class="sign">
-          <div><b>THƯ KÝ / TRỢ LÝ GHI BIÊN BẢN</b><br/><br/><br/>${escapeHtmlSafe(currentUser ? currentUser.display_name : '')}</div>
+          <div><b>THƯ KÝ / TRỢ LÝ GHI BIÊN BẢN</b><br/><br/><br/>${escapeHtmlSafe(currentUser ? getUserFullName(currentUser) : '')}</div>
           <div><b>CHỦ TRÌ CUỘC HỌP</b><br/><br/><br/>........................................</div>
         </div>
         <script>window.onload = function() { window.print(); };<\/script>
@@ -2644,28 +2726,38 @@
     async function sendTaskReminder(taskId) {
       const task = dbTasks.find(t => String(t.id) === String(taskId));
       if (!task) return;
-      const assignee = dbUsers.find(u => u.display_name === task.assignee_name);
+      const assignee = dbUsers.find(u => getUserFullName(u) === task.assignee_name || u.display_name === task.assignee_name);
       const activeChan = dbChannels.find(c => String(c.id) === String(task.channel_id));
+      const senderFull = getUserFullName(currentUser);
+      const dueLabel = task.due_at ? formatDateTimeVN(task.due_at) : 'Theo kế hoạch';
 
       const { data: msgData } = await sb.from('team_messages').insert([{
         channel_id: task.channel_id || activeChannelId,
-        sender_name: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
-        sender_role: 'Nhắc tiến độ công việc',
+        sender_name: senderFull,
+        sender_role: 'Cảnh báo / Nhắc tiến độ',
         msg_type: 'DEADLINE_ALERT',
-        content: `🔔 Nhắc việc @${task.assignee_name}: Đề nghị cập nhật tiến độ đầu việc "${task.task_title}" (Hạn: ${task.due_at ? formatDateTimeVN(task.due_at) : 'Theo kế hoạch'}).`
+        content: `🔔 Cảnh báo / Nhắc việc @${task.assignee_name}: Đề nghị cập nhật tiến độ đầu việc "${task.task_title}" (Hạn: ${dueLabel}).`
       }]).select();
       if (msgData && msgData[0]) dbMessages.push(msgData[0]);
       renderMessages();
 
       if (assignee && assignee.telegram_chat_id) {
+        const tgChatId = String(assignee.telegram_chat_id).trim();
         await callGasWebhook({
-          action: 'REMIND_TASK',
-          chatId: String(assignee.telegram_chat_id),
-          message: `🔔 <b>NHẮC TIẾN ĐỘ CÔNG VIỆC</b>\n\n• Dự án: <b>${activeChan ? activeChan.name : 'Dự án'}</b>\n• Công việc: <b>${task.task_title}</b>\n• Người nhắc: ${currentUser.display_name}`
+          action: 'NOTIFY_TASK',
+          assigneeChatId: tgChatId,
+          chatId: tgChatId,
+          assigneeName: getUserFullName(assignee),
+          assignedBy: senderFull,
+          channelName: activeChan ? activeChan.name : 'Dự án',
+          taskTitle: `🔔 [CẢNH BÁO DEADLINE] ${task.task_title}`,
+          dueDate: dueLabel,
+          taskId: task.id || '',
+          message: `🔔 <b>CẢNH BÁO TIẾN ĐỘ & DEADLINE</b>\n\n• Dự án: <b>${activeChan ? activeChan.name : 'Dự án'}</b>\n• Công việc: <b>${task.task_title}</b>\n• Hạn hoàn thành: <b>${dueLabel}</b>\n• Người nhắc: ${senderFull}`
         });
-        showAppNotice(`Đã gửi thông báo nhắc việc trên kênh và đẩy tin nhắn Telegram tới ${assignee.display_name}!`, '🔔 Đã nhắc việc');
+        showAppNotice(`Đã đăng cảnh báo trên kênh và gửi tin nhắn Telegram tới ${getUserFullName(assignee)} (ID: ${tgChatId})!`, '🔔 Đã gửi cảnh báo Telegram');
       } else {
-        showAppNotice(`Đã đăng thông báo nhắc việc @${task.assignee_name} trên kênh.`, '🔔 Đã nhắc việc');
+        showAppNotice(`Đã đăng cảnh báo @${task.assignee_name} trên kênh.\n⚠️ Lưu ý: Thành viên này chưa liên kết Telegram Chat ID nên không nhận được tin qua Telegram.`, '🔔 Đã cảnh báo trên kênh');
       }
     }
 
@@ -2673,8 +2765,18 @@
       if (!canAssignOrManageTasks(currentUser)) {
         return showAppNotice('Tài khoản của bạn chưa được cấp quyền Giao việc!', '🔒 Giới hạn quyền');
       }
-      const sel = document.getElementById('taskAssignee');
-      sel.innerHTML = dbUsers.map(u => `<option value="${u.id}">${escapeHtmlSafe(u.display_name)} (${getUserPermDef(u).label})</option>`).join('');
+
+      const visibleChans = getVisibleChannelsForCurrentUser();
+      const projSel = document.getElementById('taskProjectSelect');
+      projSel.innerHTML = visibleChans.map(c =>
+        `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}># ${escapeHtmlSafe(c.name)}</option>`
+      ).join('');
+
+      document.getElementById('assignSessionUserLabel').textContent = getUserFullName(currentUser);
+      document.getElementById('quickAddMemberBox').classList.add('hidden');
+
+      onAssignProjectChange();
+
       document.getElementById('taskContent').value = '';
       const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       document.getElementById('taskStartTime').value = nowLocal;
@@ -2682,9 +2784,69 @@
       openModal('assignModal');
     }
 
+    function onAssignProjectChange() {
+      const selectedChanId = document.getElementById('taskProjectSelect').value;
+      const meta = dbGroupMetaMap[String(selectedChanId)];
+      let groupUsers = dbUsers;
+      if (meta && Array.isArray(meta.members) && meta.members.length > 0) {
+        const filtered = dbUsers.filter(u => meta.members.map(String).includes(String(u.id)));
+        if (filtered.length > 0) groupUsers = filtered;
+      }
+
+      const sel = document.getElementById('taskAssignee');
+      const currentUid = currentUser ? String(currentUser.id) : '';
+      sel.innerHTML = groupUsers.map(u => {
+        const fullName = getUserFullName(u);
+        const roleSub = u.role_title ? ` — ${escapeHtmlSafe(u.role_title)}` : '';
+        const isCurrentSession = String(u.id) === currentUid;
+        return `<option value="${u.id}" ${isCurrentSession ? 'selected' : ''}>${escapeHtmlSafe(fullName)}${roleSub}</option>`;
+      }).join('');
+    }
+
+    function toggleQuickAddMemberToTaskGroup() {
+      const box = document.getElementById('quickAddMemberBox');
+      const sel = document.getElementById('quickAddMemberSelect');
+      const isHidden = box.classList.contains('hidden');
+
+      if (isHidden) {
+        const selectedChanId = document.getElementById('taskProjectSelect').value;
+        const meta = dbGroupMetaMap[String(selectedChanId)] || { members: [], resources: [] };
+        const existingIds = Array.isArray(meta.members) ? meta.members.map(String) : [];
+        const candidates = dbUsers.filter(u => !existingIds.includes(String(u.id)));
+        const listToRender = candidates.length > 0 ? candidates : dbUsers;
+
+        sel.innerHTML = listToRender.map(u =>
+          `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))} (${escapeHtmlSafe(u.role_title || 'Thành viên')})</option>`
+        ).join('');
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    async function confirmQuickAddMemberToTaskGroup() {
+      const selectedChanId = document.getElementById('taskProjectSelect').value;
+      const newMemberId = document.getElementById('quickAddMemberSelect').value;
+      if (!selectedChanId || !newMemberId) return;
+
+      const meta = dbGroupMetaMap[String(selectedChanId)] || { members: dbUsers.map(u => String(u.id)), resources: [] };
+      if (!Array.isArray(meta.members)) meta.members = [];
+      if (!meta.members.map(String).includes(String(newMemberId))) {
+        meta.members.push(String(newMemberId));
+        dbGroupMetaMap[String(selectedChanId)] = meta;
+        await persistSystemConfigRow('__GROUP_META__', dbGroupMetaMap);
+      }
+
+      onAssignProjectChange();
+      document.getElementById('taskAssignee').value = String(newMemberId);
+      document.getElementById('quickAddMemberBox').classList.add('hidden');
+      renderChannelsAndDm();
+    }
+
     async function submitNewTask() {
       const btn = document.getElementById('btnSubmitNewTask');
       if (btn.disabled) return;
+      const targetChanId = document.getElementById('taskProjectSelect').value || activeChannelId;
       const assigneeId = document.getElementById('taskAssignee').value;
       const content = document.getElementById('taskContent').value.trim();
       const startRaw = document.getElementById('taskStartTime').value;
@@ -2697,19 +2859,22 @@
 
       const assignee = dbUsers.find(u => String(u.id) === String(assigneeId));
       if (!assignee) return showAppNotice('Vui lòng chọn người thực hiện!', '⚠️ Thiếu thông tin');
-      const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
+      const targetChan = dbChannels.find(c => String(c.id) === String(targetChanId));
       const startIso = startRaw ? new Date(startRaw).toISOString() : new Date().toISOString();
       const dueIso = dueRaw ? new Date(dueRaw).toISOString() : null;
+
+      const assigneeFullName = getUserFullName(assignee);
+      const assignerFullName = getUserFullName(currentUser);
 
       btn.disabled = true;
       btn.textContent = 'Đang giao việc...';
 
       try {
         const insertPayload = {
-          channel_id: activeChannelId,
-          assignee_name: assignee.display_name,
-          assigned_by: currentUser.display_name,
-          meeting_chair: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+          channel_id: targetChanId,
+          assignee_name: assigneeFullName,
+          assigned_by: assignerFullName,
+          meeting_chair: assignerFullName,
           chair_confirmed: true,
           task_title: content,
           due_at: dueIso,
@@ -2723,28 +2888,38 @@
         dbTasks.unshift(createdTask);
 
         const { data: msgData } = await sb.from('team_messages').insert([{
-          channel_id: activeChannelId,
-          sender_name: '📌 Hệ Thống Giao Việc',
-          sender_role: `${currentUser.display_name} • ${getUserPermDef(currentUser).label}`,
+          channel_id: targetChanId,
+          sender_name: assignerFullName,
+          sender_role: 'Giao công việc mới',
           msg_type: 'CHAT',
-          content: `Đã giao việc cho @${assignee.display_name}: "${content}"\n⏰ Thời gian: ${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`
+          content: `📌 Đã giao việc cho @${assigneeFullName}: "${content}"\n⏰ Thời gian: ${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`
         }]).select();
         if (msgData && msgData[0]) dbMessages.push(msgData[0]);
 
         closeModal('assignModal');
-        renderAll();
+        if (String(targetChanId) !== String(activeChannelId)) {
+          selectChannel(String(targetChanId));
+        } else {
+          renderAll();
+        }
 
         if (assignee.telegram_chat_id) {
+          const tgChatId = String(assignee.telegram_chat_id).trim();
+          const dueText = `${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`;
           await callGasWebhook({
             action: 'NOTIFY_TASK',
-            assigneeChatId: String(assignee.telegram_chat_id),
-            assigneeName: assignee.display_name,
-            assignedBy: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
-            channelName: activeChan ? activeChan.name : 'Dự án',
+            assigneeChatId: tgChatId,
+            chatId: tgChatId,
+            assigneeName: assigneeFullName,
+            assignedBy: assignerFullName,
+            channelName: targetChan ? targetChan.name : 'Dự án',
             taskTitle: content,
-            dueDate: `${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`,
-            taskId: createdTask.id || ''
+            dueDate: dueText,
+            taskId: createdTask.id || '',
+            message: `📌 <b>GIAO CÔNG VIỆC MỚI</b>\n\n• Dự án: <b>${targetChan ? targetChan.name : 'Dự án'}</b>\n• Người thực hiện: <b>${assigneeFullName}</b>\n• Nội dung: <b>${content}</b>\n• Thời hạn: <b>${dueText}</b>\n• Người giao: ${assignerFullName}`
           });
+        } else {
+          showAppNotice(`Đã tạo công việc cho "${assigneeFullName}" trên Web App.\n⚠️ Thành viên này chưa liên kết Telegram Chat ID nên chưa gửi được thông báo qua Telegram.`, '📌 Đã giao việc');
         }
       } finally {
         btn.disabled = false;
@@ -2790,7 +2965,8 @@
 
     function openMyTasksModal() {
       const box = document.getElementById('myTasksListContainer');
-      const myTasks = dbTasks.filter(t => currentUser && t.assignee_name === currentUser.display_name);
+      const myFullName = currentUser ? getUserFullName(currentUser) : '';
+      const myTasks = dbTasks.filter(t => currentUser && (t.assignee_name === myFullName || t.assignee_name === currentUser.display_name));
       if (myTasks.length === 0) {
         box.innerHTML = `<div class="text-center text-slate-400 py-8">Hiện tại bạn không có công việc nào được giao.</div>`;
       } else {
@@ -2822,7 +2998,7 @@
       const sel = document.getElementById('approvalApprover');
       const approvers = dbUsers.filter(u => canApproveItems(u));
       const list = approvers.length ? approvers : dbUsers;
-      sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(u.display_name)} — [${getUserPermDef(u).label}]</option>`).join('');
+      sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))} — [${getUserPermDef(u).label}]</option>`).join('');
       document.getElementById('approvalContent').value = '';
       document.getElementById('approvalFileUrl').value = '';
       document.getElementById('approvalFileInput').value = '';
@@ -2886,6 +3062,7 @@
         return showAppNotice('Tệp đính kèm vượt quá 3MB. Vui lòng tải lên Google Drive và dán link!', '⚠️ Giới hạn dung lượng');
       }
 
+      const senderFull = getUserFullName(currentUser);
       btn.disabled = true;
       const oldBtnText = btn.textContent;
       btn.textContent = 'Đang xử lý...';
@@ -2915,7 +3092,7 @@
             dbApprovalHistoryMap[String(editId)] = {
               count: newCount,
               lastEditedAt: nowIso,
-              lastEditedBy: currentUser.display_name
+              lastEditedBy: senderFull
             };
             await persistSystemConfigRow('__APPROVAL_HISTORY__', dbApprovalHistoryMap);
             await recordAuditLog('SỬA PHIẾU TRÌNH', `Sửa lần ${newCount} phiếu trình của ${existingMsg.sender_name}: "${content.slice(0, 60)}"`);
@@ -2949,8 +3126,8 @@
         const finalizeSubmit = async () => {
           const { data } = await sb.from('team_messages').insert([{
             channel_id: activeChannelId,
-            sender_name: currentUser.display_name,
-            sender_role: getUserPermDef(currentUser).label,
+            sender_name: senderFull,
+            sender_role: currentUser.role_title || 'Thành viên',
             msg_type: 'APPROVAL',
             content,
             file_url: fileUrl,
@@ -2968,8 +3145,8 @@
             action: 'NOTIFY_APPROVAL',
             approverChatId: (approver && approver.telegram_chat_id) || DEFAULT_APPROVER_CHAT_ID,
             messageId: createdMsg ? createdMsg.id : '',
-            senderName: currentUser.display_name,
-            senderRole: getUserPermDef(currentUser).label,
+            senderName: senderFull,
+            senderRole: currentUser.role_title || 'Thành viên',
             channelName: activeChan ? activeChan.name : 'Phòng Điều Hành',
             content,
             fileUrl: fileUrl.startsWith('http') ? fileUrl : '',
@@ -3002,16 +3179,17 @@
 
     async function quickApproveOnWeb(msgId, status) {
       if (!canApproveItems(currentUser)) return;
+      const approverFull = getUserFullName(currentUser);
       await sb.from('team_messages').update({
         approval_status: status,
-        approver_name: currentUser.display_name,
+        approver_name: approverFull,
         approved_at: new Date().toISOString()
       }).eq('id', msgId);
 
       const m = dbMessages.find(x => String(x.id) === String(msgId));
       if (m) {
         m.approval_status = status;
-        m.approver_name = currentUser.display_name;
+        m.approver_name = approverFull;
         await recordAuditLog('PHÊ DUYỆT TỜ TRÌNH', `${status === 'APPROVED' ? 'Chấp thuận' : 'Từ chối'} tờ trình của ${m.sender_name}: "${String(m.content || '').slice(0, 60)}"`);
       }
       renderMessages();
@@ -3042,6 +3220,7 @@
 
       if (!mAgenda) return showAppNotice('Vui lòng nhập nội dung cuộc họp!', '⚠️ Thiếu nội dung');
 
+      const chairFull = getUserFullName(currentUser);
       btn.disabled = true;
       btn.textContent = 'Đang chốt lịch...';
 
@@ -3060,14 +3239,17 @@
             if (match) {
               const rawName = match[1].trim().toLowerCase();
               const taskTitle = match[2].trim();
-              const matchedUser = dbUsers.find(u => u.display_name.toLowerCase().includes(rawName));
-              const assigneeName = matchedUser ? matchedUser.display_name : match[1].trim();
+              const matchedUser = dbUsers.find(u =>
+                getUserFullName(u).toLowerCase().includes(rawName) ||
+                getUserLoginAccount(u).toLowerCase().includes(rawName)
+              );
+              const assigneeName = matchedUser ? getUserFullName(matchedUser) : match[1].trim();
 
               const insertPayload = {
                 channel_id: activeChannelId,
                 assignee_name: assigneeName,
-                assigned_by: currentUser.display_name,
-                meeting_chair: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+                assigned_by: chairFull,
+                meeting_chair: chairFull,
                 chair_confirmed: true,
                 task_title: `[Sau họp] ${taskTitle}`,
                 due_at: dueIso,
@@ -3081,11 +3263,13 @@
               createdTasksCount++;
 
               if (matchedUser && matchedUser.telegram_chat_id) {
+                const tgChatId = String(matchedUser.telegram_chat_id).trim();
                 await callGasWebhook({
                   action: 'NOTIFY_TASK',
-                  assigneeChatId: String(matchedUser.telegram_chat_id),
-                  assigneeName: matchedUser.display_name,
-                  assignedBy: `${currentUser.display_name} (${getUserPermDef(currentUser).label})`,
+                  assigneeChatId: tgChatId,
+                  chatId: tgChatId,
+                  assigneeName: assigneeName,
+                  assignedBy: chairFull,
                   channelName: activeChan ? activeChan.name : 'Dự án',
                   taskTitle: `[Sau họp] ${taskTitle}`,
                   dueDate: dueIso ? formatDateTimeVN(dueIso) : 'Theo kết luận họp',
@@ -3100,8 +3284,8 @@
 
         const { data } = await sb.from('team_messages').insert([{
           channel_id: activeChannelId,
-          sender_name: currentUser.display_name,
-          sender_role: `${getUserPermDef(currentUser).label} • Chốt lịch họp`,
+          sender_name: chairFull,
+          sender_role: 'Chốt lịch họp',
           msg_type: 'CHAT',
           content: noticeText
         }]).select();
@@ -3121,8 +3305,8 @@
         <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 cursor-pointer hover:border-slate-700">
           <input type="checkbox" name="multiFileTarget" value="${u.id}" class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-indigo-500" />
           <div class="truncate">
-            <div class="font-semibold text-white truncate">${escapeHtmlSafe(u.display_name)}</div>
-            <div class="text-[10px] text-slate-400 truncate">${getUserPermDef(u).label}</div>
+            <div class="font-semibold text-white truncate">${escapeHtmlSafe(getUserFullName(u))}</div>
+            <div class="text-[10px] text-slate-400 truncate">${escapeHtmlSafe(u.role_title || 'Thành viên')}</div>
           </div>
         </label>
       `).join('');
@@ -3152,22 +3336,24 @@
         return showAppNotice('Vui lòng chọn tệp tin hoặc dán đường link tài liệu!', '⚠️ Thiếu tài liệu');
       }
 
+      const senderFull = getUserFullName(currentUser);
       const recipients = dbUsers.filter(u => selectedIds.includes(String(u.id)));
-      const recipientNames = recipients.map(u => u.display_name).join(', ');
+      const recipientNames = recipients.map(u => getUserFullName(u)).join(', ');
 
       btn.disabled = true;
       btn.textContent = 'Đang gửi tài liệu...';
 
       const dispatchToRecipients = async (fName, fUrl) => {
         for (const r of recipients) {
+          const rFullName = getUserFullName(r);
           const pair = [String(currentUser.id), String(r.id)].sort();
           const dmKey = `DM_${pair[0]}_${pair[1]}`;
           const { data } = await sb.from('team_messages').insert([{
             channel_id: dmKey,
-            sender_name: currentUser.display_name,
+            sender_name: senderFull,
             sender_role: 'Gửi tài liệu nhiều người',
             msg_type: 'FILE',
-            content: `📤 Gửi tài liệu đến ${r.display_name}${note ? ': ' + note : ''}`,
+            content: `📤 Gửi tài liệu đến ${rFullName}${note ? ': ' + note : ''}`,
             file_name: fName,
             file_url: fUrl
           }]).select();
@@ -3177,14 +3363,14 @@
             await callGasWebhook({
               action: 'RESET_PIN',
               chatId: String(r.telegram_chat_id),
-              message: `📤 <b>TÀI LIỆU MỚI TỪ ${currentUser.display_name.toUpperCase()}</b>\n• Tệp: <b>${fName}</b>`
+              message: `📤 <b>TÀI LIỆU MỚI TỪ ${senderFull.toUpperCase()}</b>\n• Tệp: <b>${fName}</b>`
             });
           }
         }
 
         const { data: logData } = await sb.from('team_messages').insert([{
           channel_id: activeChannelId,
-          sender_name: currentUser.display_name,
+          sender_name: senderFull,
           sender_role: 'Phân phối tài liệu',
           msg_type: 'CHAT',
           content: `📤 Đã gửi tệp "${fName}" cho ${recipients.length} thành viên (${recipientNames}).`
@@ -3214,7 +3400,7 @@
     }
 
     // =========================================================================
-    // 13. BACKUP & RESTORE + DAILY DIGEST 17:00
+    // 13. BACKUP & RESTORE + DAILY DIGEST
     // =========================================================================
     function openBackupModal() {
       const isFull = isSystemFullAdmin(currentUser);
@@ -3236,7 +3422,7 @@
     }
 
     function buildBackupObject(scope) {
-      const base = { exported_at: new Date().toISOString(), exported_by: currentUser ? currentUser.display_name : 'Admin', scope };
+      const base = { exported_at: new Date().toISOString(), exported_by: currentUser ? getUserFullName(currentUser) : 'Admin', scope };
       if (scope === 'CURRENT_GROUP') {
         const chan = dbChannels.find(c => String(c.id) === String(activeChannelId));
         base.channel = chan || null;
@@ -3247,6 +3433,7 @@
       }
       base.team_users = dbUsers;
       base.user_perms = dbUserPermsMap;
+      base.user_aliases = dbUserAliasesMap;
       base.team_channels = dbChannels;
       base.group_meta = dbGroupMetaMap;
       base.team_messages = dbMessages;
@@ -3298,6 +3485,10 @@
           if (parsed.user_perms) {
             dbUserPermsMap = parsed.user_perms;
             await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
+          }
+          if (parsed.user_aliases) {
+            dbUserAliasesMap = parsed.user_aliases;
+            await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
           }
           if (Array.isArray(parsed.team_channels) && parsed.team_channels.length) await sb.from('team_channels').upsert(parsed.team_channels);
           if (parsed.group_meta) {
@@ -3362,12 +3553,14 @@
         const canAccess3Fields = callerIsFull || isSelf;
         const locked = isAccountLocked(u.id);
         const failCount = getAccountFailCount(u.id);
+        const fullName = getUserFullName(u);
+        const loginAcc = getUserLoginAccount(u);
 
         if (!canAccess3Fields) {
           return `
             <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-white">${escapeHtmlSafe(u.display_name)}</span>
+                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
               </div>
               <span class="text-[11px] text-slate-500 italic">🔒 Bảo mật thông tin</span>
@@ -3379,7 +3572,8 @@
           <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : (isSelf ? 'border-blue-500/40' : 'border-slate-700')} rounded-xl p-3 space-y-2.5">
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-white">${escapeHtmlSafe(u.display_name)}</span>
+                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-blue-300 font-mono">User: ${escapeHtmlSafe(loginAcc)}</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
                 ${isSelf ? '<span class="text-[10px] text-blue-400 font-semibold">(Tài khoản của bạn)</span>' : ''}
                 ${locked ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white">🔒 ĐANG BỊ KHÓA (SAI 5 LẦN)</span>' : (failCount > 0 ? `<span class="text-[10px] text-amber-400">(Đã nhập sai ${failCount}/5 lần)</span>` : '')}
@@ -3430,25 +3624,26 @@
       const u = dbUsers.find(x => String(x.id) === String(userId));
       if (!u) return;
 
+      const fullName = getUserFullName(u);
       const freshPin = generateRandomAlphanumericPin(6);
       await sb.from('team_users').update({ pin_code: freshPin }).eq('id', userId);
       u.pin_code = freshPin;
 
       delete dbAccountLocksMap[String(userId)];
       await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
-      await recordAuditLog('MỞ KHÓA TÀI KHOẢN', `Quản trị hệ thống mở khóa cho "${u.display_name}" và cấp lại PIN mới "${freshPin}".`);
+      await recordAuditLog('MỞ KHÓA TÀI KHOẢN', `Quản trị hệ thống mở khóa cho "${fullName}" và cấp lại PIN mới "${freshPin}".`);
 
       if (u.telegram_chat_id) {
         await callGasWebhook({
           action: 'SECURITY_ALERT',
           chatId: String(u.telegram_chat_id),
-          message: `🔓 <b>TÀI KHOẢN ĐÃ ĐƯỢC MỞ KHÓA</b>\n\n• Tên tài khoản: <b>${u.display_name}</b>\n• Mã PIN mới được cấp (Chữ + Số): <code>${freshPin}</code>\n• Người mở khóa: ${currentUser.display_name}`
+          message: `🔓 <b>TÀI KHOẢN ĐÃ ĐƯỢC MỞ KHÓA</b>\n\n• Họ và tên: <b>${fullName}</b>\n• Tên đăng nhập: <code>${getUserLoginAccount(u)}</code>\n• Mã PIN mới được cấp (Chữ + Số): <code>${freshPin}</code>\n• Người mở khóa: ${getUserFullName(currentUser)}`
         });
       }
 
       renderStaffPassPinIdTab();
       renderStaffRoleTab();
-      showAppNotice(`Đã mở khóa thành công cho tài khoản "${u.display_name}"!\nMã PIN mới (chữ + số) được cấp là: ${freshPin}`, '🔓 Mở khóa tài khoản thành công');
+      showAppNotice(`Đã mở khóa thành công cho tài khoản "${fullName}"!\nMã PIN mới (chữ + số) được cấp là: ${freshPin}`, '🔓 Mở khóa tài khoản thành công');
     }
 
     async function clearUserTelegramId(userId) {
@@ -3458,7 +3653,7 @@
       const isSelf = currentUser && String(currentUser.id) === String(userId);
       if (!callerIsFull && !isSelf) return;
 
-      const ok = await showAppConfirm(`Xóa liên kết Telegram Chat ID của "${u.display_name}"?`, '🗑️ Xóa Telegram ID');
+      const ok = await showAppConfirm(`Xóa liên kết Telegram Chat ID của "${getUserFullName(u)}"?`, '🗑️ Xóa Telegram ID');
       if (!ok) return;
       document.getElementById(`editTgInput_${userId}`).value = '';
       await saveUserPassPinAndTelegram(userId);
@@ -3496,11 +3691,11 @@
         updateTelegramIndicator();
       }
 
-      await recordAuditLog('CẤP ĐỔI PIN / ID', `Cập nhật Pass/PIN chữ+số & Telegram ID cho thành viên "${u.display_name}".`);
+      await recordAuditLog('CẤP ĐỔI PIN / ID', `Cập nhật Pass/PIN chữ+số & Telegram ID cho thành viên "${getUserFullName(u)}".`);
       renderChannelsAndDm();
       renderStaffPassPinIdTab();
       renderStaffRoleTab();
-      showAppNotice(`Đã lưu thông tin Pass/PIN (${checkPin.value}) & Telegram ID cho "${u.display_name}"!`, '🔑 Cập nhật Pass/PIN thành công');
+      showAppNotice(`Đã lưu thông tin Pass/PIN (${checkPin.value}) & Telegram ID cho "${getUserFullName(u)}"!`, '🔑 Cập nhật Pass/PIN thành công');
     }
 
     function renderStaffRoleTab() {
@@ -3514,12 +3709,14 @@
         const targetPerm = getUserPermDef(u);
         const canSeeDetails = callerIsFull || isSelf;
         const locked = isAccountLocked(u.id);
+        const fullName = getUserFullName(u);
+        const loginAcc = getUserLoginAccount(u);
 
         if (!canSeeDetails) {
           return `
             <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-white">${escapeHtmlSafe(u.display_name)}</span>
+                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
               </div>
             </div>
@@ -3534,7 +3731,8 @@
           <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : 'border-slate-700'} rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div class="space-y-0.5 min-w-0">
               <div class="font-bold text-white flex items-center gap-2 flex-wrap">
-                <span>${escapeHtmlSafe(u.display_name)}</span>
+                <span>${escapeHtmlSafe(fullName)}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-blue-300 font-mono">User: ${escapeHtmlSafe(loginAcc)}</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
                 ${locked ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white">🔒 ĐANG KHÓA</span>' : ''}
               </div>
@@ -3567,7 +3765,7 @@
                 `}
 
                 <button type="button" onclick="adminEditStaffInfo('${u.id}')" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 px-2.5 py-1.5 rounded-lg text-[11px] font-medium">
-                  ✏️ Sửa tên/chức vụ
+                  ✏️ Sửa họ tên / user
                 </button>
 
                 ${(!isSelf && !isRootOwner) ? `
@@ -3595,28 +3793,32 @@
       await sb.from('team_users').update({ is_admin: isAdminFlag }).eq('id', userId);
       u.is_admin = isAdminFlag;
 
-      await recordAuditLog('THAY ĐỔI PHÂN QUYỀN', `Gán quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${u.display_name}".`);
+      await recordAuditLog('THAY ĐỔI PHÂN QUYỀN', `Gán quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${getUserFullName(u)}".`);
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      showAppNotice(`Đã cấp quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${u.display_name}"!`, '🛡️ Cập nhật Phân quyền');
+      showAppNotice(`Đã cấp quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${getUserFullName(u)}"!`, '🛡️ Cập nhật Phân quyền');
     }
 
     async function addNewStaffMember() {
       if (!isSystemFullAdmin(currentUser)) {
         return showAppNotice('Chỉ tài khoản có quyền "Quản trị hệ thống (Full)" mới được thêm thành viên!', '🔒 Giới hạn quyền');
       }
-      const name = document.getElementById('newStaffName').value.trim();
+      const fullName = document.getElementById('newStaffFullName').value.trim();
+      const loginUser = document.getElementById('newStaffUsername').value.trim();
       const role = document.getElementById('newStaffRole').value.trim() || 'Chuyên viên';
       const rawPin = document.getElementById('newStaffPin').value.trim();
       const permCode = document.getElementById('newStaffPerm').value || 'MEMBER';
 
-      if (!name) {
-        return showAppNotice('Vui lòng nhập Tên tài khoản / Họ tên thành viên mới trước khi bấm Thêm!', '👥 Quản lý Nhân sự');
+      if (!fullName) {
+        return showAppNotice('Vui lòng nhập Họ và tên thành viên mới (để hiển thị nhãn tên thành viên)!', '👥 Quản lý Nhân sự');
+      }
+      if (!loginUser) {
+        return showAppNotice('Vui lòng nhập Tên đăng nhập (User) cho thành viên mới!', '👥 Quản lý Nhân sự');
       }
 
-      if (findUserByLoginName(name)) {
-        return showAppNotice(`Tên tài khoản "${name}" đã tồn tại. Vui lòng đặt tên khác để tránh trùng lặp khi đăng nhập!`, '⚠️ Trùng tên tài khoản');
+      if (findUserByLoginName(loginUser)) {
+        return showAppNotice(`Tên đăng nhập "${loginUser}" đã tồn tại. Vui lòng đặt Tên đăng nhập khác!`, '⚠️ Trùng tên đăng nhập');
       }
 
       const checkPin = validateAlphanumericPin(rawPin);
@@ -3625,29 +3827,52 @@
       }
 
       const isAdminFlag = (permCode === 'FULL');
-      const { data, error } = await sb.from('team_users').insert([{
-        display_name: name,
+      let { data, error } = await sb.from('team_users').insert([{
+        display_name: fullName,
+        username: loginUser,
         role_title: role,
         pin_code: checkPin.value,
         is_admin: isAdminFlag,
         telegram_chat_id: ''
       }]).select();
 
+      // Dự phòng nếu bảng team_users chưa có cột username thì chèn các cột cơ bản và lưu mapping vào __USER_ALIASES__
+      if (error) {
+        const retry = await sb.from('team_users').insert([{
+          display_name: fullName,
+          role_title: role,
+          pin_code: checkPin.value,
+          is_admin: isAdminFlag,
+          telegram_chat_id: ''
+        }]).select();
+        data = retry.data;
+        error = retry.error;
+      }
+
       let createdUser = (!error && data && data[0]) ? data[0] : {
         id: 'u_' + Date.now(),
-        display_name: name,
+        display_name: fullName,
+        username: loginUser,
         role_title: role,
         pin_code: checkPin.value,
         is_admin: isAdminFlag,
         telegram_chat_id: ''
       };
+      createdUser.username = loginUser;
       dbUsers.push(createdUser);
+
+      dbUserAliasesMap[String(createdUser.id)] = {
+        fullName: fullName,
+        loginUser: loginUser
+      };
+      await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
 
       dbUserPermsMap[String(createdUser.id)] = permCode;
       await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
-      await recordAuditLog('THÊM NHÂN SỰ MỚI', `Thêm thành viên "${name}" với quyền [${PERMISSION_DEFS[permCode].label}].`);
+      await recordAuditLog('THÊM NHÂN SỰ MỚI', `Thêm thành viên "${fullName}" (User: ${loginUser}) với quyền [${PERMISSION_DEFS[permCode].label}].`);
 
-      document.getElementById('newStaffName').value = '';
+      document.getElementById('newStaffFullName').value = '';
+      document.getElementById('newStaffUsername').value = '';
       document.getElementById('newStaffRole').value = '';
       document.getElementById('newStaffPin').value = '';
       document.getElementById('newStaffPerm').value = 'MEMBER';
@@ -3655,7 +3880,7 @@
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      showAppNotice(`Đã tạo thành viên "${name}"!\n• Mã PIN đăng nhập: ${checkPin.value}\n• Quyền hạn: ${PERMISSION_DEFS[permCode].label}`, '✅ Thêm nhân sự thành công');
+      showAppNotice(`Đã tạo thành viên mới!\n• Họ và tên: ${fullName}\n• Tên đăng nhập (User): ${loginUser}\n• Mã PIN: ${checkPin.value}\n• Quyền hạn: ${PERMISSION_DEFS[permCode].label}`, '✅ Thêm nhân sự thành công');
     }
 
     async function adminEditStaffInfo(userId) {
@@ -3663,17 +3888,36 @@
       const u = dbUsers.find(x => String(x.id) === String(userId));
       if (!u) return;
 
-      const newName = await showAppPrompt('Nhập Tên tài khoản / Họ tên mới cho thành viên:', u.display_name, '✏️ Sửa tên tài khoản');
-      if (newName === null || !newName.trim()) return;
+      const newFullName = await showAppPrompt('Nhập Họ và tên hiển thị mới cho thành viên:', getUserFullName(u), '✏️ Sửa Họ và tên');
+      if (newFullName === null || !newFullName.trim()) return;
+
+      const newLoginUser = await showAppPrompt('Nhập Tên đăng nhập (User) mới:', getUserLoginAccount(u), '✏️ Sửa Tên đăng nhập (User)');
+      if (newLoginUser === null || !newLoginUser.trim()) return;
+
       const newRole = await showAppPrompt('Nhập Chức vụ / Vị trí mới:', u.role_title || 'Chuyên viên', '✏️ Sửa chức vụ');
       if (newRole === null) return;
 
-      await sb.from('team_users').update({ display_name: newName.trim(), role_title: newRole.trim() || 'Chuyên viên' }).eq('id', userId);
-      u.display_name = newName.trim();
+      await sb.from('team_users').update({
+        display_name: newFullName.trim(),
+        role_title: newRole.trim() || 'Chuyên viên'
+      }).eq('id', userId);
+
+      // Thử cập nhật thêm cột username nếu bảng Supabase có cột này
+      await sb.from('team_users').update({ username: newLoginUser.trim() }).eq('id', userId);
+
+      u.display_name = newFullName.trim();
+      u.username = newLoginUser.trim();
       u.role_title = newRole.trim() || 'Chuyên viên';
+
+      dbUserAliasesMap[String(userId)] = {
+        fullName: newFullName.trim(),
+        loginUser: newLoginUser.trim()
+      };
+      await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
 
       if (currentUser && String(currentUser.id) === String(userId)) {
         currentUser.display_name = u.display_name;
+        currentUser.username = u.username;
         currentUser.role_title = u.role_title;
         applyPermissionUI();
       }
@@ -3681,7 +3925,7 @@
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      showAppNotice('Đã cập nhật thông tin nhân sự thành công!', '✅ Cập nhật hoàn tất');
+      showAppNotice('Đã cập nhật Họ tên, Tên đăng nhập và Chức vụ thành công!', '✅ Cập nhật hoàn tất');
     }
 
     async function adminDeleteStaffMember(userId) {
@@ -3689,21 +3933,24 @@
       const u = dbUsers.find(x => String(x.id) === String(userId));
       if (!u || isPrimarySystemOwner(u)) return;
 
-      const ok = await showAppConfirm(`Anh chắc chắn muốn XÓA VĨNH VIỄN thành viên "${u.display_name}" khỏi hệ thống?`, '🗑️ Xóa nhân sự');
+      const fullName = getUserFullName(u);
+      const ok = await showAppConfirm(`Anh chắc chắn muốn XÓA VĨNH VIỄN thành viên "${fullName}" khỏi hệ thống?`, '🗑️ Xóa nhân sự');
       if (!ok) return;
 
       await sb.from('team_users').delete().eq('id', userId);
       dbUsers = dbUsers.filter(x => String(x.id) !== String(userId));
       delete dbUserPermsMap[String(userId)];
+      delete dbUserAliasesMap[String(userId)];
       delete dbAccountLocksMap[String(userId)];
       await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
+      await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
       await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
-      await recordAuditLog('XÓA NHÂN SỰ', `Đã xóa thành viên "${u.display_name}" khỏi hệ thống.`);
+      await recordAuditLog('XÓA NHÂN SỰ', `Đã xóa thành viên "${fullName}" khỏi hệ thống.`);
 
       renderStaffRoleTab();
       renderStaffPassPinIdTab();
       renderChannelsAndDm();
-      showAppNotice(`Đã xóa thành viên "${u.display_name}" khỏi hệ thống.`, '🗑️ Đã xóa nhân sự');
+      showAppNotice(`Đã xóa thành viên "${fullName}" khỏi hệ thống.`, '🗑️ Đã xóa nhân sự');
     }
 
     function prepareMyTelegramTab(autoListen = false) {
