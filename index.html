@@ -15,8 +15,109 @@
     @keyframes spinOnce { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .animate-spin-once { animation: spinOnce 0.6s ease-in-out; }
   </style>
+  [LOCKED MODULE 00]
+  <!-- ======================================================================= -->
+  <!-- [LOCKED MODULE 00]: PWA LOGO, APPLE-TOUCH-ICON & MANIFEST (DO NOT EDIT) -->
+  <!-- ======================================================================= -->
+  <meta name="application-name" content="TeamWork Cloud" />
+  <meta name="apple-mobile-web-app-title" content="TeamWork Cloud" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <link id="twAppIconPng" rel="icon" type="image/png" sizes="512x512" href="" />
+  <link id="twAppleTouchIcon" rel="apple-touch-icon" sizes="512x512" href="" />
+  <link id="twPwaManifest" rel="manifest" href="" />
+  <script>
+    // [LOCKED LOGO GENERATOR - KHÔNG CHỈNH SỬA KHI CẬP NHẬT CHỨC NĂNG KHÁC]
+    (function initLockedTeamWorkLogo() {
+      try {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // 1. Nền bo góc hiện đại màu xanh navy đậm
+        const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+        bgGrad.addColorStop(0, '#0f172a');
+        bgGrad.addColorStop(0.5, '#1e3a8a');
+        bgGrad.addColorStop(1, '#0284c7');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, size, size);
+
+        // 2. Vòng hào quang trung tâm
+        const glow = ctx.createRadialGradient(256, 220, 30, 256, 256, 230);
+        glow.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+        glow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, size, size);
+
+        // 3. Khung khiên viền vàng kim sang trọng
+        const goldGrad = ctx.createLinearGradient(96, 80, 416, 432);
+        goldGrad.addColorStop(0, '#fde047');
+        goldGrad.addColorStop(0.5, '#f59e0b');
+        goldGrad.addColorStop(1, '#d97706');
+
+        ctx.strokeStyle = goldGrad;
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.roundRect(44, 44, size - 88, size - 88, 96);
+        ctx.stroke();
+
+        // 4. Biểu tượng tia chớp điều hành phía trên
+        ctx.fillStyle = goldGrad;
+        ctx.beginPath();
+        ctx.moveTo(272, 92);
+        ctx.lineTo(204, 214);
+        ctx.lineTo(256, 214);
+        ctx.lineTo(236, 304);
+        ctx.lineTo(314, 178);
+        ctx.lineTo(260, 178);
+        ctx.closePath();
+        ctx.fill();
+
+        // 5. Chữ TW & dòng chữ CLOUD sắc nét phía dưới
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 108px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('TW', 256, 368);
+
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText('CLOUD', 256, 426);
+
+        const pngDataUrl = canvas.toDataURL('image/png');
+        const iconEl = document.getElementById('twAppIconPng');
+        const appleEl = document.getElementById('twAppleTouchIcon');
+        if (iconEl) iconEl.href = pngDataUrl;
+        if (appleEl) appleEl.href = pngDataUrl;
+
+        // 6. Tạo Manifest động hỗ trợ cài đặt ứng dụng trên Android & Desktop
+        const manifestObj = {
+          name: 'TeamWork Cloud — Điều Hành Dự Án',
+          short_name: 'TeamWork',
+          start_url: window.location.href,
+          display: 'standalone',
+          background_color: '#0f172a',
+          theme_color: '#0f172a',
+          icons: [
+            { src: pngDataUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+            { src: pngDataUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const manifestEl = document.getElementById('twPwaManifest');
+        if (manifestEl) manifestEl.href = URL.createObjectURL(manifestBlob);
+      } catch (e) {
+        console.warn('Logo init note:', e);
+      }
+    })();
+  </script>
+  <!-- ======================================================================= -->
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col overflow-hidden select-none sm:select-auto">
+  <body class="bg-slate-950 text-slate-100 flex flex-col overflow-hidden select-none sm:select-auto">
 
   <!-- [LOCKED UI 01: MÀN HÌNH ĐĂNG NHẬP] -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
