@@ -799,13 +799,15 @@
       }
     };
 
-    function getUserFullName(user) {
-      if (!user) return 'Thành viên';
-      const alias = dbUserAliasesMap[String(user.id)];
-      if (alias && alias.fullName && alias.fullName.trim()) return alias.fullName.trim();
-      return (user.display_name || user.username || 'Thành viên').trim();
-    }
-
+   function getUserFullName(user) {
+  if (!user) return 'Thành viên';
+  const alias = dbUserAliasesMap[String(user.id)];
+  if (alias && alias.fullName && alias.fullName.trim()) return alias.fullName.trim();
+  if (user.full_name && String(user.full_name).trim()) return String(user.full_name).trim();
+  const dName = String(user.display_name || '').trim();
+  if (dName && dName.toLowerCase() !== 'admin') return dName;
+  return (dName || user.username || 'Thành viên').trim();
+}
     function getUserLoginAccount(user) {
       if (!user) return '';
       const alias = dbUserAliasesMap[String(user.id)];
