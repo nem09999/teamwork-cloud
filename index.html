@@ -4031,7 +4031,6 @@
   })();
 </script>  
 <!-- ========================================================================= -->
-    <!-- ========================================================================= -->
 <!-- [LOCKED MODULE 20]: NHÚNG GOOGLE MAPS CÓ XÁC NHẬN CHỦ ĐỘNG (DO NOT EDIT)  -->
 <!-- ========================================================================= -->
 <div id="twLockedMapSuggestBar" class="hidden fixed z-[85] bg-slate-900/95 border border-sky-500/60 backdrop-blur-md rounded-2xl shadow-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-slate-100 max-w-xl">
@@ -4055,37 +4054,29 @@
     let currentDetectedLocation = '';
     let mapAttachedForCurrentDraft = false;
     let dismissedText = '';
+    let renderDebounceTimer = null;
 
-    // Bộ nhận diện địa điểm / địa chỉ / tọa độ chính xác
+    // 1. Bộ nhận diện địa điểm / địa chỉ / tọa độ chính xác
     function detectValidLocation(rawText) {
       const text = (rawText || '').trim();
       if (text.length < 5 || text.length > 220) return null;
-      // Bỏ qua nếu đã đính kèm bản đồ rồi
       if (text.includes('[BẢN ĐỒ VỊ TRÍ:')) return null;
 
-      // 1. Kiểm tra tọa độ GPS (VD: 10.776889, 106.700806)
+      // Tọa độ GPS (VD: 10.776889, 106.700806)
       const coordMatch = text.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
-      if (coordMatch) {
-        return `${coordMatch[1]}, ${coordMatch[2]}`;
-      }
+      if (coordMatch) return `${coordMatch[1]}, ${coordMatch[2]}`;
 
-      // 2. Kiểm tra địa chỉ chi tiết có số nhà + đơn vị hành chính (phường/xã/quận/huyện/tỉnh/thành phố)
+      // Địa chỉ chi tiết có số nhà + đơn vị hành chính
       const fullAddressRegex = /(?:số\s*)?\d+[a-zA-Z0-9\/\-]*\s+[^,]+,\s*(?:phường|p\.|xã|x\.|thị trấn|tt\.)\s*[^,]+,\s*(?:quận|q\.|huyện|h\.|thành phố|tp\.|thị xã|tx\.|tỉnh)\s*[^,]+/i;
-      if (fullAddressRegex.test(text)) {
-        return text;
-      }
+      if (fullAddressRegex.test(text)) return text;
 
-      // 3. Kiểm tra địa chỉ có ít nhất 2 cấp hành chính rõ ràng (VD: Phường Long Thới, Nhà Bè, TP.HCM)
+      // Địa chỉ có ít nhất 2 cấp hành chính rõ ràng
       const adminMultiLevelRegex = /(?:phường|p\.|xã|x\.|thị trấn|tt\.)\s*[a-zA-ZÀ-ỹ0-9\s]+,\s*(?:quận|q\.|huyện|h\.|thành phố|tp\.|thị xã|tx\.|tỉnh)\s*[a-zA-ZÀ-ỹ0-9\s]+/i;
-      if (adminMultiLevelRegex.test(text)) {
-        return text;
-      }
+      if (adminMultiLevelRegex.test(text)) return text;
 
-      // 4. Kiểm tra tên tỉnh / thành phố / địa danh hành chính cụ thể (VD: tỉnh Lạng Sơn, thành phố Đà Lạt)
+      // Tên tỉnh / thành phố cụ thể
       const provinceOrCityRegex = /^(?:tỉnh|thành phố|tp\.?)\s+[A-ZÀ-Ỹa-zà-ỹ][a-zA-ZÀ-ỹ\s]{2,40}$/i;
-      if (provinceOrCityRegex.test(text)) {
-        return text;
-      }
+      if (provinceOrCityRegex.test(text)) return text;
 
       return null;
     }
@@ -4149,14 +4140,12 @@
       if (bar) bar.classList.add('hidden');
     };
 
-    // Chèn thẻ định danh bản đồ vào nội dung tin nhắn CHỈ KHI người dùng đã click chọn nút xác nhận
     function injectMapTagBeforeSend(chatInput) {
       if (!mapAttachedForCurrentDraft || !currentDetectedLocation) return;
       const loc = currentDetectedLocation;
-      const encoded = encodeURIComponent(loc);
       const currentVal = chatInput.value.trim();
       if (!currentVal.includes('[BẢN ĐỒ VỊ TRÍ:')) {
-        chatInput.value = `${currentVal}\n🗺️ [BẢN ĐỒ VỊ TRÍ: ${loc}]\n🔗 https://www.google.com/maps?q=${encoded}`;
+        chatInput.value = `${currentVal}\n🗺️ [BẢN ĐỒ VỊ TRÍ: ${loc}]`;
         chatInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
       mapAttachedForCurrentDraft = false;
@@ -4165,7 +4154,6 @@
       if (bar) bar.classList.add('hidden');
     }
 
-    // Lắng nghe thao tác gõ phím và bấm Gửi trên ô chat
     function bindChatInputMapWatcher() {
       const chatInput = document.querySelector('input[placeholder*="Nhập trao đổi"], textarea[placeholder*="Nhập trao đổi"]');
       if (!chatInput || chatInput.dataset.twMapBound === '1') return;
@@ -4197,41 +4185,66 @@
       }
     }
 
-    // Tự động dựng khung Google Maps trực quan cho các tin nhắn đã được xác nhận đính kèm bản đồ
+    // 2. Render DUY NHẤT 1 khung bản đồ cho mỗi tin nhắn (Không trùng 3 khung, không chớp nháy)
     function renderEmbeddedMapsInMessages() {
-      const msgNodes = document.querySelectorAll('div, p, span');
-      msgNodes.forEach(el => {
-        if (el.dataset.twMapRendered === '1') return;
-        if (el.children.length > 3) return;
-        const txt = el.textContent || '';
-        const match = txt.match(/🗺️\s*\[BẢN ĐỒ VỊ TRÍ:\s*([^\]]+)\]/);
+      const chatArea = document.querySelector('#messagesContainer, #chatMessages, [id*="messageList"], [class*="overflow-y-auto"]') || document.body;
+      const walker = document.createTreeWalker(chatArea, NodeFilter.SHOW_TEXT, null, false);
+      const matchedTextNodes = [];
+      let n;
+      while ((n = walker.nextNode())) {
+        if (n.nodeValue && n.nodeValue.includes('[BẢN ĐỒ VỊ TRÍ:')) {
+          matchedTextNodes.push(n);
+        }
+      }
+
+      matchedTextNodes.forEach(textNode => {
+        const msgContainer = textNode.parentElement;
+        if (!msgContainer) return;
+
+        // Kiểm tra nếu tin nhắn này đã có khung bản đồ rồi thì bỏ qua tuyệt đối
+        const bubbleBox = msgContainer.closest('[class*="rounded"]') || msgContainer;
+        if (bubbleBox.querySelector('.tw-embedded-map-card')) return;
+
+        const match = textNode.nodeValue.match(/🗺️?\s*\[BẢN ĐỒ VỊ TRÍ:\s*([^\]]+)\]/);
         if (!match) return;
 
-        el.dataset.twMapRendered = '1';
         const locationQuery = match[1].trim();
+        // Làm gọn chuỗi kỹ thuật trong tin nhắn cho đẹp mắt
+        textNode.nodeValue = textNode.nodeValue.replace(/\n?🗺️?\s*\[BẢN ĐỒ VỊ TRÍ:\s*[^\]]+\]/, '').trim();
+
         const encodedQuery = encodeURIComponent(locationQuery);
         const embedUrl = `https://maps.google.com/maps?q=${encodedQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
         const externalUrl = `https://www.google.com/maps?q=${encodedQuery}`;
 
         const card = document.createElement('div');
-        card.className = 'mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow-lg max-w-md';
+        card.className = 'tw-embedded-map-card mt-2.5 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow-lg w-full max-w-md';
         card.innerHTML = `
           <div class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
             <span class="font-bold text-sky-400 truncate">📍 ${locationQuery}</span>
-            <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 px-2 py-0.5 rounded-lg shrink-0 font-semibold">Mở Google Maps ↗</a>
+            <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">Mở Google Maps ↗</a>
           </div>
-          <iframe src="${embedUrl}" width="100%" height="210" style="border:0; display:block;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe src="${embedUrl}" width="100%" height="220" style="border:0; display:block;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         `;
-        el.appendChild(card);
+        msgContainer.appendChild(card);
       });
     }
 
     bindChatInputMapWatcher();
     renderEmbeddedMapsInMessages();
 
-    const mapObserver = new MutationObserver(() => {
-      bindChatInputMapWatcher();
-      renderEmbeddedMapsInMessages();
+    // Dùng Debounce 250ms để tránh kích hoạt lại liên tục khi giao diện tự đồng bộ
+    const mapObserver = new MutationObserver((mutations) => {
+      const hasRelevantChange = mutations.some(m => {
+        if (m.target && m.target.closest && m.target.closest('.tw-embedded-map-card')) return false;
+        return true;
+      });
+      if (!hasRelevantChange) return;
+
+      clearTimeout(renderDebounceTimer);
+      renderDebounceTimer = setTimeout(() => {
+        bindChatInputMapWatcher();
+        renderEmbeddedMapsInMessages();
+      }, 250);
     });
     mapObserver.observe(document.body, { childList: true, subtree: true });
   })();
