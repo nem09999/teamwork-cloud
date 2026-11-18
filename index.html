@@ -140,7 +140,7 @@
             <span id="currentUserName" class="text-xs font-bold text-white truncate">Chưa đăng nhập</span>
           </div>
           <div class="flex items-center gap-1.5 mt-0.5">
-            <span id="currentUserPermBadge" class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-slate-700 text-slate-200">Member</span>
+            <span id="currentUserPermBadge" class="hidden text-[9px] px-1.5 py-0.2 rounded font-bold bg-slate-700 text-slate-200"></span>
             <span id="currentUserRole" class="text-[10px] text-slate-400 truncate">Thành viên</span>
           </div>
         </div>
@@ -800,11 +800,11 @@
     };
 
     function getUserFullName(user) {
-  if (!user) return 'Thành viên';
-  const alias = dbUserAliasesMap[String(user.id)];
-  if (alias && alias.fullName && alias.fullName.trim()) return alias.fullName.trim();
-  return (user.display_name || user.username || 'Thành viên').trim();
-}
+      if (!user) return 'Thành viên';
+      const alias = dbUserAliasesMap[String(user.id)];
+      if (alias && alias.fullName && alias.fullName.trim()) return alias.fullName.trim();
+      return (user.display_name || user.username || 'Thành viên').trim();
+    }
 
     function getUserLoginAccount(user) {
       if (!user) return '';
@@ -1338,32 +1338,32 @@
       renderAll();
     }
 
-   function applyPermissionUI() {
-  if (!currentUser) return;
-  const fullName = getUserFullName(currentUser);
-  document.getElementById('currentUserName').textContent = fullName;
-  document.getElementById('currentUserRole').textContent = currentUser.role_title || 'Thành viên';
+    function applyPermissionUI() {
+      if (!currentUser) return;
+      const fullName = getUserFullName(currentUser);
+      document.getElementById('currentUserName').textContent = fullName;
+      document.getElementById('currentUserRole').textContent = currentUser.role_title || 'Thành viên';
 
-  const mobName = document.getElementById('mobileMenuUserName');
-  const mobRole = document.getElementById('mobileMenuUserRole');
-  if (mobName) mobName.textContent = fullName;
-  if (mobRole) mobRole.textContent = currentUser.role_title || 'Thành viên';
+      const mobName = document.getElementById('mobileMenuUserName');
+      const mobRole = document.getElementById('mobileMenuUserRole');
+      if (mobName) mobName.textContent = fullName;
+      if (mobRole) mobRole.textContent = currentUser.role_title || 'Thành viên';
 
-  const badgeEl = document.getElementById('currentUserPermBadge');
-  if (badgeEl) badgeEl.classList.add('hidden');
+      const badgeEl = document.getElementById('currentUserPermBadge');
+      if (badgeEl) badgeEl.classList.add('hidden');
 
-  const btnNewGroup = document.getElementById('btnNewGroupSidebar');
-  if (btnNewGroup) btnNewGroup.style.display = isSystemFullAdmin(currentUser) ? 'inline-block' : 'none';
+      const btnNewGroup = document.getElementById('btnNewGroupSidebar');
+      if (btnNewGroup) btnNewGroup.style.display = isSystemFullAdmin(currentUser) ? 'inline-block' : 'none';
 
-  const btnAssign = document.getElementById('btnAssignTaskTop');
-  if (btnAssign) btnAssign.style.display = canAssignOrManageTasks(currentUser) ? 'inline-block' : 'none';
+      const btnAssign = document.getElementById('btnAssignTaskTop');
+      if (btnAssign) btnAssign.style.display = canAssignOrManageTasks(currentUser) ? 'inline-block' : 'none';
 
-  const btnMeet = document.getElementById('btnMenuMeeting');
-  if (btnMeet) btnMeet.style.display = canScheduleMeetings(currentUser) ? 'flex' : 'none';
+      const btnMeet = document.getElementById('btnMenuMeeting');
+      if (btnMeet) btnMeet.style.display = canScheduleMeetings(currentUser) ? 'flex' : 'none';
 
-  const btnAudit = document.getElementById('menuBtnAuditLog');
-  if (btnAudit) btnAudit.style.display = isSystemFullAdmin(currentUser) ? 'flex' : 'none';
-}
+      const btnAudit = document.getElementById('menuBtnAuditLog');
+      if (btnAudit) btnAudit.style.display = isSystemFullAdmin(currentUser) ? 'flex' : 'none';
+    }
 
     function updateTelegramIndicator() {
       const dot = document.getElementById('tgStatusDot');
@@ -1410,7 +1410,6 @@
       const qNoTone = normalizeLoginKey(rawName);
       if (!qExact) return null;
 
-      // Ưu tiên khớp chính xác (Tên đăng nhập user, Họ và tên, display_name hoặc id)
       const exactMatch = dbUsers.find(u => {
         const dName = String(u.display_name || '').replace(/\s+/g, ' ').trim().toLowerCase();
         const uName = String(u.username || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -1421,7 +1420,6 @@
       });
       if (exactMatch) return exactMatch;
 
-      // Dự phòng khớp không dấu tiếng Việt
       return dbUsers.find(u => {
         const dNoTone = normalizeLoginKey(u.display_name);
         const uNoTone = normalizeLoginKey(u.username);
@@ -2246,7 +2244,7 @@
                   <button onclick="openMsgContextMenu(event, '${m.id}')" title="Tùy chọn phiếu trình" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                 </div>
               </div>
-              <div class="text-xs text-slate-400">Người trình: <b class="text-white">${escapeHtmlSafe(m.sender_name)}</b> (${escapeHtmlSafe(m.sender_role || '')})</div>
+              <div class="text-xs text-slate-400">Người trình: <b class="text-white">${escapeHtmlSafe(m.sender_name)}</b>${m.sender_role ? ' (' + escapeHtmlSafe(m.sender_role) + ')' : ''}</div>
               <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">${formatMessageTextHtml(m.content)}</div>
               ${m.file_url ? `<div><a href="${escapeHtmlSafe(m.file_url)}" target="_blank" class="text-xs text-blue-400 underline break-all">📎 ${escapeHtmlSafe(m.file_name || 'Xem tài liệu đính kèm')}</a></div>` : ''}
               ${editLogBadgeHtml ? `<div>${editLogBadgeHtml}</div>` : ''}
@@ -2421,504 +2419,190 @@
 
       container.innerHTML = resHtml + msgFilesHtml;
     }
-
     // =========================================================================
-    // 11. CHECKLIST, GIAO VIỆC (CHỌN NHÓM DỰ ÁN + ADD THÀNH VIÊN) & DASHBOARD
+    // 11. GIAO VIỆC, CHECKLIST, HỒI ĐÁP & XÓA CÔNG VIỆC
     // =========================================================================
     function renderTasks() {
       const container = document.getElementById('checklistContainer');
-      const hideDone = document.getElementById('hideDoneToggle').checked;
-      let tasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
+      const hideDone = document.getElementById('hideDoneToggle')?.checked;
+      const channelTasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
 
-      document.getElementById('channelTaskCount').textContent = tasks.length;
+      document.getElementById('channelTaskCount').textContent = channelTasks.length;
       const mobTaskBadge = document.getElementById('mobTaskBadge');
-      if (mobTaskBadge) mobTaskBadge.textContent = tasks.length;
+      if (mobTaskBadge) mobTaskBadge.textContent = channelTasks.length;
 
       const myFullName = currentUser ? getUserFullName(currentUser) : '';
-      const myPending = dbTasks.filter(t => currentUser && (t.assignee_name === myFullName || t.assignee_name === currentUser.display_name) && t.status !== 'DONE').length;
-      document.getElementById('myTaskBadge').textContent = myPending;
+      const myPendingCount = dbTasks.filter(t =>
+        currentUser &&
+        t.status !== 'DONE' &&
+        (t.assignee_name === myFullName || t.assignee_name === currentUser.display_name)
+      ).length;
+      const myBadge = document.getElementById('myTaskBadge');
+      if (myBadge) myBadge.textContent = myPendingCount;
 
-      if (hideDone) tasks = tasks.filter(t => t.status !== 'DONE');
-
-      if (tasks.length === 0) {
-        container.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Chưa có đầu việc nào trong mục này.</div>`;
+      const visibleTasks = hideDone ? channelTasks.filter(t => t.status !== 'DONE') : channelTasks;
+      if (visibleTasks.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Chưa có đầu việc nào trong danh sách hiển thị.</div>`;
         return;
       }
 
-      const canManageTasks = canAssignOrManageTasks(currentUser);
-      container.innerHTML = tasks.map(t => {
+      const nowMs = Date.now();
+      container.innerHTML = visibleTasks.map(t => {
         const isDone = t.status === 'DONE';
-        const canDelete = currentUser && (isSystemFullAdmin(currentUser) || myFullName === t.assigned_by || currentUser.display_name === t.assigned_by);
-        const startStr = formatDateTimeVN(t.start_at || t.created_at);
-        const dueStr = t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn';
+        const dueMs = t.due_at ? new Date(t.due_at).getTime() : null;
+        const isOverdue = !isDone && dueMs && dueMs < nowMs;
+        const canDel = currentUser && (isSystemFullAdmin(currentUser) || getUserFullName(currentUser) === t.assigned_by);
 
         return `
-          <div class="bg-slate-800/90 border ${isDone ? 'border-emerald-800/60' : 'border-slate-700'} rounded-xl p-3 space-y-2 transition hover:border-slate-600">
+          <div class="bg-slate-800/80 border ${isDone ? 'border-emerald-800/50 opacity-75' : (isOverdue ? 'border-rose-500/60' : 'border-slate-700')} rounded-xl p-2.5 space-y-1.5 text-xs">
             <div class="flex items-start justify-between gap-2">
-              <div class="text-xs font-bold text-blue-300 truncate">👤 ${escapeHtmlSafe(t.assignee_name)}</div>
-              <div class="flex items-center gap-1 shrink-0">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${isDone ? 'DONE' : 'ĐANG LÀM'}</span>
-                ${(!isDone && canManageTasks) ? `<button onclick="sendTaskReminder('${t.id}')" title="Gửi nhắc việc / cảnh báo qua Telegram" class="bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 px-2 py-0.5 rounded text-[11px] transition">🔔</button>` : ''}
-                ${canDelete ? `<button onclick="deleteTask('${t.id}')" title="Xóa công việc này" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2 py-0.5 rounded text-[11px] transition">🗑️</button>` : ''}
-              </div>
+              <div class="font-bold ${isDone ? 'line-through text-slate-400' : 'text-white'} leading-snug">${escapeHtmlSafe(t.task_title)}</div>
+              ${canDel ? `<button onclick="deleteTask('${t.id}')" title="Xóa công việc" class="text-slate-500 hover:text-rose-400 shrink-0">🗑️</button>` : ''}
             </div>
-            <div class="text-xs text-white font-medium leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${escapeHtmlSafe(t.task_title)}</div>
-            <div class="text-[11px] text-slate-400 space-y-1 pt-1.5 border-t border-slate-700/70">
-              <div class="text-emerald-400/90">🟢 BĐ: ${startStr}</div>
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-rose-400/90">🔴 KT: ${dueStr}</span>
-                <div class="flex items-center gap-1.5">
-                  <button onclick="replyTask('${t.id}')" class="bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white px-2 py-1 rounded text-[10px] font-semibold">Hồi đáp</button>
-                  ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded text-[10px] font-semibold">✓ Xong</button>` : ''}
-                </div>
-              </div>
+            <div class="text-[11px] text-slate-300">👤 Phụ trách: <b>${escapeHtmlSafe(t.assignee_name)}</b></div>
+            <div class="text-[10px] ${isOverdue ? 'text-rose-400 font-bold' : 'text-slate-400'}">
+              ⏰ Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'} ${isOverdue ? '(QUÁ HẠN)' : ''}
             </div>
-            ${(t.delay_reason || t.progress_note) ? `<div class="text-[11px] text-slate-300 bg-slate-900/70 px-2 py-1 rounded">💬 ${escapeHtmlSafe(t.delay_reason || t.progress_note)}</div>` : ''}
+            ${t.progress_note ? `<div class="text-[11px] text-blue-300 bg-slate-900/80 px-2 py-1 rounded-lg">💬 ${escapeHtmlSafe(t.progress_note)}</div>` : ''}
+            <div class="pt-1 flex items-center gap-1.5">
+              ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-1 rounded-lg font-semibold">✓ Xong</button>` : `<span class="flex-1 text-center text-emerald-400 font-bold py-1">✓ ĐÃ XONG</span>`}
+              <button onclick="replyTask('${t.id}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-1 rounded-lg font-semibold">Hồi đáp</button>
+            </div>
           </div>
         `;
       }).join('');
-    }
-
-    function openProgressModal(defaultScope = 'ALL') {
-      const scopeSel = document.getElementById('dashFilterScope');
-      if (scopeSel) scopeSel.value = defaultScope;
-
-      const assigneeSel = document.getElementById('dashFilterAssignee');
-      if (assigneeSel) {
-        assigneeSel.innerHTML = `<option value="">👥 Tất cả nhân sự</option>` +
-          dbUsers.map(u => {
-            const fullName = getUserFullName(u);
-            return `<option value="${escapeHtmlSafe(fullName)}">${escapeHtmlSafe(fullName)}</option>`;
-          }).join('');
-      }
-      renderProgressTable();
-      openModal('progressModal');
-    }
-
-    function getFilteredDashboardTasks() {
-      const scope = (document.getElementById('dashFilterScope') || {}).value || 'ALL';
-      const assigneeFilter = (document.getElementById('dashFilterAssignee') || {}).value || '';
-      const statusFilter = (document.getElementById('dashFilterStatus') || {}).value || '';
-      const nowMs = Date.now();
-      const myFullName = currentUser ? getUserFullName(currentUser) : '';
-
-      const visibleChanIds = getVisibleChannelsForCurrentUser().map(c => String(c.id));
-
-      return dbTasks.filter(t => {
-        if (!isSystemFullAdmin(currentUser) && !visibleChanIds.includes(String(t.channel_id))) return false;
-        if (scope === 'CURRENT' && String(t.channel_id) !== String(activeChannelId)) return false;
-        if (scope === 'MINE' && (!currentUser || (t.assignee_name !== myFullName && t.assignee_name !== currentUser.display_name))) return false;
-        if (assigneeFilter && t.assignee_name !== assigneeFilter) return false;
-
-        if (statusFilter === 'DONE' && t.status !== 'DONE') return false;
-        if (statusFilter === 'PENDING' && t.status === 'DONE') return false;
-        if (statusFilter === 'OVERDUE') {
-          if (t.status === 'DONE' || !t.due_at || new Date(t.due_at).getTime() >= nowMs) return false;
-        }
-        return true;
-      });
-    }
-
-    function renderProgressTable() {
-      const tbody = document.getElementById('progressTableBody');
-      const kpiBox = document.getElementById('dashboardKpiCards');
-      if (!tbody) return;
-
-      const tasks = getFilteredDashboardTasks();
-      const nowMs = Date.now();
-      const canRemind = canAssignOrManageTasks(currentUser);
-
-      const totalCount = tasks.length;
-      const doneCount = tasks.filter(t => t.status === 'DONE').length;
-      const overdueCount = tasks.filter(t => t.status !== 'DONE' && t.due_at && new Date(t.due_at).getTime() < nowMs).length;
-      const doingCount = totalCount - doneCount;
-      const ratePct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-
-      if (kpiBox) {
-        kpiBox.innerHTML = `
-          <div class="bg-white border border-slate-200 rounded-xl p-2.5">
-            <div class="text-[10px] text-slate-500 font-bold uppercase">Tổng đầu việc</div>
-            <div class="text-lg font-extrabold text-slate-900 mt-0.5">${totalCount}</div>
-          </div>
-          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
-            <div class="text-[10px] text-emerald-700 font-bold uppercase">Đã hoàn thành</div>
-            <div class="text-lg font-extrabold text-emerald-700 mt-0.5">${doneCount}</div>
-          </div>
-          <div class="bg-blue-50 border border-blue-200 rounded-xl p-2.5">
-            <div class="text-[10px] text-blue-700 font-bold uppercase">Đang triển khai</div>
-            <div class="text-lg font-extrabold text-blue-700 mt-0.5">${doingCount}</div>
-          </div>
-          <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
-            <div class="text-[10px] text-rose-700 font-bold uppercase">Quá hạn (Overdue)</div>
-            <div class="text-lg font-extrabold text-rose-700 mt-0.5">${overdueCount}</div>
-          </div>
-          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5 col-span-2 sm:col-span-1">
-            <div class="text-[10px] text-indigo-700 font-bold uppercase">Tỷ lệ hoàn thành</div>
-            <div class="text-lg font-extrabold text-indigo-700 mt-0.5">${ratePct}%</div>
-          </div>
-        `;
-      }
-
-      if (tasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Không có công việc nào khớp bộ lọc hiện tại.</td></tr>`;
-        return;
-      }
-
-      const myFullName = currentUser ? getUserFullName(currentUser) : '';
-
-      tbody.innerHTML = tasks.map(t => {
-        const isDone = t.status === 'DONE';
-        const canDelete = currentUser && (isSystemFullAdmin(currentUser) || myFullName === t.assigned_by || currentUser.display_name === t.assigned_by);
-        const startStr = formatDateTimeVN(t.start_at || t.created_at);
-        const dueStr = t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn';
-        const chanObj = dbChannels.find(c => String(c.id) === String(t.channel_id));
-        const chanTitle = chanObj ? chanObj.name : 'Dự án';
-
-        let statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-600 text-white">⏳ ĐANG TRIỂN KHAI</span>`;
-        if (isDone) {
-          statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-600 text-white">✓ ĐÃ XONG (DONE)</span>`;
-        } else if (t.due_at) {
-          const diff = new Date(t.due_at).getTime() - nowMs;
-          if (diff < 0) statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-600 text-white">🚨 QUÁ DEADLINE</span>`;
-          else if (diff <= 30 * 60 * 1000) statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500 text-white">🔔 ĐẾN DEADLINE</span>`;
-        }
-
-        const noteDisplay = [t.delay_reason, t.progress_note].filter(Boolean).join(' — ') || '—';
-
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-3 font-semibold text-indigo-700 max-w-[140px] truncate"># ${escapeHtmlSafe(chanTitle)}</td>
-            <td class="py-3 px-3 font-semibold text-slate-900">${escapeHtmlSafe(t.assignee_name)}</td>
-            <td class="py-3 px-3 text-slate-800 max-w-xs">${escapeHtmlSafe(t.task_title)}</td>
-            <td class="py-3 px-3 text-[11px] text-slate-600">
-              <div class="text-emerald-600 font-medium">🟢 ${startStr}</div>
-              <div class="text-rose-600 font-medium">🔴 ${dueStr}</div>
-            </td>
-            <td class="py-3 px-3 text-slate-700">${escapeHtmlSafe(t.meeting_chair || t.assigned_by || 'Lãnh Đạo')} ✅</td>
-            <td class="py-3 px-3">${statusBadge}</td>
-            <td class="py-3 px-3 text-slate-600 max-w-xs">${escapeHtmlSafe(noteDisplay)}</td>
-            <td class="py-3 px-3 text-right whitespace-nowrap">
-              <div class="inline-flex items-center gap-1.5">
-                ${(!isDone && canRemind) ? `<button onclick="sendTaskReminder('${t.id}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">🔔 Nhắc việc</button>` : ''}
-                <button onclick="replyTask('${t.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">Hồi đáp</button>
-                ${canDelete ? `<button onclick="deleteTask('${t.id}')" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition">🗑️ Xóa</button>` : ''}
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function exportChecklistToExcel() {
-      const tasks = getFilteredDashboardTasks();
-      let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>
-        <h3>BẢNG TỔNG HỢP TIẾN ĐỘ CÔNG VIỆC DỰ ÁN</h3>
-        <p>Ngày xuất báo cáo: ${formatDateTimeVN(new Date().toISOString())}</p>
-        <table border="1" cellspacing="0" cellpadding="6">
-          <tr style="background:#e2e8f0;font-weight:bold;">
-            <th>STT</th><th>Dự án</th><th>Thành viên thực hiện</th><th>Nội dung công việc</th><th>Thời gian bắt đầu</th><th>Thời hạn hoàn thành</th><th>Người giao / Chủ trì</th><th>Trạng thái</th><th>Ghi chú / Hồi đáp</th>
-          </tr>`;
-
-      tasks.forEach((t, idx) => {
-        const chanObj = dbChannels.find(c => String(c.id) === String(t.channel_id));
-        tableHtml += `<tr>
-          <td>${idx + 1}</td>
-          <td>${escapeHtmlSafe(chanObj ? chanObj.name : '')}</td>
-          <td>${escapeHtmlSafe(t.assignee_name)}</td>
-          <td>${escapeHtmlSafe(t.task_title)}</td>
-          <td>${formatDateTimeVN(t.start_at || t.created_at)}</td>
-          <td>${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</td>
-          <td>${escapeHtmlSafe(t.meeting_chair || t.assigned_by || '')}</td>
-          <td>${t.status === 'DONE' ? 'ĐÃ HOÀN THÀNH' : 'ĐANG TRIỂN KHAI'}</td>
-          <td>${escapeHtmlSafe([t.delay_reason, t.progress_note].filter(Boolean).join(' - '))}</td>
-        </tr>`;
-      });
-      tableHtml += `</table></body></html>`;
-
-      const blob = new Blob(['\ufeff', tableHtml], { type: 'application/vnd.ms-excel' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `BaoCao_TienDo_${new Date().toISOString().slice(0, 10)}.xls`;
-      a.click();
-    }
-
-    function exportChecklistToPDF() {
-      const tasks = getFilteredDashboardTasks();
-      const win = window.open('', '_blank');
-      if (!win) return showAppNotice('Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng cho phép mở Pop-up để xuất PDF!', '⚠️ Chặn Pop-up');
-      win.document.write(`
-        <html><head><meta charset="UTF-8"><title>Báo Cáo Tiến Độ Dự Án</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
-          h2 { margin-bottom: 4px; text-transform: uppercase; }
-          table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
-          th, td { border: 1px solid #444; padding: 8px; text-align: left; }
-          th { background: #f1f5f9; }
-          .sign { margin-top: 36px; display: flex; justify-content: space-between; font-size: 13px; }
-        </style></head><body>
-        <h2>BẢNG TỔNG HỢP TIẾN ĐỘ CÔNG VIỆC DỰ ÁN</h2>
-        <div><b>Thời điểm xuất:</b> ${formatDateTimeVN(new Date().toISOString())}</div>
-        <table>
-          <thead><tr><th>STT</th><th>Dự án</th><th>Thành viên</th><th>Nội dung công việc</th><th>Thời hạn</th><th>Trạng thái</th><th>Hồi đáp</th></tr></thead>
-          <tbody>
-            ${tasks.map((t, i) => {
-              const chanObj = dbChannels.find(c => String(c.id) === String(t.channel_id));
-              return `<tr>
-                <td>${i + 1}</td>
-                <td>${escapeHtmlSafe(chanObj ? chanObj.name : '')}</td>
-                <td>${escapeHtmlSafe(t.assignee_name)}</td>
-                <td>${escapeHtmlSafe(t.task_title)}</td>
-                <td>${t.due_at ? formatDateTimeVN(t.due_at) : 'Theo kế hoạch'}</td>
-                <td>${t.status === 'DONE' ? 'Đã xong' : 'Đang thực hiện'}</td>
-                <td>${escapeHtmlSafe([t.delay_reason, t.progress_note].filter(Boolean).join(' - ') || '—')}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-        <div class="sign">
-          <div><b>NGƯỜI LẬP BIỂU</b><br/><br/><br/>${escapeHtmlSafe(currentUser ? getUserFullName(currentUser) : '')}</div>
-          <div><b>LÃNH ĐẠO / CHỦ TRÌ DUYỆT</b><br/><br/><br/>........................................</div>
-        </div>
-        <script>window.onload = function() { window.print(); };<\/script>
-        </body></html>
-      `);
-      win.document.close();
-    }
-
-    function exportMeetingMinutesPDF() {
-      const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
-      const chanName = activeChan ? activeChan.name : 'Dự Án';
-      const mTime = document.getElementById('meetingTime').value;
-      const mLoc = document.getElementById('meetingLocation').value.trim() || 'Phòng họp điều hành';
-      const mAgenda = document.getElementById('meetingAgenda').value.trim() || '(Chưa nhập nội dung)';
-      const tasksLines = document.getElementById('meetingAutoTasksLines').value.trim();
-
-      const win = window.open('', '_blank');
-      if (!win) return showAppNotice('Trình duyệt đang chặn cửa sổ bật lên (Pop-up). Vui lòng cho phép mở Pop-up để xuất PDF!', '⚠️ Chặn Pop-up');
-      win.document.write(`
-        <html><head><meta charset="UTF-8"><title>Biên Bản Họp - ${escapeHtmlSafe(chanName)}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 30px; color: #111; line-height: 1.6; }
-          h2 { text-align: center; margin-bottom: 6px; }
-          .box { border: 1px solid #555; padding: 14px; margin-top: 12px; white-space: pre-line; }
-          .sign { margin-top: 40px; display: flex; justify-content: space-between; }
-        </style></head><body>
-        <h2>BIÊN BẢN CHỐT CUỘC HỌP & PHÂN CÔNG TRIỂN KHAI</h2>
-        <div><b>Nhóm / Dự án:</b> ${escapeHtmlSafe(chanName)}</div>
-        <div><b>Thời gian họp:</b> ${mTime ? formatDateTimeVN(new Date(mTime).toISOString()) : formatDateTimeVN(new Date().toISOString())}</div>
-        <div><b>Địa điểm:</b> ${escapeHtmlSafe(mLoc)}</div>
-        <h4>I. Nội dung & Kết luận cuộc họp:</h4>
-        <div class="box">${escapeHtmlSafe(mAgenda)}</div>
-        <h4>II. Phân công nhiệm vụ sau cuộc họp:</h4>
-        <div class="box">${escapeHtmlSafe(tasksLines || 'Theo bảng phân công chi tiết.')}</div>
-        <div class="sign">
-          <div><b>THƯ KÝ / TRỢ LÝ GHI BIÊN BẢN</b><br/><br/><br/>${escapeHtmlSafe(currentUser ? getUserFullName(currentUser) : '')}</div>
-          <div><b>CHỦ TRÌ CUỘC HỌP</b><br/><br/><br/>........................................</div>
-        </div>
-        <script>window.onload = function() { window.print(); };<\/script>
-        </body></html>
-      `);
-      win.document.close();
-    }
-
-    async function sendTaskReminder(taskId) {
-      const task = dbTasks.find(t => String(t.id) === String(taskId));
-      if (!task) return;
-      const assignee = dbUsers.find(u => getUserFullName(u) === task.assignee_name || u.display_name === task.assignee_name);
-      const activeChan = dbChannels.find(c => String(c.id) === String(task.channel_id));
-      const senderFull = getUserFullName(currentUser);
-      const dueLabel = task.due_at ? formatDateTimeVN(task.due_at) : 'Theo kế hoạch';
-
-      const { data: msgData } = await sb.from('team_messages').insert([{
-        channel_id: task.channel_id || activeChannelId,
-        sender_name: senderFull,
-        sender_role: 'Cảnh báo / Nhắc tiến độ',
-        msg_type: 'DEADLINE_ALERT',
-        content: `🔔 Cảnh báo / Nhắc việc @${task.assignee_name}: Đề nghị cập nhật tiến độ đầu việc "${task.task_title}" (Hạn: ${dueLabel}).`
-      }]).select();
-      if (msgData && msgData[0]) dbMessages.push(msgData[0]);
-      renderMessages();
-
-      if (assignee && assignee.telegram_chat_id) {
-        const tgChatId = String(assignee.telegram_chat_id).trim();
-        await callGasWebhook({
-          action: 'NOTIFY_TASK',
-          assigneeChatId: tgChatId,
-          chatId: tgChatId,
-          assigneeName: getUserFullName(assignee),
-          assignedBy: senderFull,
-          channelName: activeChan ? activeChan.name : 'Dự án',
-          taskTitle: `🔔 [CẢNH BÁO DEADLINE] ${task.task_title}`,
-          dueDate: dueLabel,
-          taskId: task.id || '',
-          message: `🔔 <b>CẢNH BÁO TIẾN ĐỘ & DEADLINE</b>\n\n• Dự án: <b>${activeChan ? activeChan.name : 'Dự án'}</b>\n• Công việc: <b>${task.task_title}</b>\n• Hạn hoàn thành: <b>${dueLabel}</b>\n• Người nhắc: ${senderFull}`
-        });
-        showAppNotice(`Đã đăng cảnh báo trên kênh và gửi tin nhắn Telegram tới ${getUserFullName(assignee)} (ID: ${tgChatId})!`, '🔔 Đã gửi cảnh báo Telegram');
-      } else {
-        showAppNotice(`Đã đăng cảnh báo @${task.assignee_name} trên kênh.\n⚠️ Lưu ý: Thành viên này chưa liên kết Telegram Chat ID nên không nhận được tin qua Telegram.`, '🔔 Đã cảnh báo trên kênh');
-      }
     }
 
     function openAssignModal() {
       if (!canAssignOrManageTasks(currentUser)) {
-        return showAppNotice('Tài khoản của bạn chưa được cấp quyền Giao việc!', '🔒 Giới hạn quyền');
+        return showAppNotice('Bạn không có quyền giao việc mới.', '🔒 Giới hạn quyền');
       }
-
       const visibleChans = getVisibleChannelsForCurrentUser();
       const projSel = document.getElementById('taskProjectSelect');
-      projSel.innerHTML = visibleChans.map(c =>
-        `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}># ${escapeHtmlSafe(c.name)}</option>`
-      ).join('');
+      projSel.innerHTML = visibleChans.map(c => `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}># ${escapeHtmlSafe(c.name)}</option>`).join('');
 
-      document.getElementById('assignSessionUserLabel').textContent = getUserFullName(currentUser);
+      document.getElementById('assignSessionUserLabel').textContent = currentUser ? getUserFullName(currentUser) : '';
+      document.getElementById('taskContent').value = '';
       document.getElementById('quickAddMemberBox').classList.add('hidden');
 
-      onAssignProjectChange();
+      const now = new Date();
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      document.getElementById('taskStartTime').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      document.getElementById('taskDueTime').value = new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-      document.getElementById('taskContent').value = '';
-      const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      document.getElementById('taskStartTime').value = nowLocal;
-      document.getElementById('taskDueTime').value = '';
+      onAssignProjectChange();
       openModal('assignModal');
     }
 
     function onAssignProjectChange() {
-      const selectedChanId = document.getElementById('taskProjectSelect').value;
-      const meta = dbGroupMetaMap[String(selectedChanId)];
-      let groupUsers = dbUsers;
-      if (meta && Array.isArray(meta.members) && meta.members.length > 0) {
-        const filtered = dbUsers.filter(u => meta.members.map(String).includes(String(u.id)));
-        if (filtered.length > 0) groupUsers = filtered;
-      }
+      const chanId = document.getElementById('taskProjectSelect').value;
+      const meta = dbGroupMetaMap[String(chanId)];
+      const memberIds = (meta && Array.isArray(meta.members) && meta.members.length > 0)
+        ? meta.members.map(String)
+        : dbUsers.map(u => String(u.id));
 
-      const sel = document.getElementById('taskAssignee');
-      const currentUid = currentUser ? String(currentUser.id) : '';
-      sel.innerHTML = groupUsers.map(u => {
-        const fullName = getUserFullName(u);
-        const roleSub = u.role_title ? ` — ${escapeHtmlSafe(u.role_title)}` : '';
-        const isCurrentSession = String(u.id) === currentUid;
-        return `<option value="${u.id}" ${isCurrentSession ? 'selected' : ''}>${escapeHtmlSafe(fullName)}${roleSub}</option>`;
-      }).join('');
+      const groupUsers = dbUsers.filter(u => memberIds.includes(String(u.id)));
+      const list = groupUsers.length ? groupUsers : dbUsers;
+
+      document.getElementById('taskAssignee').innerHTML = list.map(u =>
+        `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}${u.role_title ? ' — ' + escapeHtmlSafe(u.role_title) : ''}</option>`
+      ).join('');
+
+      const nonMembers = dbUsers.filter(u => !memberIds.includes(String(u.id)));
+      document.getElementById('quickAddMemberSelect').innerHTML = nonMembers.length
+        ? nonMembers.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}</option>`).join('')
+        : '<option value="">Tất cả nhân sự đã có trong nhóm</option>';
     }
 
     function toggleQuickAddMemberToTaskGroup() {
-      const box = document.getElementById('quickAddMemberBox');
-      const sel = document.getElementById('quickAddMemberSelect');
-      const isHidden = box.classList.contains('hidden');
-
-      if (isHidden) {
-        const selectedChanId = document.getElementById('taskProjectSelect').value;
-        const meta = dbGroupMetaMap[String(selectedChanId)] || { members: [], resources: [] };
-        const existingIds = Array.isArray(meta.members) ? meta.members.map(String) : [];
-        const candidates = dbUsers.filter(u => !existingIds.includes(String(u.id)));
-        const listToRender = candidates.length > 0 ? candidates : dbUsers;
-
-        sel.innerHTML = listToRender.map(u =>
-          `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))} (${escapeHtmlSafe(u.role_title || 'Thành viên')})</option>`
-        ).join('');
-        box.classList.remove('hidden');
-      } else {
-        box.classList.add('hidden');
-      }
+      document.getElementById('quickAddMemberBox').classList.toggle('hidden');
     }
 
     async function confirmQuickAddMemberToTaskGroup() {
-      const selectedChanId = document.getElementById('taskProjectSelect').value;
-      const newMemberId = document.getElementById('quickAddMemberSelect').value;
-      if (!selectedChanId || !newMemberId) return;
+      const chanId = document.getElementById('taskProjectSelect').value;
+      const newUserId = document.getElementById('quickAddMemberSelect').value;
+      if (!chanId || !newUserId) return;
 
-      const meta = dbGroupMetaMap[String(selectedChanId)] || { members: dbUsers.map(u => String(u.id)), resources: [] };
-      if (!Array.isArray(meta.members)) meta.members = [];
-      if (!meta.members.map(String).includes(String(newMemberId))) {
-        meta.members.push(String(newMemberId));
-        dbGroupMetaMap[String(selectedChanId)] = meta;
+      const meta = dbGroupMetaMap[String(chanId)] || { members: dbUsers.map(u => String(u.id)), resources: [] };
+      if (!meta.members.map(String).includes(String(newUserId))) {
+        meta.members.push(String(newUserId));
+        dbGroupMetaMap[String(chanId)] = meta;
         await persistSystemConfigRow('__GROUP_META__', dbGroupMetaMap);
       }
-
       onAssignProjectChange();
-      document.getElementById('taskAssignee').value = String(newMemberId);
+      document.getElementById('taskAssignee').value = newUserId;
       document.getElementById('quickAddMemberBox').classList.add('hidden');
       renderChannelsAndDm();
     }
 
     async function submitNewTask() {
-      const btn = document.getElementById('btnSubmitNewTask');
-      if (btn.disabled) return;
-      const targetChanId = document.getElementById('taskProjectSelect').value || activeChannelId;
+      const chanId = document.getElementById('taskProjectSelect').value || activeChannelId;
       const assigneeId = document.getElementById('taskAssignee').value;
-      const content = document.getElementById('taskContent').value.trim();
-      const startRaw = document.getElementById('taskStartTime').value;
-      const dueRaw = document.getElementById('taskDueTime').value;
+      const title = document.getElementById('taskContent').value.trim();
+      const startVal = document.getElementById('taskStartTime').value;
+      const dueVal = document.getElementById('taskDueTime').value;
 
-      if (!content) return showAppNotice('Anh vui lòng nhập nội dung công việc!', '⚠️ Thiếu nội dung');
-      if (startRaw && dueRaw && new Date(dueRaw).getTime() < new Date(startRaw).getTime()) {
-        return showAppNotice('Thời hạn hoàn thành không được sớm hơn Thời gian bắt đầu!', '⚠️ Lỗi thời gian');
-      }
+      if (!title) return showAppNotice('Vui lòng nhập nội dung công việc yêu cầu!', '⚠️ Thiếu nội dung');
+      const assigneeObj = dbUsers.find(u => String(u.id) === String(assigneeId));
+      const assigneeFullName = assigneeObj ? getUserFullName(assigneeObj) : 'Thành viên';
+      const assignerFullName = currentUser ? getUserFullName(currentUser) : 'Quản lý';
+      const dueIso = dueVal ? new Date(dueVal).toISOString() : null;
 
-      const assignee = dbUsers.find(u => String(u.id) === String(assigneeId));
-      if (!assignee) return showAppNotice('Vui lòng chọn người thực hiện!', '⚠️ Thiếu thông tin');
-      const targetChan = dbChannels.find(c => String(c.id) === String(targetChanId));
-      const startIso = startRaw ? new Date(startRaw).toISOString() : new Date().toISOString();
-      const dueIso = dueRaw ? new Date(dueRaw).toISOString() : null;
-
-      const assigneeFullName = getUserFullName(assignee);
-      const assignerFullName = getUserFullName(currentUser);
-
+      const btn = document.getElementById('btnSubmitNewTask');
       btn.disabled = true;
       btn.textContent = 'Đang giao việc...';
 
       try {
-        const insertPayload = {
-          channel_id: targetChanId,
+        const { data, error } = await sb.from('team_tasks').insert([{
+          channel_id: chanId,
           assignee_name: assigneeFullName,
           assigned_by: assignerFullName,
           meeting_chair: assignerFullName,
           chair_confirmed: true,
-          task_title: content,
+          task_title: title,
           due_at: dueIso,
           status: 'PENDING',
-          alert_stage: 'NONE'
-        };
+          alert_stage: 0
+        }]).select();
 
-        const { data } = await sb.from('team_tasks').insert([insertPayload]).select();
-        let createdTask = (data && data[0]) ? data[0] : { id: 't_' + Date.now(), ...insertPayload };
-        createdTask.start_at = startIso;
-        dbTasks.unshift(createdTask);
+        if (error) {
+          return showAppNotice('Lỗi lưu công việc lên Supabase: ' + error.message, '❌ Lỗi lưu dữ liệu');
+        }
+
+        const createdTask = data && data[0] ? data[0] : null;
+        if (createdTask) dbTasks.unshift(createdTask);
+
+        const chanObj = dbChannels.find(c => String(c.id) === String(chanId));
+        const dueLabel = dueIso ? formatDateTimeVN(dueIso) : 'Theo kế hoạch';
 
         const { data: msgData } = await sb.from('team_messages').insert([{
-          channel_id: targetChanId,
+          channel_id: chanId,
           sender_name: assignerFullName,
-          sender_role: 'Giao công việc mới',
+          sender_role: currentUser.role_title || 'Giao việc',
           msg_type: 'CHAT',
-          content: `📌 Đã giao việc cho @${assigneeFullName}: "${content}"\n⏰ Thời gian: ${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`
+          content: `📌 GIAO VIỆC MỚI cho ${assigneeFullName}:\n"${title}"\n• Thời hạn hoàn thành: ${dueLabel}`
         }]).select();
         if (msgData && msgData[0]) dbMessages.push(msgData[0]);
 
         closeModal('assignModal');
-        if (String(targetChanId) !== String(activeChannelId)) {
-          selectChannel(String(targetChanId));
-        } else {
-          renderAll();
-        }
+        renderAll();
 
-        if (assignee.telegram_chat_id) {
-          const tgChatId = String(assignee.telegram_chat_id).trim();
-          const dueText = `${formatDateTimeVN(startIso)} → ${dueIso ? formatDateTimeVN(dueIso) : 'Chưa đặt hạn'}`;
-          await callGasWebhook({
-            action: 'NOTIFY_TASK',
-            assigneeChatId: tgChatId,
-            chatId: tgChatId,
-            assigneeName: assigneeFullName,
-            assignedBy: assignerFullName,
-            channelName: targetChan ? targetChan.name : 'Dự án',
-            taskTitle: content,
-            dueDate: dueText,
-            taskId: createdTask.id || '',
-            message: `📌 <b>GIAO CÔNG VIỆC MỚI</b>\n\n• Dự án: <b>${targetChan ? targetChan.name : 'Dự án'}</b>\n• Người thực hiện: <b>${assigneeFullName}</b>\n• Nội dung: <b>${content}</b>\n• Thời hạn: <b>${dueText}</b>\n• Người giao: ${assignerFullName}`
-          });
-        } else {
-          showAppNotice(`Đã tạo công việc cho "${assigneeFullName}" trên Web App.\n⚠️ Thành viên này chưa liên kết Telegram Chat ID nên chưa gửi được thông báo qua Telegram.`, '📌 Đã giao việc');
-        }
+        const targetChatId = (assigneeObj && assigneeObj.telegram_chat_id)
+          ? String(assigneeObj.telegram_chat_id).trim()
+          : DEFAULT_APPROVER_CHAT_ID;
+
+        await callGasWebhook({
+          action: 'NOTIFY_TASK',
+          taskId: createdTask ? createdTask.id : '',
+          channelName: chanObj ? chanObj.name : 'Dự án',
+          taskTitle: title,
+          assigneeName: assigneeFullName,
+          assigneeChatId: targetChatId,
+          assignedBy: assignerFullName,
+          dueDate: dueLabel
+        });
+
+        showAppNotice(`Đã giao việc "${title}" cho ${assigneeFullName} và gửi thông báo Telegram!`, '✅ Giao việc thành công');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Giao Việc & Gửi Telegram';
@@ -2926,670 +2610,427 @@
     }
 
     async function markTaskDone(taskId) {
-  const task = dbTasks.find(t => String(t.id) === String(taskId));
-  if (!task) return;
-  const note = task.progress_note || 'Đã hoàn thành công việc được giao.';
-  const senderFull = currentUser ? getUserFullName(currentUser) : (task.assignee_name || 'Thành viên');
+      const task = dbTasks.find(t => String(t.id) === String(taskId));
+      if (!task) return;
+      const note = task.progress_note || 'Đã hoàn thành công việc được giao.';
+      const senderFull = currentUser ? getUserFullName(currentUser) : (task.assignee_name || 'Thành viên');
 
-  const { error } = await sb.from('team_tasks').update({
-    status: 'DONE',
-    progress_note: note
-  }).eq('id', taskId);
+      const { error } = await sb.from('team_tasks').update({
+        status: 'DONE',
+        progress_note: note
+      }).eq('id', taskId);
 
-  if (error) {
-    return showAppNotice('Lỗi cập nhật trạng thái lên Supabase: ' + error.message, '❌ Lỗi lưu dữ liệu');
-  }
+      if (error) {
+        return showAppNotice('Lỗi cập nhật trạng thái lên Supabase: ' + error.message, '❌ Lỗi lưu dữ liệu');
+      }
 
-  task.status = 'DONE';
-  task.progress_note = note;
+      task.status = 'DONE';
+      task.progress_note = note;
 
-  const { data: msgData } = await sb.from('team_messages').insert([{
-    channel_id: task.channel_id || activeChannelId,
-    sender_name: senderFull,
-    sender_role: 'Báo cáo hoàn thành',
-    msg_type: 'CHAT',
-    content: `🎉 Đã báo cáo HOÀN THÀNH (DONE) đầu việc: "${task.task_title}"`
-  }]).select();
-  if (msgData && msgData[0]) dbMessages.push(msgData[0]);
+      const { data: msgData } = await sb.from('team_messages').insert([{
+        channel_id: task.channel_id || activeChannelId,
+        sender_name: senderFull,
+        sender_role: 'Báo cáo hoàn thành',
+        msg_type: 'CHAT',
+        content: `🎉 Đã báo cáo HOÀN THÀNH (DONE) đầu việc: "${task.task_title}"`
+      }]).select();
+      if (msgData && msgData[0]) dbMessages.push(msgData[0]);
 
-  renderAll();
-  if (!document.getElementById('myTasksModal').classList.contains('hidden')) {
-    openMyTasksModal();
-  }
+      renderAll();
+      if (!document.getElementById('myTasksModal').classList.contains('hidden')) {
+        openMyTasksModal();
+      }
 
-  const assigner = dbUsers.find(u => getUserFullName(u) === task.assigned_by || u.display_name === task.assigned_by);
-  const notifyChatId = (assigner && assigner.telegram_chat_id) ? String(assigner.telegram_chat_id).trim() : DEFAULT_APPROVER_CHAT_ID;
-  await callGasWebhook({
-    action: 'SECURITY_ALERT',
-    chatId: notifyChatId,
-    message: `🎉 <b>BÁO CÁO HOÀN THÀNH CÔNG VIỆC</b>\n\n• Đầu việc: <b>${task.task_title}</b>\n• Người thực hiện: <b>${senderFull}</b>\n• Trạng thái: <b>ĐÃ XONG (DONE)</b>`
-  });
+      const assigner = dbUsers.find(u => getUserFullName(u) === task.assigned_by || u.display_name === task.assigned_by);
+      const notifyChatId = (assigner && assigner.telegram_chat_id) ? String(assigner.telegram_chat_id).trim() : DEFAULT_APPROVER_CHAT_ID;
+      await callGasWebhook({
+        action: 'SECURITY_ALERT',
+        chatId: notifyChatId,
+        message: `🎉 <b>BÁO CÁO HOÀN THÀNH CÔNG VIỆC</b>\n\n• Đầu việc: <b>${task.task_title}</b>\n• Người thực hiện: <b>${senderFull}</b>\n• Trạng thái: <b>ĐÃ XONG (DONE)</b>`
+      });
 
-  showAppNotice(`Đã xác nhận HOÀN THÀNH đầu việc "${task.task_title}" và gửi thông báo về Telegram!`, '🎉 Hoàn thành công việc');
-}
+      showAppNotice(`Đã xác nhận HOÀN THÀNH đầu việc "${task.task_title}" và gửi thông báo về Telegram!`, '🎉 Hoàn thành công việc');
+    }
 
-async function replyTask(taskId) {
-  const task = dbTasks.find(t => String(t.id) === String(taskId));
-  if (!task) return;
+    async function replyTask(taskId) {
+      const task = dbTasks.find(t => String(t.id) === String(taskId));
+      if (!task) return;
 
-  const reply = await showAppPrompt(
-    `Nhập nội dung hồi đáp tiến độ / lý do trễ hạn cho việc "${task.task_title}":`,
-    task.progress_note || task.delay_reason || '',
-    '💬 Hồi đáp tiến độ công việc'
-  );
-  if (reply === null) return;
+      const reply = await showAppPrompt(
+        `Nhập nội dung hồi đáp tiến độ / lý do trễ hạn cho việc "${task.task_title}":`,
+        task.progress_note || task.delay_reason || '',
+        '💬 Hồi đáp tiến độ công việc'
+      );
+      if (reply === null) return;
 
-  const cleanReply = reply.trim();
-  if (!cleanReply) {
-    return showAppNotice('Anh vui lòng nhập nội dung hồi đáp trước khi lưu!', '⚠️ Thiếu nội dung');
-  }
+      const cleanReply = reply.trim();
+      if (!cleanReply) {
+        return showAppNotice('Anh vui lòng nhập nội dung hồi đáp trước khi lưu!', '⚠️ Thiếu nội dung');
+      }
 
-  const setDone = await showAppConfirm('Đánh dấu công việc này là ĐÃ XONG (DONE) luôn không?', '✅ Xác nhận trạng thái');
-  const newStatus = setDone ? 'DONE' : 'PENDING';
-  const senderFull = currentUser ? getUserFullName(currentUser) : (task.assignee_name || 'Thành viên');
+      const setDone = await showAppConfirm('Đánh dấu công việc này là ĐÃ XONG (DONE) luôn không?', '✅ Xác nhận trạng thái');
+      const newStatus = setDone ? 'DONE' : 'PENDING';
+      const senderFull = currentUser ? getUserFullName(currentUser) : (task.assignee_name || 'Thành viên');
 
-  const { error } = await sb.from('team_tasks').update({
-    status: newStatus,
-    progress_note: cleanReply
-  }).eq('id', taskId);
+      const { error } = await sb.from('team_tasks').update({
+        status: newStatus,
+        progress_note: cleanReply
+      }).eq('id', taskId);
 
-  if (error) {
-    return showAppNotice('Không thể lưu hồi đáp lên máy chủ Supabase: ' + error.message, '❌ Lỗi lưu dữ liệu');
-  }
+      if (error) {
+        return showAppNotice('Không thể lưu hồi đáp lên máy chủ Supabase: ' + error.message, '❌ Lỗi lưu dữ liệu');
+      }
 
-  task.status = newStatus;
-  task.progress_note = cleanReply;
+      task.status = newStatus;
+      task.progress_note = cleanReply;
 
-  const statusLabel = newStatus === 'DONE' ? '✅ ĐÃ XONG (DONE)' : '⏳ ĐANG TRIỂN KHAI';
-  const { data: msgData } = await sb.from('team_messages').insert([{
-    channel_id: task.channel_id || activeChannelId,
-    sender_name: senderFull,
-    sender_role: 'Hồi đáp tiến độ',
-    msg_type: 'CHAT',
-    content: `💬 Hồi đáp đầu việc "${task.task_title}":\n"${cleanReply}"\n• Trạng thái cập nhật: ${statusLabel}`
-  }]).select();
-  if (msgData && msgData[0]) dbMessages.push(msgData[0]);
+      const statusLabel = newStatus === 'DONE' ? '✅ ĐÃ XONG (DONE)' : '⏳ ĐANG TRIỂN KHAI';
+      const { data: msgData } = await sb.from('team_messages').insert([{
+        channel_id: task.channel_id || activeChannelId,
+        sender_name: senderFull,
+        sender_role: 'Hồi đáp tiến độ',
+        msg_type: 'CHAT',
+        content: `💬 Hồi đáp đầu việc "${task.task_title}":\n"${cleanReply}"\n• Trạng thái cập nhật: ${statusLabel}`
+      }]).select();
+      if (msgData && msgData[0]) dbMessages.push(msgData[0]);
 
-  renderAll();
-  if (!document.getElementById('myTasksModal').classList.contains('hidden')) {
-    openMyTasksModal();
-  }
+      renderAll();
+      if (!document.getElementById('myTasksModal').classList.contains('hidden')) {
+        openMyTasksModal();
+      }
 
-  const assigner = dbUsers.find(u => getUserFullName(u) === task.assigned_by || u.display_name === task.assigned_by);
-  const notifyChatId = (assigner && assigner.telegram_chat_id) ? String(assigner.telegram_chat_id).trim() : DEFAULT_APPROVER_CHAT_ID;
-  await callGasWebhook({
-    action: 'SECURITY_ALERT',
-    chatId: notifyChatId,
-    message: `💬 <b>HỒI ĐÁP TIẾN ĐỘ CÔNG VIỆC</b>\n\n• Đầu việc: <b>${task.task_title}</b>\n• Người hồi đáp: <b>${senderFull}</b>\n• Nội dung: <i>"${cleanReply}"</i>\n• Trạng thái: <b>${statusLabel}</b>`
-  });
+      const assigner = dbUsers.find(u => getUserFullName(u) === task.assigned_by || u.display_name === task.assigned_by);
+      const notifyChatId = (assigner && assigner.telegram_chat_id) ? String(assigner.telegram_chat_id).trim() : DEFAULT_APPROVER_CHAT_ID;
+      await callGasWebhook({
+        action: 'SECURITY_ALERT',
+        chatId: notifyChatId,
+        message: `💬 <b>HỒI ĐÁP TIẾN ĐỘ CÔNG VIỆC</b>\n\n• Đầu việc: <b>${task.task_title}</b>\n• Người hồi đáp: <b>${senderFull}</b>\n• Nội dung: <i>"${cleanReply}"</i>\n• Trạng thái: <b>${statusLabel}</b>`
+      });
 
-  showAppNotice(`Đã lưu hồi đáp "${cleanReply}", đăng lên kênh dự án và gửi thông báo về Telegram!`, '✅ Đã gửi hồi đáp thành công');
-}
+      showAppNotice(`Đã lưu hồi đáp "${cleanReply}", đăng lên kênh dự án và gửi thông báo về Telegram!`, '✅ Đã gửi hồi đáp thành công');
+    }
 
-async function deleteTask(taskId) {
-  const task = dbTasks.find(t => String(t.id) === String(taskId));
-  if (!task) return;
-  const ok = await showAppConfirm(`Anh chắc chắn muốn XÓA VĨNH VIỄN công việc:\n"${task.task_title}" (Giao cho: ${task.assignee_name})?`, '🗑️ Xóa công việc');
-  if (!ok) return;
+    async function deleteTask(taskId) {
+      const task = dbTasks.find(t => String(t.id) === String(taskId));
+      if (!task) return;
+      const ok = await showAppConfirm(`Anh chắc chắn muốn XÓA VĨNH VIỄN công việc:\n"${task.task_title}" (Giao cho: ${task.assignee_name})?`, '🗑️ Xóa công việc');
+      if (!ok) return;
 
-  await sb.from('team_tasks').delete().eq('id', taskId);
-  dbTasks = dbTasks.filter(t => String(t.id) !== String(taskId));
-  await recordAuditLog('XÓA CÔNG VIỆC', `Đã xóa đầu việc "${task.task_title}" của ${task.assignee_name}.`);
-  renderAll();
-}
+      await sb.from('team_tasks').delete().eq('id', taskId);
+      dbTasks = dbTasks.filter(t => String(t.id) !== String(taskId));
+      await recordAuditLog('XÓA CÔNG VIỆC', `Đã xóa đầu việc "${task.task_title}" của ${task.assignee_name}.`);
+      renderAll();
+    }
 
-function openMyTasksModal() {
-  const box = document.getElementById('myTasksListContainer');
-  const myFullName = currentUser ? getUserFullName(currentUser) : '';
-  const myTasks = dbTasks.filter(t => currentUser && (t.assignee_name === myFullName || t.assignee_name === currentUser.display_name));
-  if (myTasks.length === 0) {
-    box.innerHTML = `<div class="text-center text-slate-400 py-8">Hiện tại bạn không có công việc nào được giao.</div>`;
-  } else {
-    box.innerHTML = myTasks.map(t => `
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div>
-          <div class="font-bold text-white">${escapeHtmlSafe(t.task_title)}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">Giao bởi: ${escapeHtmlSafe(t.assigned_by)} • Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</div>
-          ${t.progress_note ? `<div class="text-[11px] text-blue-300 mt-1">💬 ${escapeHtmlSafe(t.progress_note)}</div>` : ''}
-        </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          ${t.status !== 'DONE' ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-semibold">✓ Xong</button>` : `<span class="text-emerald-400 font-bold">✓ DONE</span>`}
-          <button onclick="replyTask('${t.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-semibold">Hồi đáp</button>
-        </div>
-      </div>
-    `).join('');
-  }
-  openModal('myTasksModal');
-}
+    function openMyTasksModal() {
+      const box = document.getElementById('myTasksListContainer');
+      const myFullName = currentUser ? getUserFullName(currentUser) : '';
+      const myTasks = dbTasks.filter(t => currentUser && (t.assignee_name === myFullName || t.assignee_name === currentUser.display_name));
+      if (myTasks.length === 0) {
+        box.innerHTML = `<div class="text-center text-slate-400 py-8">Hiện tại bạn không có công việc nào được giao.</div>`;
+      } else {
+        box.innerHTML = myTasks.map(t => `
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <div class="font-bold text-white">${escapeHtmlSafe(t.task_title)}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Giao bởi: ${escapeHtmlSafe(t.assigned_by)} • Hạn: ${t.due_at ? formatDateTimeVN(t.due_at) : 'Chưa đặt hạn'}</div>
+              ${t.progress_note ? `<div class="text-[11px] text-blue-300 mt-1">💬 ${escapeHtmlSafe(t.progress_note)}</div>` : ''}
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${t.status !== 'DONE' ? `<button onclick="markTaskDone('${t.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-semibold">✓ Xong</button>` : `<span class="text-emerald-400 font-bold">✓ DONE</span>`}
+              <button onclick="replyTask('${t.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-semibold">Hồi đáp</button>
+            </div>
+          </div>
+        `).join('');
+      }
+      openModal('myTasksModal');
+    }
+
     // =========================================================================
     // 12. TRÌNH PHÊ DUYỆT, SỬA/XÓA PHIẾU TRÌNH, CHỐT LỊCH HỌP
     // =========================================================================
     function openApprovalModal() {
-  document.getElementById('editingApprovalId').value = '';
-  document.getElementById('approvalModalTitle').textContent = '📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình';
-  document.getElementById('btnSubmitApproval').textContent = 'Gửi Trình Duyệt & Báo Telegram';
-  document.getElementById('approvalApproverBox').style.display = 'block';
+      document.getElementById('editingApprovalId').value = '';
+      document.getElementById('approvalModalTitle').textContent = '📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình';
+      document.getElementById('btnSubmitApproval').textContent = 'Gửi Trình Duyệt & Báo Telegram';
+      document.getElementById('approvalApproverBox').style.display = 'block';
 
-  const sel = document.getElementById('approvalApprover');
-  const approvers = dbUsers.filter(u => canApproveItems(u));
-  const list = approvers.length ? approvers : dbUsers;
-  sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}${u.role_title ? ' — ' + escapeHtmlSafe(u.role_title) : ''}</option>`).join('');
-  document.getElementById('approvalContent').value = '';
-  document.getElementById('approvalFileUrl').value = '';
-  document.getElementById('approvalFileInput').value = '';
-  openModal('approvalModal');
-}
-
-    function openEditApprovalModal(msgId) {
-      const msg = dbMessages.find(m => String(m.id) === String(msgId));
-      if (!msg || !canEditApprovalItem(msg)) {
-        return showAppNotice('Phiếu trình này đã được phê duyệt hoặc bạn không có quyền chỉnh sửa.', '🔒 Giới hạn quyền');
-      }
-
-      document.getElementById('editingApprovalId').value = String(msgId);
-      document.getElementById('approvalModalTitle').textContent = '✏️ Chỉnh Sửa Nội Dung Phiếu Trình';
-      document.getElementById('btnSubmitApproval').textContent = '💾 Lưu Chỉnh Sửa Phiếu Trình';
-      document.getElementById('approvalApproverBox').style.display = 'none';
-
-      document.getElementById('approvalContent').value = msg.content || '';
-      document.getElementById('approvalFileUrl').value = (msg.file_url && msg.file_url.startsWith('http')) ? msg.file_url : '';
+      const sel = document.getElementById('approvalApprover');
+      const approvers = dbUsers.filter(u => canApproveItems(u));
+      const list = approvers.length ? approvers : dbUsers;
+      sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}${u.role_title ? ' — ' + escapeHtmlSafe(u.role_title) : ''}</option>`).join('');
+      document.getElementById('approvalContent').value = '';
+      document.getElementById('approvalFileUrl').value = '';
       document.getElementById('approvalFileInput').value = '';
       openModal('approvalModal');
     }
 
-    async function deleteApprovalItem(msgId) {
+    function openEditApprovalModal(msgId) {
       const msg = dbMessages.find(m => String(m.id) === String(msgId));
-      if (!msg) return;
-      if (!canDeleteApprovalItem(msg)) {
-        return showAppNotice('Chỉ tài khoản có quyền "Quản trị hệ thống (Full)" mới được xóa phiếu trình phê duyệt!', '🔒 Giới hạn quyền');
+      if (!msg || !canEditApprovalItem(msg)) {
+        return showAppNotice('Bạn không có quyền chỉnh sửa phiếu trình này.', '🔒 Giới hạn quyền');
       }
 
-      const ok = await showAppConfirm(
-        `Anh chắc chắn muốn XÓA VĨNH VIỄN phiếu trình phê duyệt của "${msg.sender_name}"?\nNội dung: "${String(msg.content || '').slice(0, 80)}"`,
-        '🗑️ Xóa phiếu trình phê duyệt'
-      );
-      if (!ok) return;
-
-      await sb.from('team_messages').delete().eq('id', msgId);
-      dbMessages = dbMessages.filter(m => String(m.id) !== String(msgId));
-      if (dbApprovalHistoryMap[String(msgId)]) {
-        delete dbApprovalHistoryMap[String(msgId)];
-        await persistSystemConfigRow('__APPROVAL_HISTORY__', dbApprovalHistoryMap);
-      }
-
-      await recordAuditLog('XÓA PHIẾU TRÌNH', `Đã xóa phiếu trình của ${msg.sender_name}: "${String(msg.content || '').slice(0, 60)}"`);
-      renderMessages();
-      renderChannelFiles();
-      showAppNotice('Đã xóa phiếu trình phê duyệt và lưu nhật ký kiểm toán.', '🗑️ Đã xóa phiếu trình');
+      document.getElementById('editingApprovalId').value = String(msg.id);
+      document.getElementById('approvalModalTitle').textContent = '✏️ Chỉnh Sửa Phiếu Trình Phê Duyệt';
+      document.getElementById('btnSubmitApproval').textContent = '💾 Lưu Chỉnh Sửa Phiếu Trình';
+      document.getElementById('approvalApproverBox').style.display = 'none';
+      document.getElementById('approvalContent').value = msg.content || '';
+      document.getElementById('approvalFileUrl').value = (msg.file_url && !String(msg.file_url).startsWith('data:')) ? msg.file_url : '';
+      document.getElementById('approvalFileInput').value = '';
+      openModal('approvalModal');
     }
 
     async function submitApprovalRequest() {
-      const btn = document.getElementById('btnSubmitApproval');
-      if (btn.disabled) return;
       const editId = document.getElementById('editingApprovalId').value.trim();
+      const approverId = document.getElementById('approvalApprover').value;
       const content = document.getElementById('approvalContent').value.trim();
-      let fileUrl = document.getElementById('approvalFileUrl').value.trim();
-      let fileName = fileUrl ? 'Tài liệu đính kèm' : '';
-      const fileInput = document.getElementById('approvalFileInput');
+      const linkUrl = document.getElementById('approvalFileUrl').value.trim();
+      const fileInp = document.getElementById('approvalFileInput');
+      const fileObj = fileInp.files[0];
 
-      if (!content) return showAppNotice('Vui lòng nhập nội dung trình phê duyệt!', '⚠️ Thiếu nội dung');
-      if (fileInput.files && fileInput.files[0] && fileInput.files[0].size > 3 * 1024 * 1024) {
-        return showAppNotice('Tệp đính kèm vượt quá 3MB. Vui lòng tải lên Google Drive và dán link!', '⚠️ Giới hạn dung lượng');
+      if (!content) return showAppNotice('Vui lòng nhập nội dung tờ trình / đề xuất phê duyệt!', '⚠️ Thiếu nội dung');
+
+      if (fileObj && fileObj.size > 3 * 1024 * 1024) {
+        return showAppNotice('Tệp đính kèm trực tiếp vượt quá 3MB. Vui lòng tải lên Google Drive và dán link.', '⚠️ Dung lượng tệp lớn');
       }
 
-      const senderFull = getUserFullName(currentUser);
+      const btn = document.getElementById('btnSubmitApproval');
       btn.disabled = true;
-      const oldBtnText = btn.textContent;
       btn.textContent = 'Đang xử lý...';
 
-      try {
-        if (editId) {
-          const existingMsg = dbMessages.find(m => String(m.id) === String(editId));
-          if (!existingMsg || !canEditApprovalItem(existingMsg)) return;
+      const finalizeApproval = async (finalUrl, finalName) => {
+        try {
+          const convKey = getCurrentConversationChannelKey();
+          const senderFull = getUserFullName(currentUser);
 
-          const applyApprovalEdit = async (finalUrl, finalName) => {
-            const updateFields = { content };
-            if (finalUrl) {
-              updateFields.file_url = finalUrl;
-              updateFields.file_name = finalName || existingMsg.file_name || 'Tài liệu đính kèm';
+          if (editId) {
+            const msg = dbMessages.find(m => String(m.id) === String(editId));
+            if (msg) {
+              const updatePayload = {
+                content,
+                file_url: finalUrl || msg.file_url || null,
+                file_name: finalName || msg.file_name || null
+              };
+              await sb.from('team_messages').update(updatePayload).eq('id', editId);
+              Object.assign(msg, updatePayload);
+
+              const prevHist = dbApprovalHistoryMap[String(editId)] || { count: 0 };
+              dbApprovalHistoryMap[String(editId)] = {
+                count: (Number(prevHist.count) || 0) + 1,
+                lastEditedAt: new Date().toISOString(),
+                lastEditedBy: senderFull
+              };
+              await persistSystemConfigRow('__APPROVAL_HISTORY__', dbApprovalHistoryMap);
+              await recordAuditLog('SỬA PHIẾU TRÌNH', `Chỉnh sửa phiếu trình "${content.slice(0, 50)}".`);
             }
-
-            await sb.from('team_messages').update(updateFields).eq('id', editId);
-            existingMsg.content = content;
-            if (finalUrl) {
-              existingMsg.file_url = finalUrl;
-              existingMsg.file_name = updateFields.file_name;
-            }
-
-            const prevHist = dbApprovalHistoryMap[String(editId)] || { count: 0 };
-            const newCount = (Number(prevHist.count) || 0) + 1;
-            const nowIso = new Date().toISOString();
-            dbApprovalHistoryMap[String(editId)] = {
-              count: newCount,
-              lastEditedAt: nowIso,
-              lastEditedBy: senderFull
-            };
-            await persistSystemConfigRow('__APPROVAL_HISTORY__', dbApprovalHistoryMap);
-            await recordAuditLog('SỬA PHIẾU TRÌNH', `Sửa lần ${newCount} phiếu trình của ${existingMsg.sender_name}: "${content.slice(0, 60)}"`);
-
             closeModal('approvalModal');
             renderMessages();
             renderChannelFiles();
-            showAppNotice(`Đã cập nhật nội dung phiếu trình (Sửa lần ${newCount} lúc ${formatDateTimeVN(nowIso)}).`, '✏️ Đã cập nhật phiếu trình');
-          };
-
-          if (fileInput.files && fileInput.files[0]) {
-            const f = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-              await applyApprovalEdit(e.target.result, f.name);
-              btn.disabled = false;
-              btn.textContent = oldBtnText;
-            };
-            reader.readAsDataURL(f);
-            return;
-          } else {
-            await applyApprovalEdit(fileUrl, fileName);
             return;
           }
-        }
 
-        const approverId = document.getElementById('approvalApprover').value;
-        const approver = dbUsers.find(u => String(u.id) === String(approverId));
-        const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
-
-        const finalizeSubmit = async () => {
           const { data } = await sb.from('team_messages').insert([{
-            channel_id: activeChannelId,
+            channel_id: convKey,
             sender_name: senderFull,
             sender_role: currentUser.role_title || 'Thành viên',
             msg_type: 'APPROVAL',
             content,
-            file_url: fileUrl,
-            file_name: fileName,
+            file_url: finalUrl || null,
+            file_name: finalName || (finalUrl ? 'Hồ sơ đính kèm' : null),
             approval_status: 'PENDING'
           }]).select();
 
-          const createdMsg = data && data[0];
-          if (createdMsg) dbMessages.push(createdMsg);
+          const created = data && data[0] ? data[0] : null;
+          if (created) dbMessages.push(created);
+
           closeModal('approvalModal');
           renderMessages();
           renderChannelFiles();
 
+          const approverObj = dbUsers.find(u => String(u.id) === String(approverId));
+          const approverChatId = (approverObj && approverObj.telegram_chat_id)
+            ? String(approverObj.telegram_chat_id).trim()
+            : DEFAULT_APPROVER_CHAT_ID;
+          const chanObj = dbChannels.find(c => String(c.id) === String(activeChannelId));
+
           await callGasWebhook({
             action: 'NOTIFY_APPROVAL',
-            approverChatId: (approver && approver.telegram_chat_id) || DEFAULT_APPROVER_CHAT_ID,
-            messageId: createdMsg ? createdMsg.id : '',
+            messageId: created ? created.id : '',
+            channelName: activeDmPeer ? `Trao đổi riêng (${getUserFullName(activeDmPeer)})` : (chanObj ? chanObj.name : 'Điều hành'),
             senderName: senderFull,
             senderRole: currentUser.role_title || 'Thành viên',
-            channelName: activeChan ? activeChan.name : 'Phòng Điều Hành',
             content,
-            fileUrl: fileUrl.startsWith('http') ? fileUrl : '',
-            fileName
+            fileUrl: (finalUrl && !String(finalUrl).startsWith('data:')) ? finalUrl : '',
+            fileName: finalName || 'Xem hồ sơ',
+            approverChatId
           });
-        };
 
-        if (fileInput.files && fileInput.files[0]) {
-          const f = fileInput.files[0];
-          fileName = f.name;
-          const reader = new FileReader();
-          reader.onload = async (e) => {
-            fileUrl = e.target.result;
-            await finalizeSubmit();
-            btn.disabled = false;
-            btn.textContent = oldBtnText;
-          };
-          reader.readAsDataURL(f);
-          return;
-        } else {
-          await finalizeSubmit();
-        }
-      } finally {
-        if (!(fileInput.files && fileInput.files[0])) {
+          showAppNotice('Đã gửi phiếu trình phê duyệt và chuyển thông báo tới Lãnh đạo qua Telegram!', '📋 Đã gửi trình duyệt');
+        } finally {
           btn.disabled = false;
-          btn.textContent = oldBtnText;
+          btn.textContent = 'Gửi Trình Duyệt & Báo Telegram';
         }
+      };
+
+      if (fileObj) {
+        const reader = new FileReader();
+        reader.onload = e => finalizeApproval(e.target.result, fileObj.name);
+        reader.readAsDataURL(fileObj);
+      } else {
+        await finalizeApproval(linkUrl, linkUrl ? 'Tài liệu Google Drive' : null);
       }
     }
 
     async function quickApproveOnWeb(msgId, status) {
       if (!canApproveItems(currentUser)) return;
+      const msg = dbMessages.find(m => String(m.id) === String(msgId));
+      if (!msg) return;
       const approverFull = getUserFullName(currentUser);
+      const nowIso = new Date().toISOString();
+
       await sb.from('team_messages').update({
         approval_status: status,
         approver_name: approverFull,
-        approved_at: new Date().toISOString()
+        approved_at: nowIso
       }).eq('id', msgId);
 
-      const m = dbMessages.find(x => String(x.id) === String(msgId));
-      if (m) {
-        m.approval_status = status;
-        m.approver_name = approverFull;
-        await recordAuditLog('PHÊ DUYỆT TỜ TRÌNH', `${status === 'APPROVED' ? 'Chấp thuận' : 'Từ chối'} tờ trình của ${m.sender_name}: "${String(m.content || '').slice(0, 60)}"`);
-      }
+      msg.approval_status = status;
+      msg.approver_name = approverFull;
+      msg.approved_at = nowIso;
+      await recordAuditLog(status === 'APPROVED' ? 'DUYỆT PHIẾU TRÌNH' : 'TỪ CHỐI PHIẾU TRÌNH', `${approverFull} đã xử lý phiếu trình của ${msg.sender_name}.`);
       renderMessages();
     }
 
+    async function deleteApprovalItem(msgId) {
+      const msg = dbMessages.find(m => String(m.id) === String(msgId));
+      if (!msg || !canDeleteApprovalItem(msg)) return;
+      const ok = await showAppConfirm('Xóa vĩnh viễn phiếu trình phê duyệt này?', '🗑️ Xóa phiếu trình');
+      if (!ok) return;
+
+      await sb.from('team_messages').delete().eq('id', msgId);
+      dbMessages = dbMessages.filter(m => String(m.id) !== String(msgId));
+      await recordAuditLog('XÓA PHIẾU TRÌNH', `Đã xóa phiếu trình của ${msg.sender_name}.`);
+      renderMessages();
+      renderChannelFiles();
+    }
+
     function openMeetingModal() {
-      if (!canScheduleMeetings(currentUser)) {
-        return showAppNotice('Chỉ Trợ lý, Quản trị hoặc Chủ trì mới có quyền chốt lịch họp!', '🔒 Giới hạn quyền');
-      }
-      const nowLocal = new Date(Date.now() + 3600000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      document.getElementById('meetingTime').value = nowLocal;
+      if (!canScheduleMeetings(currentUser)) return;
+      const now = new Date();
+      document.getElementById('meetingTime').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       document.getElementById('meetingLocation').value = '';
       document.getElementById('meetingAgenda').value = '';
       document.getElementById('meetingAutoTasksLines').value = '';
-      document.getElementById('meetingTasksDue').value = '';
       openModal('meetingModal');
     }
 
     async function submitMeetingNotice() {
-      const btn = document.getElementById('btnSubmitMeeting');
-      if (btn.disabled) return;
-      const mTime = document.getElementById('meetingTime').value;
-      const mLoc = document.getElementById('meetingLocation').value.trim() || 'Phòng họp điều hành';
-      const mAgenda = document.getElementById('meetingAgenda').value.trim();
-      const autoCreate = document.getElementById('meetingAutoTasksCheck').checked;
-      const autoLinesRaw = document.getElementById('meetingAutoTasksLines').value.trim();
-      const tasksDueRaw = document.getElementById('meetingTasksDue').value;
+      const timeVal = document.getElementById('meetingTime').value;
+      const locVal = document.getElementById('meetingLocation').value.trim() || 'Phòng họp trực tuyến';
+      const agendaVal = document.getElementById('meetingAgenda').value.trim();
+      const autoTasks = document.getElementById('meetingAutoTasksCheck').checked;
+      const linesRaw = document.getElementById('meetingAutoTasksLines').value.trim();
+      const dueVal = document.getElementById('meetingTasksDue').value;
 
-      if (!mAgenda) return showAppNotice('Vui lòng nhập nội dung cuộc họp!', '⚠️ Thiếu nội dung');
+      if (!agendaVal) return showAppNotice('Vui lòng nhập nội dung / kết luận cuộc họp!', '⚠️ Thiếu nội dung');
 
       const chairFull = getUserFullName(currentUser);
-      btn.disabled = true;
-      btn.textContent = 'Đang chốt lịch...';
+      const timeLabel = timeVal ? formatDateTimeVN(new Date(timeVal).toISOString()) : 'Theo lịch thông báo';
+      const convKey = getCurrentConversationChannelKey();
 
-      try {
-        const formattedTime = mTime ? formatDateTimeVN(new Date(mTime).toISOString()) : 'Theo thông báo';
-        let noticeText = `📅 CHỐT LỊCH HỌP DỰ ÁN\n• Thời gian: ${formattedTime}\n• Địa điểm: ${mLoc}\n• Nội dung: ${mAgenda}`;
+      const noticeText = `📅 THÔNG BÁO / KẾT LUẬN CUỘC HỌP\n• Thời gian: ${timeLabel}\n• Địa điểm: ${locVal}\n• Chủ trì: ${chairFull}\n• Nội dung: ${agendaVal}`;
+      const { data: msgData } = await sb.from('team_messages').insert([{
+        channel_id: convKey,
+        sender_name: chairFull,
+        sender_role: currentUser.role_title || 'Chủ trì cuộc họp',
+        msg_type: 'CHAT',
+        content: noticeText
+      }]).select();
+      if (msgData && msgData[0]) dbMessages.push(msgData[0]);
 
-        let createdTasksCount = 0;
-        if (autoCreate && autoLinesRaw) {
-          const lines = autoLinesRaw.split('\n').map(l => l.trim()).filter(Boolean);
-          const dueIso = tasksDueRaw ? new Date(tasksDueRaw).toISOString() : null;
-          const activeChan = dbChannels.find(c => String(c.id) === String(activeChannelId));
+      let createdCount = 0;
+      if (autoTasks && linesRaw) {
+        const lines = linesRaw.split('\n').map(l => l.trim()).filter(Boolean);
+        const dueIso = dueVal ? new Date(dueVal).toISOString() : null;
+        for (const line of lines) {
+          const match = line.match(/^@([^:]+):\s*(.+)$/);
+          const rawAssignee = match ? match[1].trim() : chairFull;
+          const taskTitle = match ? match[2].trim() : line;
+          const foundUser = dbUsers.find(u =>
+            removeVietnameseTones(getUserFullName(u)).includes(removeVietnameseTones(rawAssignee))
+          );
+          const finalAssignee = foundUser ? getUserFullName(foundUser) : rawAssignee;
 
-          for (const line of lines) {
-            const match = line.match(/^@?([^:]+):\s*(.+)$/);
-            if (match) {
-              const rawName = match[1].trim().toLowerCase();
-              const taskTitle = match[2].trim();
-              const matchedUser = dbUsers.find(u =>
-                getUserFullName(u).toLowerCase().includes(rawName) ||
-                getUserLoginAccount(u).toLowerCase().includes(rawName)
-              );
-              const assigneeName = matchedUser ? getUserFullName(matchedUser) : match[1].trim();
-
-              const insertPayload = {
-                channel_id: activeChannelId,
-                assignee_name: assigneeName,
-                assigned_by: chairFull,
-                meeting_chair: chairFull,
-                chair_confirmed: true,
-                task_title: `[Sau họp] ${taskTitle}`,
-                due_at: dueIso,
-                status: 'PENDING',
-                alert_stage: 'NONE'
-              };
-
-              const { data: tData } = await sb.from('team_tasks').insert([insertPayload]).select();
-              const newTask = (tData && tData[0]) ? tData[0] : insertPayload;
-              dbTasks.unshift(newTask);
-              createdTasksCount++;
-
-              if (matchedUser && matchedUser.telegram_chat_id) {
-                const tgChatId = String(matchedUser.telegram_chat_id).trim();
-                await callGasWebhook({
-                  action: 'NOTIFY_TASK',
-                  assigneeChatId: tgChatId,
-                  chatId: tgChatId,
-                  assigneeName: assigneeName,
-                  assignedBy: chairFull,
-                  channelName: activeChan ? activeChan.name : 'Dự án',
-                  taskTitle: `[Sau họp] ${taskTitle}`,
-                  dueDate: dueIso ? formatDateTimeVN(dueIso) : 'Theo kết luận họp',
-                  taskId: newTask.id || ''
-                });
-              }
-            }
-          }
-        }
-
-        if (createdTasksCount > 0) noticeText += `\n✅ Đã tự động phân công ${createdTasksCount} đầu việc vào Checklist dự án.`;
-
-        const { data } = await sb.from('team_messages').insert([{
-          channel_id: activeChannelId,
-          sender_name: chairFull,
-          sender_role: 'Chốt lịch họp',
-          msg_type: 'CHAT',
-          content: noticeText
-        }]).select();
-
-        if (data && data[0]) dbMessages.push(data[0]);
-        closeModal('meetingModal');
-        renderAll();
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '📅 Chốt Lịch & Giao Việc';
-      }
-    }
-
-    function openMultiFileModal() {
-      const box = document.getElementById('multiFileRecipientsList');
-      box.innerHTML = dbUsers.map(u => `
-        <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 cursor-pointer hover:border-slate-700">
-          <input type="checkbox" name="multiFileTarget" value="${u.id}" class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-indigo-500" />
-          <div class="truncate">
-            <div class="font-semibold text-white truncate">${escapeHtmlSafe(getUserFullName(u))}</div>
-            <div class="text-[10px] text-slate-400 truncate">${escapeHtmlSafe(u.role_title || 'Thành viên')}</div>
-          </div>
-        </label>
-      `).join('');
-      document.getElementById('multiFileUploadInput').value = '';
-      document.getElementById('multiFileLinkInput').value = '';
-      document.getElementById('multiFileNoteInput').value = '';
-      openModal('multiFileModal');
-    }
-
-    function toggleSelectAllRecipients() {
-      const boxes = document.querySelectorAll('input[name="multiFileTarget"]');
-      const allChecked = Array.from(boxes).every(b => b.checked);
-      boxes.forEach(b => b.checked = !allChecked);
-    }
-
-    async function submitMultiFileSend() {
-      const btn = document.getElementById('btnSubmitMultiFile');
-      if (btn.disabled) return;
-      const selectedIds = Array.from(document.querySelectorAll('input[name="multiFileTarget"]:checked')).map(b => b.value);
-      if (selectedIds.length === 0) return showAppNotice('Vui lòng chọn ít nhất 1 thành viên nhận tài liệu!', '⚠️ Thiếu người nhận');
-
-      const fileInput = document.getElementById('multiFileUploadInput');
-      const linkUrl = document.getElementById('multiFileLinkInput').value.trim();
-      const note = document.getElementById('multiFileNoteInput').value.trim();
-
-      if ((!fileInput.files || fileInput.files.length === 0) && !linkUrl) {
-        return showAppNotice('Vui lòng chọn tệp tin hoặc dán đường link tài liệu!', '⚠️ Thiếu tài liệu');
-      }
-
-      const senderFull = getUserFullName(currentUser);
-      const recipients = dbUsers.filter(u => selectedIds.includes(String(u.id)));
-      const recipientNames = recipients.map(u => getUserFullName(u)).join(', ');
-
-      btn.disabled = true;
-      btn.textContent = 'Đang gửi tài liệu...';
-
-      const dispatchToRecipients = async (fName, fUrl) => {
-        for (const r of recipients) {
-          const rFullName = getUserFullName(r);
-          const pair = [String(currentUser.id), String(r.id)].sort();
-          const dmKey = `DM_${pair[0]}_${pair[1]}`;
-          const { data } = await sb.from('team_messages').insert([{
-            channel_id: dmKey,
-            sender_name: senderFull,
-            sender_role: 'Gửi tài liệu nhiều người',
-            msg_type: 'FILE',
-            content: `📤 Gửi tài liệu đến ${rFullName}${note ? ': ' + note : ''}`,
-            file_name: fName,
-            file_url: fUrl
+          const { data: tData } = await sb.from('team_tasks').insert([{
+            channel_id: activeChannelId,
+            assignee_name: finalAssignee,
+            assigned_by: chairFull,
+            meeting_chair: chairFull,
+            chair_confirmed: true,
+            task_title: taskTitle,
+            due_at: dueIso,
+            status: 'PENDING',
+            alert_stage: 0
           }]).select();
-          if (data && data[0]) dbMessages.push(data[0]);
-
-          if (r.telegram_chat_id) {
-            await callGasWebhook({
-              action: 'RESET_PIN',
-              chatId: String(r.telegram_chat_id),
-              message: `📤 <b>TÀI LIỆU MỚI TỪ ${senderFull.toUpperCase()}</b>\n• Tệp: <b>${fName}</b>`
-            });
+          if (tData && tData[0]) {
+            dbTasks.unshift(tData[0]);
+            createdCount++;
           }
         }
-
-        const { data: logData } = await sb.from('team_messages').insert([{
-          channel_id: activeChannelId,
-          sender_name: senderFull,
-          sender_role: 'Phân phối tài liệu',
-          msg_type: 'CHAT',
-          content: `📤 Đã gửi tệp "${fName}" cho ${recipients.length} thành viên (${recipientNames}).`
-        }]).select();
-        if (logData && logData[0]) dbMessages.push(logData[0]);
-
-        closeModal('multiFileModal');
-        renderMessages();
-        btn.disabled = false;
-        btn.textContent = '📤 Gửi File & Báo Telegram';
-        showAppNotice(`Đã gửi tài liệu thành công cho ${recipients.length} thành viên!`, '📤 Gửi tài liệu thành công');
-      };
-
-      if (fileInput.files && fileInput.files[0]) {
-        const f = fileInput.files[0];
-        if (f.size > 3 * 1024 * 1024) {
-          btn.disabled = false;
-          btn.textContent = '📤 Gửi File & Báo Telegram';
-          return showAppNotice('Tệp vượt quá 3MB, vui lòng tải lên Google Drive và dán link!', '⚠️ Giới hạn dung lượng');
-        }
-        const reader = new FileReader();
-        reader.onload = async (e) => await dispatchToRecipients(f.name, e.target.result);
-        reader.readAsDataURL(f);
-      } else {
-        await dispatchToRecipients('Tài liệu liên kết ngoài', linkUrl);
       }
+
+      closeModal('meetingModal');
+      renderAll();
+      showAppNotice(`Đã đăng thông báo lịch họp${createdCount ? ` và tự động tạo ${createdCount} đầu việc` : ''}!`, '📅 Chốt lịch họp thành công');
+    }
+
+    function exportMeetingMinutesPDF() {
+      const timeVal = document.getElementById('meetingTime').value;
+      const locVal = document.getElementById('meetingLocation').value.trim() || 'Phòng họp';
+      const agendaVal = document.getElementById('meetingAgenda').value.trim();
+      const linesRaw = document.getElementById('meetingAutoTasksLines').value.trim();
+      const chairFull = currentUser ? getUserFullName(currentUser) : 'Chủ trì';
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><title>Biên Bản Cuộc Họp</title>
+        <style>body{font-family:Arial,sans-serif;padding:32px;line-height:1.6}h2{text-align:center;text-transform:uppercase}</style>
+        </head><body>
+        <h2>BIÊN BẢN CUỘC HỌP & PHÂN CÔNG TRIỂN KHAI</h2>
+        <p><b>Thời gian:</b> ${timeVal ? formatDateTimeVN(new Date(timeVal).toISOString()) : ''}</p>
+        <p><b>Địa điểm:</b> ${escapeHtmlSafe(locVal)}</p>
+        <p><b>Chủ trì:</b> ${escapeHtmlSafe(chairFull)}</p>
+        <hr/>
+        <h3>1. Nội dung / Kết luận cuộc họp:</h3>
+        <p>${escapeHtmlSafe(agendaVal).replace(/\n/g, '<br/>')}</p>
+        <h3>2. Phân công thực hiện sau họp:</h3>
+        <p>${escapeHtmlSafe(linesRaw || 'Không có').replace(/\n/g, '<br/>')}</p>
+        <script>window.print();<\/script>
+        </body></html>
+      `);
+      win.document.close();
     }
 
     // =========================================================================
-    // 13. BACKUP & RESTORE + DAILY DIGEST
+    // 13. QUẢN LÝ NHÂN SỰ, PHÂN QUYỀN 4 CẤP & LIÊN KẾT TELEGRAM
     // =========================================================================
-    function openBackupModal() {
+    function openStaffModal(defaultTab = 'PASS_PIN_ID', forceTelegramGuide = false) {
       const isFull = isSystemFullAdmin(currentUser);
-      const scopeSel = document.getElementById('backupScopeSelect');
+      document.getElementById('staffTabBtn_PASS_PIN_ID').style.display = isFull ? 'block' : 'none';
+      document.getElementById('staffTabBtn_STAFF_ROLE').style.display = isFull ? 'block' : 'none';
+      document.getElementById('addStaffFormBox').style.display = isFull ? 'block' : 'none';
 
-      if (isFull) {
-        scopeSel.innerHTML = `
-          <option value="ALL">Toàn bộ hệ thống (Nhân sự, Phân quyền, Kênh, Tin nhắn, Checklist, File)</option>
-          <option value="CURRENT_GROUP">Chỉ dữ liệu Nhóm / Dự án đang mở hiện tại</option>
-        `;
-        document.getElementById('systemBackupScheduleBox').style.display = 'block';
-        document.getElementById('systemRestoreBox').style.display = 'block';
-      } else {
-        scopeSel.innerHTML = `<option value="CURRENT_GROUP">Dữ liệu Nhóm / Dự án đang mở hiện tại</option>`;
-        document.getElementById('systemBackupScheduleBox').style.display = 'none';
-        document.getElementById('systemRestoreBox').style.display = 'none';
+      const targetTab = (!isFull || forceTelegramGuide) ? 'MY_TELEGRAM' : defaultTab;
+      switchStaffModalTab(targetTab);
+
+      if (currentUser) {
+        document.getElementById('profileRoleTitle').value = currentUser.role_title || '';
+        document.getElementById('profileTelegramId').value = currentUser.telegram_chat_id || '';
+        document.getElementById('profileNewPass').value = currentUser.pin_code || '';
+        document.getElementById('telegramAutoLinkBtn').href = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=link_${encodeURIComponent(currentUser.id)}`;
       }
-      openModal('backupModal');
-    }
 
-    function buildBackupObject(scope) {
-      const base = { exported_at: new Date().toISOString(), exported_by: currentUser ? getUserFullName(currentUser) : 'Admin', scope };
-      if (scope === 'CURRENT_GROUP') {
-        const chan = dbChannels.find(c => String(c.id) === String(activeChannelId));
-        base.channel = chan || null;
-        base.group_meta = dbGroupMetaMap[String(activeChannelId)] || {};
-        base.team_messages = dbMessages.filter(m => String(m.channel_id) === String(activeChannelId));
-        base.team_tasks = dbTasks.filter(t => String(t.channel_id) === String(activeChannelId));
-        return base;
-      }
-      base.team_users = dbUsers;
-      base.user_perms = dbUserPermsMap;
-      base.user_aliases = dbUserAliasesMap;
-      base.team_channels = dbChannels;
-      base.group_meta = dbGroupMetaMap;
-      base.team_messages = dbMessages;
-      base.team_tasks = dbTasks;
-      return base;
-    }
-
-    function downloadBackupNow() {
-      const scope = document.getElementById('backupScopeSelect').value;
-      const obj = buildBackupObject(scope);
-      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `TeamWorkCloud_Backup_${scope}_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-    }
-
-    async function backupToGoogleDriveNow() {
-      const scope = document.getElementById('backupScopeSelect').value;
-      const obj = buildBackupObject(scope);
-      await callGasWebhook({
-        action: 'BACKUP_TO_DRIVE',
-        folderName: 'TeamWork_Cloud_Backup',
-        fileName: `TeamWork_ManualBackup_${scope}_${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.json`,
-        content: JSON.stringify(obj, null, 2),
-        notifyTelegram: true,
-        notifyChatId: (currentUser && currentUser.telegram_chat_id) || DEFAULT_APPROVER_CHAT_ID
-      });
-      showAppNotice('Đã gửi lệnh sao lưu lên Google Drive! Kiểm tra thư mục TeamWork_Cloud_Backup hoặc tin nhắn Telegram.', '☁️ Backup Google Drive');
-    }
-
-    async function triggerDailyDigestNow() {
-      await callGasWebhook({ action: 'RUN_DAILY_DIGEST_NOW' });
-      showAppNotice('Đã kích hoạt gửi bản tóm tắt tiến độ cuối ngày (Daily Digest) về Telegram của Lãnh đạo và Trợ lý!', '📊 Báo cáo Daily Digest');
-    }
-
-    async function restoreFromJsonFile() {
-      if (!isSystemFullAdmin(currentUser)) return;
-      const input = document.getElementById('restoreFileInput');
-      if (!input.files || !input.files[0]) return showAppNotice('Vui lòng chọn tệp backup .json cần khôi phục!', '⚠️ Thiếu tệp backup');
-      const ok = await showAppConfirm('Khôi phục dữ liệu sẽ ghi đè/bổ sung các bản ghi từ tệp sao lưu lên hệ thống. Tiếp tục?', '♻️ Khôi phục dữ liệu');
-      if (!ok) return;
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const parsed = JSON.parse(e.target.result);
-          if (Array.isArray(parsed.team_users) && parsed.team_users.length) await sb.from('team_users').upsert(parsed.team_users);
-          if (parsed.user_perms) {
-            dbUserPermsMap = parsed.user_perms;
-            await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
-          }
-          if (parsed.user_aliases) {
-            dbUserAliasesMap = parsed.user_aliases;
-            await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
-          }
-          if (Array.isArray(parsed.team_channels) && parsed.team_channels.length) await sb.from('team_channels').upsert(parsed.team_channels);
-          if (parsed.group_meta) {
-            dbGroupMetaMap = parsed.group_meta;
-            await persistSystemConfigRow('__GROUP_META__', dbGroupMetaMap);
-          }
-          if (Array.isArray(parsed.team_messages) && parsed.team_messages.length) await sb.from('team_messages').upsert(parsed.team_messages);
-          if (Array.isArray(parsed.team_tasks) && parsed.team_tasks.length) await sb.from('team_tasks').upsert(parsed.team_tasks);
-          await syncAllFromSupabase();
-          closeModal('backupModal');
-          showAppNotice('Khôi phục dữ liệu từ bản sao lưu thành công!', '🎉 Khôi phục thành công');
-        } catch (err) {
-          showAppNotice('Tệp sao lưu không hợp lệ hoặc bị lỗi định dạng JSON.', '❌ Lỗi tệp JSON');
-        }
-      };
-      reader.readAsText(input.files[0]);
-    }
-
-    // =========================================================================
-    // 14. QUẢN LÝ NHÂN SỰ - PHÂN QUYỀN, ĐỔI PASS/PIN CHỮ+SỐ & MỞ KHÓA TÀI KHOẢN
-    // =========================================================================
-    function openStaffModal(defaultTab = 'PASS_PIN_ID', autoListenTg = false) {
-      renderStaffPassPinIdTab();
-      renderStaffRoleTab();
-      prepareMyTelegramTab(autoListenTg);
-      switchStaffModalTab(defaultTab);
+      renderStaffManagementLists();
       openModal('staffModal');
     }
 
@@ -3601,518 +3042,522 @@ function openMyTasksModal() {
       closeModal('staffModal');
     }
 
-    function switchStaffModalTab(tabKey) {
+    function switchStaffModalTab(tabName) {
       ['PASS_PIN_ID', 'STAFF_ROLE', 'MY_TELEGRAM'].forEach(t => {
-        const btn = document.getElementById('staffTabBtn_' + t);
-        const sec = document.getElementById('staffSection_' + t);
-        if (t === tabKey) {
+        const btn = document.getElementById(`staffTabBtn_${t}`);
+        const sec = document.getElementById(`staffSection_${t}`);
+        if (t === tabName) {
+          btn.className = 'py-2 px-3 rounded-xl bg-blue-600 text-white font-bold';
           sec.classList.remove('hidden');
-          if (t === 'PASS_PIN_ID') btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-amber-500/20 text-amber-300 border-amber-500/40';
-          else if (t === 'STAFF_ROLE') btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-purple-500/20 text-purple-300 border-purple-500/40';
-          else btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-blue-500/20 text-blue-300 border-blue-500/40';
         } else {
+          btn.className = 'py-2 px-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold';
           sec.classList.add('hidden');
-          btn.className = 'py-2 px-3 rounded-xl font-bold border text-left flex items-center gap-2 transition bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800';
         }
       });
     }
 
-    function renderStaffPassPinIdTab() {
-      const box = document.getElementById('staffSection_PASS_PIN_ID');
-      if (!box) return;
-      const callerIsFull = isSystemFullAdmin(currentUser);
+    function renderStaffManagementLists() {
+      const isFull = isSystemFullAdmin(currentUser);
+      const pinBox = document.getElementById('staffSection_PASS_PIN_ID');
+      const roleBox = document.getElementById('staffRoleListContainer');
 
-      box.innerHTML = dbUsers.map(u => {
-        const targetPerm = getUserPermDef(u);
-        const isSelf = currentUser && String(currentUser.id) === String(u.id);
-        const canAccess3Fields = callerIsFull || isSelf;
-        const locked = isAccountLocked(u.id);
-        const failCount = getAccountFailCount(u.id);
+      pinBox.innerHTML = dbUsers.map(u => {
         const fullName = getUserFullName(u);
-        const loginAcc = getUserLoginAccount(u);
-
-        if (!canAccess3Fields) {
-          return `
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
-              </div>
-              <span class="text-[11px] text-slate-500 italic">🔒 Bảo mật thông tin</span>
-            </div>
-          `;
-        }
-
+        const loginUser = getUserLoginAccount(u);
+        const locked = isAccountLocked(u.id);
         return `
-          <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : (isSelf ? 'border-blue-500/40' : 'border-slate-700')} rounded-xl p-3 space-y-2.5">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-blue-300 font-mono">User: ${escapeHtmlSafe(loginAcc)}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
-                ${isSelf ? '<span class="text-[10px] text-blue-400 font-semibold">(Tài khoản của bạn)</span>' : ''}
-                ${locked ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white">🔒 ĐANG BỊ KHÓA (SAI 5 LẦN)</span>' : (failCount > 0 ? `<span class="text-[10px] text-amber-400">(Đã nhập sai ${failCount}/5 lần)</span>` : '')}
-              </div>
-
-              ${(callerIsFull && locked) ? `
-                <button type="button" onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow-md transition">
-                  🔓 Mở khóa & Cấp lại PIN mới
-                </button>
-              ` : ''}
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <div class="font-bold text-white">${escapeHtmlSafe(fullName)} <span class="text-blue-300 font-mono text-[11px]">(User: ${escapeHtmlSafe(loginUser)})</span></div>
+              <div class="text-[11px] text-slate-400">PIN: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '---')}</code> • Telegram ID: <code class="text-emerald-300">${escapeHtmlSafe(u.telegram_chat_id || 'Chưa liên kết')}</code></div>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
-              <div class="sm:col-span-4">
-                <label class="block text-[10px] text-slate-400 mb-0.5">1. Chức vụ / Vị trí</label>
-                <input id="editRoleInput_${u.id}" type="text" value="${escapeHtmlSafe(u.role_title || '')}"
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 text-xs focus:outline-none focus:border-blue-500" />
-              </div>
-
-              <div class="sm:col-span-3">
-                <label class="block text-[10px] text-slate-400 mb-0.5">2. Mật khẩu / PIN (4–12 chữ+số)</label>
-                <input id="editPinInput_${u.id}" type="text" maxlength="12" value="${escapeHtmlSafe(u.pin_code || '')}" placeholder="VD: tv01ab"
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-500" />
-              </div>
-
-              <div class="sm:col-span-3">
-                <label class="block text-[10px] text-slate-400 mb-0.5">3. Telegram Chat ID</label>
-                <div class="flex gap-1">
-                  <input id="editTgInput_${u.id}" type="text" inputmode="numeric" value="${escapeHtmlSafe(u.telegram_chat_id || '')}" placeholder="Chưa gắn ID"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-500" />
-                  ${u.telegram_chat_id ? `<button type="button" onclick="clearUserTelegramId('${u.id}')" title="Xóa Telegram ID" class="bg-slate-900 hover:bg-rose-950 text-rose-400 border border-slate-700 px-2.5 rounded-lg text-xs">✕</button>` : ''}
-                </div>
-              </div>
-
-              <div class="sm:col-span-2 flex justify-end">
-                <button type="button" onclick="saveUserPassPinAndTelegram('${u.id}')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition">
-                  💾 Lưu
-                </button>
-              </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="adminUpdateUserPinAndTg('${u.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg font-semibold">🔑 Đổi PIN / TG ID</button>
+              ${locked ? `<button onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg font-semibold">🔓 Mở khóa</button>` : ''}
             </div>
           </div>
         `;
       }).join('');
+
+      roleBox.innerHTML = dbUsers.map(u => {
+        const fullName = getUserFullName(u);
+        const loginUser = getUserLoginAccount(u);
+        const perm = getUserPermDef(u);
+        const isOwner = isPrimarySystemOwner(u);
+        return `
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
+                <span class="text-[11px] text-blue-300 font-mono">[User: ${escapeHtmlSafe(loginUser)}]</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-bold ${perm.badgeClass}">${escapeHtmlSafe(perm.label)}</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Chức vụ: ${escapeHtmlSafe(u.role_title || 'Thành viên')}</div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button onclick="adminEditUserIdentity('${u.id}')" class="bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1.5 rounded-lg font-semibold">✏️ Sửa họ tên / user</button>
+              ${!isOwner && isFull ? `
+                <select onchange="adminChangeUserPermission('${u.id}', this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1.5 text-white">
+                  <option value="MEMBER" ${perm.code === 'MEMBER' ? 'selected' : ''}>Thành viên</option>
+                  <option value="ASSISTANT" ${perm.code === 'ASSISTANT' ? 'selected' : ''}>Trợ lý</option>
+                  <option value="CHAIR" ${perm.code === 'CHAIR' ? 'selected' : ''}>Chủ trì</option>
+                  <option value="FULL" ${perm.code === 'FULL' ? 'selected' : ''}>Quản trị (Full)</option>
+                </select>
+                <button onclick="adminDeleteUser('${u.id}')" class="bg-rose-950/70 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1.5 rounded-lg font-semibold">🗑️</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function adminEditUserIdentity(userId) {
+      const u = dbUsers.find(x => String(x.id) === String(userId));
+      if (!u) return;
+      const newFull = await showAppPrompt('Nhập Họ và tên hiển thị chuẩn:', getUserFullName(u), '✏️ Cập nhật Họ và tên');
+      if (newFull === null || !newFull.trim()) return;
+      const newLogin = await showAppPrompt('Nhập Tên đăng nhập (User):', getUserLoginAccount(u), '🆔 Cập nhật Tên đăng nhập');
+      if (newLogin === null || !newLogin.trim()) return;
+      const newRole = await showAppPrompt('Nhập Chức vụ / Vị trí công tác:', u.role_title || 'Thành viên', '💼 Cập nhật Chức vụ');
+      if (newRole === null) return;
+
+      await sb.from('team_users').update({
+        display_name: newFull.trim(),
+        role_title: newRole.trim() || 'Thành viên'
+      }).eq('id', u.id);
+
+      u.display_name = newFull.trim();
+      u.role_title = newRole.trim() || 'Thành viên';
+      dbUserAliasesMap[String(u.id)] = {
+        fullName: newFull.trim(),
+        loginUser: newLogin.trim()
+      };
+      await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
+      await recordAuditLog('CẬP NHẬT HỒ SƠ NHÂN SỰ', `Cập nhật họ tên "${newFull.trim()}" (User: ${newLogin.trim()}).`);
+
+      if (currentUser && String(currentUser.id) === String(u.id)) {
+        currentUser = u;
+        applyPermissionUI();
+      }
+      renderStaffManagementLists();
+      renderAll();
+    }
+
+    async function adminUpdateUserPinAndTg(userId) {
+      const u = dbUsers.find(x => String(x.id) === String(userId));
+      if (!u) return;
+      const newPin = await showAppPrompt(`Nhập Mã PIN mới (4–12 ký tự chữ + số) cho ${getUserFullName(u)}:`, u.pin_code || '', '🔑 Đổi Mã PIN');
+      if (newPin === null) return;
+      const valid = validateAlphanumericPin(newPin);
+      if (!valid.ok) return showAppNotice(valid.msg, '⚠️ Mã PIN không hợp lệ');
+
+      const newTg = await showAppPrompt(`Nhập Telegram Chat ID cho ${getUserFullName(u)} (để trống nếu chưa có):`, u.telegram_chat_id || '', '📲 Telegram Chat ID');
+      if (newTg === null) return;
+
+      await sb.from('team_users').update({
+        pin_code: valid.value,
+        telegram_chat_id: newTg.trim() || null
+      }).eq('id', u.id);
+
+      u.pin_code = valid.value;
+      u.telegram_chat_id = newTg.trim() || null;
+      await recordAuditLog('CẬP NHẬT PIN & TELEGRAM', `Đổi PIN / Telegram ID cho ${getUserFullName(u)}.`);
+      renderStaffManagementLists();
     }
 
     async function adminUnlockUserAccount(userId) {
-      if (!isSystemFullAdmin(currentUser)) return;
-      const u = dbUsers.find(x => String(x.id) === String(userId));
-      if (!u) return;
-
-      const fullName = getUserFullName(u);
-      const freshPin = generateRandomAlphanumericPin(6);
-      await sb.from('team_users').update({ pin_code: freshPin }).eq('id', userId);
-      u.pin_code = freshPin;
-
       delete dbAccountLocksMap[String(userId)];
       await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
-      await recordAuditLog('MỞ KHÓA TÀI KHOẢN', `Quản trị hệ thống mở khóa cho "${fullName}" và cấp lại PIN mới "${freshPin}".`);
-
-      if (u.telegram_chat_id) {
-        await callGasWebhook({
-          action: 'SECURITY_ALERT',
-          chatId: String(u.telegram_chat_id),
-          message: `🔓 <b>TÀI KHOẢN ĐÃ ĐƯỢC MỞ KHÓA</b>\n\n• Họ và tên: <b>${fullName}</b>\n• Tên đăng nhập: <code>${getUserLoginAccount(u)}</code>\n• Mã PIN mới được cấp (Chữ + Số): <code>${freshPin}</code>\n• Người mở khóa: ${getUserFullName(currentUser)}`
-        });
-      }
-
-      renderStaffPassPinIdTab();
-      renderStaffRoleTab();
-      showAppNotice(`Đã mở khóa thành công cho tài khoản "${fullName}"!\nMã PIN mới (chữ + số) được cấp là: ${freshPin}`, '🔓 Mở khóa tài khoản thành công');
+      renderStaffManagementLists();
+      showAppNotice('Đã mở khóa tài khoản thành công!', '🔓 Đã mở khóa');
     }
 
-    async function clearUserTelegramId(userId) {
-      const u = dbUsers.find(x => String(x.id) === String(userId));
-      if (!u) return;
-      const callerIsFull = isSystemFullAdmin(currentUser);
-      const isSelf = currentUser && String(currentUser.id) === String(userId);
-      if (!callerIsFull && !isSelf) return;
-
-      const ok = await showAppConfirm(`Xóa liên kết Telegram Chat ID của "${getUserFullName(u)}"?`, '🗑️ Xóa Telegram ID');
-      if (!ok) return;
-      document.getElementById(`editTgInput_${userId}`).value = '';
-      await saveUserPassPinAndTelegram(userId);
-    }
-
-    async function saveUserPassPinAndTelegram(userId) {
-      const u = dbUsers.find(x => String(x.id) === String(userId));
-      if (!u) return;
-
-      const callerIsFull = isSystemFullAdmin(currentUser);
-      const isSelf = currentUser && String(currentUser.id) === String(userId);
-      if (!callerIsFull && !isSelf) {
-        return showAppNotice('Chỉ quyền "Quản trị hệ thống (Full)" mới được sửa thông tin của thành viên khác!', '🔒 Giới hạn quyền');
-      }
-
-      const newRole = document.getElementById(`editRoleInput_${userId}`).value.trim() || 'Thành viên';
-      const rawPin = document.getElementById(`editPinInput_${userId}`).value.trim();
-      const newTgId = document.getElementById(`editTgInput_${userId}`).value.trim();
-
-      const checkPin = validateAlphanumericPin(rawPin);
-      if (!checkPin.ok) {
-        return showAppNotice(checkPin.msg, '⚠️ Sai định dạng Mật khẩu / Mã PIN');
-      }
-
-      await sb.from('team_users').update({ role_title: newRole, pin_code: checkPin.value, telegram_chat_id: newTgId }).eq('id', userId);
-      u.role_title = newRole;
-      u.pin_code = checkPin.value;
-      u.telegram_chat_id = newTgId;
-
-      if (isSelf) {
-        currentUser.role_title = newRole;
-        currentUser.pin_code = checkPin.value;
-        currentUser.telegram_chat_id = newTgId;
-        applyPermissionUI();
-        updateTelegramIndicator();
-      }
-
-      await recordAuditLog('CẤP ĐỔI PIN / ID', `Cập nhật Pass/PIN chữ+số & Telegram ID cho thành viên "${getUserFullName(u)}".`);
-      renderChannelsAndDm();
-      renderStaffPassPinIdTab();
-      renderStaffRoleTab();
-      showAppNotice(`Đã lưu thông tin Pass/PIN (${checkPin.value}) & Telegram ID cho "${getUserFullName(u)}"!`, '🔑 Cập nhật Pass/PIN thành công');
-    }
-
-    function renderStaffRoleTab() {
-      const box = document.getElementById('staffRoleListContainer');
-      const callerIsFull = isSystemFullAdmin(currentUser);
-      document.getElementById('addStaffFormBox').style.display = callerIsFull ? 'block' : 'none';
-
-      box.innerHTML = dbUsers.map(u => {
-        const isSelf = currentUser && String(currentUser.id) === String(u.id);
-        const isRootOwner = isPrimarySystemOwner(u);
-        const targetPerm = getUserPermDef(u);
-        const canSeeDetails = callerIsFull || isSelf;
-        const locked = isAccountLocked(u.id);
-        const fullName = getUserFullName(u);
-        const loginAcc = getUserLoginAccount(u);
-
-        if (!canSeeDetails) {
-          return `
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-white">${escapeHtmlSafe(fullName)}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
-              </div>
-            </div>
-          `;
-        }
-
-        const permOptionsHtml = Object.values(PERMISSION_DEFS).map(p =>
-          `<option value="${p.code}" ${p.code === targetPerm.code ? 'selected' : ''}>${p.shortTitle}</option>`
-        ).join('');
-
-        return `
-          <div class="bg-slate-800/90 border ${locked ? 'border-rose-500/70' : 'border-slate-700'} rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div class="space-y-0.5 min-w-0">
-              <div class="font-bold text-white flex items-center gap-2 flex-wrap">
-                <span>${escapeHtmlSafe(fullName)}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-blue-300 font-mono">User: ${escapeHtmlSafe(loginAcc)}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${targetPerm.badgeClass}">${targetPerm.label}</span>
-                ${locked ? '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white">🔒 ĐANG KHÓA</span>' : ''}
-              </div>
-              <div class="text-[11px] text-slate-400">
-                Chức vụ: <b class="text-slate-200">${escapeHtmlSafe(u.role_title || 'Chuyên viên')}</b>
-                • PIN: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '')}</code>
-                • Telegram: <span class="${u.telegram_chat_id ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtmlSafe(u.telegram_chat_id || 'Chưa gắn')}</span>
-              </div>
-            </div>
-
-            ${callerIsFull ? `
-              <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-                ${locked ? `
-                  <button type="button" onclick="adminUnlockUserAccount('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold">
-                    🔓 Mở khóa
-                  </button>
-                ` : ''}
-
-                ${isRootOwner ? `
-                  <span class="text-[11px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg font-semibold">
-                    🔒 Quyền Quản trị gốc (Cố định)
-                  </span>
-                ` : `
-                  <div class="flex items-center gap-1 bg-slate-900 border border-purple-500/40 rounded-lg px-2 py-1">
-                    <span class="text-[10px] text-purple-300 font-semibold">🛡️ Quyền:</span>
-                    <select id="permSelect_${u.id}" onchange="adminSetUserPermission('${u.id}', this.value)" class="bg-slate-900 text-white text-[11px] font-semibold focus:outline-none">
-                      ${permOptionsHtml}
-                    </select>
-                  </div>
-                `}
-
-                <button type="button" onclick="adminEditStaffInfo('${u.id}')" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 px-2.5 py-1.5 rounded-lg text-[11px] font-medium">
-                  ✏️ Sửa họ tên / user
-                </button>
-
-                ${(!isSelf && !isRootOwner) ? `
-                  <button type="button" onclick="adminDeleteStaffMember('${u.id}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition">
-                    🗑️ Xóa
-                  </button>
-                ` : ''}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function adminSetUserPermission(userId, permCode) {
-      if (!isSystemFullAdmin(currentUser)) return;
-      const u = dbUsers.find(x => String(x.id) === String(userId));
-      if (!u || !PERMISSION_DEFS[permCode]) return;
-      if (isPrimarySystemOwner(u)) return;
-
+    async function adminChangeUserPermission(userId, permCode) {
       dbUserPermsMap[String(userId)] = permCode;
       await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
-
-      const isAdminFlag = (permCode === 'FULL');
-      await sb.from('team_users').update({ is_admin: isAdminFlag }).eq('id', userId);
-      u.is_admin = isAdminFlag;
-
-      await recordAuditLog('THAY ĐỔI PHÂN QUYỀN', `Gán quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${getUserFullName(u)}".`);
-      renderStaffRoleTab();
-      renderStaffPassPinIdTab();
-      renderChannelsAndDm();
-      showAppNotice(`Đã cấp quyền [${PERMISSION_DEFS[permCode].label}] cho thành viên "${getUserFullName(u)}"!`, '🛡️ Cập nhật Phân quyền');
+      await sb.from('team_users').update({ is_admin: permCode === 'FULL' }).eq('id', userId);
+      renderStaffManagementLists();
     }
 
     async function addNewStaffMember() {
-      if (!isSystemFullAdmin(currentUser)) {
-        return showAppNotice('Chỉ tài khoản có quyền "Quản trị hệ thống (Full)" mới được thêm thành viên!', '🔒 Giới hạn quyền');
-      }
+      if (!isSystemFullAdmin(currentUser)) return;
       const fullName = document.getElementById('newStaffFullName').value.trim();
       const loginUser = document.getElementById('newStaffUsername').value.trim();
-      const role = document.getElementById('newStaffRole').value.trim() || 'Chuyên viên';
+      const roleTitle = document.getElementById('newStaffRole').value.trim() || 'Thành viên';
       const rawPin = document.getElementById('newStaffPin').value.trim();
-      const permCode = document.getElementById('newStaffPerm').value || 'MEMBER';
+      const permCode = document.getElementById('newStaffPerm').value;
 
-      if (!fullName) {
-        return showAppNotice('Vui lòng nhập Họ và tên thành viên mới (để hiển thị nhãn tên thành viên)!', '👥 Quản lý Nhân sự');
-      }
-      if (!loginUser) {
-        return showAppNotice('Vui lòng nhập Tên đăng nhập (User) cho thành viên mới!', '👥 Quản lý Nhân sự');
-      }
+      if (!fullName || !loginUser) return showAppNotice('Vui lòng nhập đầy đủ Họ và tên và Tên đăng nhập (User)!', '⚠️ Thiếu thông tin');
+      const valid = validateAlphanumericPin(rawPin);
+      if (!valid.ok) return showAppNotice(valid.msg, '⚠️ Mã PIN chưa đạt chuẩn');
 
-      if (findUserByLoginName(loginUser)) {
-        return showAppNotice(`Tên đăng nhập "${loginUser}" đã tồn tại. Vui lòng đặt Tên đăng nhập khác!`, '⚠️ Trùng tên đăng nhập');
-      }
-
-      const checkPin = validateAlphanumericPin(rawPin);
-      if (!checkPin.ok) {
-        return showAppNotice(checkPin.msg, '⚠️ Sai định dạng Mã PIN');
-      }
-
-      const isAdminFlag = (permCode === 'FULL');
-      let { data, error } = await sb.from('team_users').insert([{
+      const { data, error } = await sb.from('team_users').insert([{
         display_name: fullName,
-        username: loginUser,
-        role_title: role,
-        pin_code: checkPin.value,
-        is_admin: isAdminFlag,
-        telegram_chat_id: ''
+        role_title: roleTitle,
+        pin_code: valid.value,
+        is_admin: permCode === 'FULL'
       }]).select();
 
-      // Dự phòng nếu bảng team_users chưa có cột username thì chèn các cột cơ bản và lưu mapping vào __USER_ALIASES__
-      if (error) {
-        const retry = await sb.from('team_users').insert([{
-          display_name: fullName,
-          role_title: role,
-          pin_code: checkPin.value,
-          is_admin: isAdminFlag,
-          telegram_chat_id: ''
-        }]).select();
-        data = retry.data;
-        error = retry.error;
+      if (error || !data || !data[0]) {
+        return showAppNotice('Lỗi thêm nhân sự: ' + (error ? error.message : 'Không xác định'), '❌ Lỗi');
       }
 
-      let createdUser = (!error && data && data[0]) ? data[0] : {
-        id: 'u_' + Date.now(),
-        display_name: fullName,
-        username: loginUser,
-        role_title: role,
-        pin_code: checkPin.value,
-        is_admin: isAdminFlag,
-        telegram_chat_id: ''
-      };
-      createdUser.username = loginUser;
-      dbUsers.push(createdUser);
-
-      dbUserAliasesMap[String(createdUser.id)] = {
-        fullName: fullName,
-        loginUser: loginUser
-      };
+      const created = data[0];
+      dbUsers.push(created);
+      dbUserAliasesMap[String(created.id)] = { fullName, loginUser };
+      dbUserPermsMap[String(created.id)] = permCode;
       await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
-
-      dbUserPermsMap[String(createdUser.id)] = permCode;
       await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
-      await recordAuditLog('THÊM NHÂN SỰ MỚI', `Thêm thành viên "${fullName}" (User: ${loginUser}) với quyền [${PERMISSION_DEFS[permCode].label}].`);
+      await recordAuditLog('THÊM NHÂN SỰ MỚI', `Thêm "${fullName}" (User: ${loginUser}).`);
 
       document.getElementById('newStaffFullName').value = '';
       document.getElementById('newStaffUsername').value = '';
       document.getElementById('newStaffRole').value = '';
       document.getElementById('newStaffPin').value = '';
-      document.getElementById('newStaffPerm').value = 'MEMBER';
-
-      renderStaffRoleTab();
-      renderStaffPassPinIdTab();
-      renderChannelsAndDm();
-      showAppNotice(`Đã tạo thành viên mới!\n• Họ và tên: ${fullName}\n• Tên đăng nhập (User): ${loginUser}\n• Mã PIN: ${checkPin.value}\n• Quyền hạn: ${PERMISSION_DEFS[permCode].label}`, '✅ Thêm nhân sự thành công');
+      renderStaffManagementLists();
+      renderAll();
     }
 
-    async function adminEditStaffInfo(userId) {
-      if (!isSystemFullAdmin(currentUser)) return;
-      const u = dbUsers.find(x => String(x.id) === String(userId));
-      if (!u) return;
-
-      const newFullName = await showAppPrompt('Nhập Họ và tên hiển thị mới cho thành viên:', getUserFullName(u), '✏️ Sửa Họ và tên');
-      if (newFullName === null || !newFullName.trim()) return;
-
-      const newLoginUser = await showAppPrompt('Nhập Tên đăng nhập (User) mới:', getUserLoginAccount(u), '✏️ Sửa Tên đăng nhập (User)');
-      if (newLoginUser === null || !newLoginUser.trim()) return;
-
-      const newRole = await showAppPrompt('Nhập Chức vụ / Vị trí mới:', u.role_title || 'Chuyên viên', '✏️ Sửa chức vụ');
-      if (newRole === null) return;
-
-      await sb.from('team_users').update({
-        display_name: newFullName.trim(),
-        role_title: newRole.trim() || 'Chuyên viên'
-      }).eq('id', userId);
-
-      // Thử cập nhật thêm cột username nếu bảng Supabase có cột này
-      await sb.from('team_users').update({ username: newLoginUser.trim() }).eq('id', userId);
-
-      u.display_name = newFullName.trim();
-      u.username = newLoginUser.trim();
-      u.role_title = newRole.trim() || 'Chuyên viên';
-
-      dbUserAliasesMap[String(userId)] = {
-        fullName: newFullName.trim(),
-        loginUser: newLoginUser.trim()
-      };
-      await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
-
-      if (currentUser && String(currentUser.id) === String(userId)) {
-        currentUser.display_name = u.display_name;
-        currentUser.username = u.username;
-        currentUser.role_title = u.role_title;
-        applyPermissionUI();
-      }
-
-      renderStaffRoleTab();
-      renderStaffPassPinIdTab();
-      renderChannelsAndDm();
-      showAppNotice('Đã cập nhật Họ tên, Tên đăng nhập và Chức vụ thành công!', '✅ Cập nhật hoàn tất');
-    }
-
-    async function adminDeleteStaffMember(userId) {
-      if (!isSystemFullAdmin(currentUser)) return;
+    async function adminDeleteUser(userId) {
       const u = dbUsers.find(x => String(x.id) === String(userId));
       if (!u || isPrimarySystemOwner(u)) return;
-
-      const fullName = getUserFullName(u);
-      const ok = await showAppConfirm(`Anh chắc chắn muốn XÓA VĨNH VIỄN thành viên "${fullName}" khỏi hệ thống?`, '🗑️ Xóa nhân sự');
+      const ok = await showAppConfirm(`Xóa vĩnh viễn nhân sự "${getUserFullName(u)}" khỏi hệ thống?`, '🗑️ Xóa nhân sự');
       if (!ok) return;
 
       await sb.from('team_users').delete().eq('id', userId);
       dbUsers = dbUsers.filter(x => String(x.id) !== String(userId));
-      delete dbUserPermsMap[String(userId)];
       delete dbUserAliasesMap[String(userId)];
-      delete dbAccountLocksMap[String(userId)];
-      await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
+      delete dbUserPermsMap[String(userId)];
       await persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap);
-      await persistSystemConfigRow('__ACCOUNT_LOCKS__', dbAccountLocksMap);
-      await recordAuditLog('XÓA NHÂN SỰ', `Đã xóa thành viên "${fullName}" khỏi hệ thống.`);
-
-      renderStaffRoleTab();
-      renderStaffPassPinIdTab();
-      renderChannelsAndDm();
-      showAppNotice(`Đã xóa thành viên "${fullName}" khỏi hệ thống.`, '🗑️ Đã xóa nhân sự');
-    }
-
-    function prepareMyTelegramTab(autoListen = false) {
-      if (!currentUser) return;
-      document.getElementById('profileRoleTitle').value = currentUser.role_title || '';
-      document.getElementById('profileTelegramId').value = currentUser.telegram_chat_id || '';
-      document.getElementById('profileNewPass').value = currentUser.pin_code || '';
-
-      const deepLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=link_${encodeURIComponent(currentUser.id)}`;
-      document.getElementById('telegramAutoLinkBtn').setAttribute('href', deepLink);
-
-      const statusEl = document.getElementById('tgAutoLinkStatus');
-      if (currentUser.telegram_chat_id) {
-        statusEl.classList.remove('hidden', 'text-amber-300');
-        statusEl.classList.add('text-emerald-400');
-        statusEl.innerHTML = `✅ Tài khoản đã liên kết Telegram ID: <b>${escapeHtmlSafe(currentUser.telegram_chat_id)}</b>`;
-      } else {
-        statusEl.classList.add('hidden');
-      }
-
-      if (autoListen && !currentUser.telegram_chat_id) startTelegramAutoLinkListener();
+      await persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap);
+      renderStaffManagementLists();
+      renderAll();
     }
 
     function startTelegramAutoLinkListener() {
-      if (!currentUser) return;
-      const targetUserId = String(currentUser.id);
       const statusEl = document.getElementById('tgAutoLinkStatus');
-      statusEl.classList.remove('hidden', 'text-emerald-400');
-      statusEl.classList.add('text-amber-300');
-      statusEl.innerHTML = '⏳ Đang chờ bạn bấm <b>START</b> trên Telegram... Hệ thống sẽ tự động lấy ID ngay.';
-
+      statusEl.classList.remove('hidden');
+      statusEl.innerHTML = `<span class="text-sky-300">⏳ Đang chờ bạn bấm START trên Bot Telegram...</span>`;
       if (tgPollTimer) clearInterval(tgPollTimer);
-      let attempts = 0;
       tgPollTimer = setInterval(async () => {
-        attempts++;
-        if (attempts > 30) {
-          clearInterval(tgPollTimer);
-          tgPollTimer = null;
-          return;
-        }
-        const { data } = await sb.from('team_users').select('telegram_chat_id').eq('id', targetUserId).single();
+        if (!currentUser) return;
+        const { data } = await sb.from('team_users').select('telegram_chat_id').eq('id', currentUser.id).single();
         if (data && data.telegram_chat_id) {
+          currentUser.telegram_chat_id = data.telegram_chat_id;
+          document.getElementById('profileTelegramId').value = data.telegram_chat_id;
+          statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✅ Đã liên kết thành công Telegram ID: ${escapeHtmlSafe(data.telegram_chat_id)}</span>`;
+          updateTelegramIndicator();
           clearInterval(tgPollTimer);
           tgPollTimer = null;
-          const detectedId = String(data.telegram_chat_id).trim();
-          currentUser.telegram_chat_id = detectedId;
-          const idx = dbUsers.findIndex(x => String(x.id) === targetUserId);
-          if (idx !== -1) dbUsers[idx].telegram_chat_id = detectedId;
-
-          document.getElementById('profileTelegramId').value = detectedId;
-          statusEl.classList.remove('text-amber-300');
-          statusEl.classList.add('text-emerald-400');
-          statusEl.innerHTML = `🎉 <b>Liên kết thành công!</b> Telegram ID (<b>${escapeHtmlSafe(detectedId)}</b>) đã được tự động lưu.`;
-          updateTelegramIndicator();
-          renderStaffPassPinIdTab();
-          renderStaffRoleTab();
         }
-      }, 2000);
+      }, 3000);
     }
 
     async function saveProfileSettings() {
       if (!currentUser) return;
-      const newRole = document.getElementById('profileRoleTitle').value.trim() || 'Thành viên';
-      const newTg = document.getElementById('profileTelegramId').value.trim();
-      const rawPin = document.getElementById('profileNewPass').value.trim();
+      const roleTitle = document.getElementById('profileRoleTitle').value.trim() || 'Thành viên';
+      const tgId = document.getElementById('profileTelegramId').value.trim();
+      const newPass = document.getElementById('profileNewPass').value.trim();
 
-      const checkPin = validateAlphanumericPin(rawPin);
-      if (!checkPin.ok) {
-        return showAppNotice(checkPin.msg, '⚠️ Sai định dạng Mật khẩu / Mã PIN');
-      }
+      const valid = validateAlphanumericPin(newPass);
+      if (!valid.ok) return showAppNotice(valid.msg, '⚠️ Mã PIN không hợp lệ');
 
-      const updateObj = { role_title: newRole, telegram_chat_id: newTg, pin_code: checkPin.value };
-      await sb.from('team_users').update(updateObj).eq('id', currentUser.id);
-      Object.assign(currentUser, updateObj);
+      await sb.from('team_users').update({
+        role_title: roleTitle,
+        telegram_chat_id: tgId || null,
+        pin_code: valid.value
+      }).eq('id', currentUser.id);
 
-      const idx = dbUsers.findIndex(u => String(u.id) === String(currentUser.id));
-      if (idx !== -1) Object.assign(dbUsers[idx], updateObj);
+      currentUser.role_title = roleTitle;
+      currentUser.telegram_chat_id = tgId || null;
+      currentUser.pin_code = valid.value;
 
       applyPermissionUI();
       updateTelegramIndicator();
-      renderStaffPassPinIdTab();
-      renderStaffRoleTab();
-      showAppNotice('Đã cập nhật thông tin & Mật khẩu/PIN chữ+số cá nhân thành công!', '✅ Lưu thành công');
+      showAppNotice('Đã lưu cập nhật hồ sơ cá nhân thành công!', '💾 Đã lưu');
     }
 
     // =========================================================================
-    // 15. TIỆN ÍCH MODAL & KHỞI CHẠY REALTIME
+    // 14. DASHBOARD TIẾN ĐỘ DỰ ÁN CHUNG & CÁ NHÂN, XUẤT EXCEL / PDF, BACKUP
+    // =========================================================================
+    function openProgressModal(defaultScope = 'ALL') {
+      document.getElementById('dashFilterScope').value = defaultScope;
+      const assSel = document.getElementById('dashFilterAssignee');
+      assSel.innerHTML = '<option value="">👥 Tất cả nhân sự</option>' +
+        dbUsers.map(u => `<option value="${escapeHtmlSafe(getUserFullName(u))}">${escapeHtmlSafe(getUserFullName(u))}</option>`).join('');
+      renderProgressTable();
+      openModal('progressModal');
+    }
+
+    function getFilteredProgressTasks() {
+      const scope = document.getElementById('dashFilterScope')?.value || 'ALL';
+      const assigneeFilter = document.getElementById('dashFilterAssignee')?.value || '';
+      const statusFilter = document.getElementById('dashFilterStatus')?.value || '';
+      const myFull = currentUser ? getUserFullName(currentUser) : '';
+      const nowMs = Date.now();
+
+      return dbTasks.filter(t => {
+        if (scope === 'CURRENT' && String(t.channel_id) !== String(activeChannelId)) return false;
+        if (scope === 'MINE' && t.assignee_name !== myFull && t.assignee_name !== currentUser?.display_name) return false;
+        if (assigneeFilter && t.assignee_name !== assigneeFilter) return false;
+
+        const isDone = t.status === 'DONE';
+        const isOverdue = !isDone && t.due_at && new Date(t.due_at).getTime() < nowMs;
+        if (statusFilter === 'DONE' && !isDone) return false;
+        if (statusFilter === 'PENDING' && (isDone || isOverdue)) return false;
+        if (statusFilter === 'OVERDUE' && !isOverdue) return false;
+        return true;
+      });
+    }
+
+    function renderProgressTable() {
+      const tbody = document.getElementById('progressTableBody');
+      const kpiBox = document.getElementById('dashboardKpiCards');
+      if (!tbody || !kpiBox) return;
+
+      const list = getFilteredProgressTasks();
+      const nowMs = Date.now();
+      const total = list.length;
+      const doneCount = list.filter(t => t.status === 'DONE').length;
+      const overdueCount = list.filter(t => t.status !== 'DONE' && t.due_at && new Date(t.due_at).getTime() < nowMs).length;
+      const pendingCount = total - doneCount - overdueCount;
+      const rate = total ? Math.round((doneCount / total) * 100) : 0;
+
+      kpiBox.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-xl p-2.5"><div class="text-slate-500">Tổng đầu việc</div><div class="text-lg font-extrabold text-slate-900">${total}</div></div>
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5"><div class="text-emerald-700">Đã hoàn thành</div><div class="text-lg font-extrabold text-emerald-700">${doneCount}</div></div>
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-2.5"><div class="text-blue-700">Đang triển khai</div><div class="text-lg font-extrabold text-blue-700">${pendingCount}</div></div>
+        <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5"><div class="text-rose-700">Quá hạn</div><div class="text-lg font-extrabold text-rose-700">${overdueCount}</div></div>
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5"><div class="text-indigo-700">Tỷ lệ hoàn thành</div><div class="text-lg font-extrabold text-indigo-700">${rate}%</div></div>
+      `;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Không có dữ liệu công việc phù hợp bộ lọc.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(t => {
+        const chan = dbChannels.find(c => String(c.id) === String(t.channel_id));
+        const isDone = t.status === 'DONE';
+        const isOverdue = !isDone && t.due_at && new Date(t.due_at).getTime() < nowMs;
+        const badge = isDone
+          ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">✅ Hoàn thành</span>'
+          : (isOverdue
+            ? '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">🚨 Quá hạn</span>'
+            : '<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">⏳ Đang làm</span>');
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 font-semibold text-slate-700">${escapeHtmlSafe(chan ? chan.name : 'Dự án')}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${escapeHtmlSafe(t.assignee_name)}</td>
+            <td class="py-2.5 px-3 text-slate-800">${escapeHtmlSafe(t.task_title)}</td>
+            <td class="py-2.5 px-3 text-slate-600">${t.due_at ? formatDateTimeVN(t.due_at) : '---'}</td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHtmlSafe(t.assigned_by || '')}</td>
+            <td class="py-2.5 px-3">${badge}</td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHtmlSafe(t.progress_note || '')}</td>
+            <td class="py-2.5 px-3 text-right space-x-1">
+              ${!isDone ? `<button onclick="markTaskDone('${t.id}')" class="px-2 py-1 rounded bg-emerald-600 text-white font-semibold">Xong</button>` : ''}
+              <button onclick="replyTask('${t.id}')" class="px-2 py-1 rounded bg-blue-600 text-white font-semibold">Hồi đáp</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportChecklistToExcel() {
+      const list = getFilteredProgressTasks();
+      let csv = '\uFEFFDự án,Người thực hiện,Nội dung công việc,Thời hạn,Người giao,Trạng thái,Ghi chú hồi đáp\n';
+      list.forEach(t => {
+        const chan = dbChannels.find(c => String(c.id) === String(t.channel_id));
+        const row = [
+          chan ? chan.name : 'Dự án',
+          t.assignee_name || '',
+          t.task_title || '',
+          t.due_at ? formatDateTimeVN(t.due_at) : '',
+          t.assigned_by || '',
+          t.status === 'DONE' ? 'Hoàn thành' : 'Đang triển khai',
+          t.progress_note || ''
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+        csv += row + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Bao_Cao_Tien_Do_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    }
+
+    function exportChecklistToPDF() {
+      const list = getFilteredProgressTasks();
+      const rowsHtml = list.map((t, i) => {
+        const chan = dbChannels.find(c => String(c.id) === String(t.channel_id));
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtmlSafe(chan ? chan.name : '')}</td>
+          <td><b>${escapeHtmlSafe(t.assignee_name)}</b></td>
+          <td>${escapeHtmlSafe(t.task_title)}</td>
+          <td>${t.due_at ? formatDateTimeVN(t.due_at) : ''}</td>
+          <td>${t.status === 'DONE' ? 'Hoàn thành' : 'Đang triển khai'}</td>
+          <td>${escapeHtmlSafe(t.progress_note || '')}</td>
+        </tr>`;
+      }).join('');
+
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><title>Báo Cáo Tiến Độ</title>
+        <style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f1f5f9}</style>
+        </head><body>
+        <h2>BÁO CÁO TỔNG HỢP TIẾN ĐỘ CÔNG VIỆC</h2>
+        <p>Ngày xuất báo cáo: ${formatDateTimeVN(new Date().toISOString())}</p>
+        <table><thead><tr><th>STT</th><th>Dự án</th><th>Phụ trách</th><th>Nội dung</th><th>Thời hạn</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+        <script>window.print();<\/script>
+        </body></html>
+      `);
+      win.document.close();
+    }
+
+    function openMultiFileModal() {
+      const box = document.getElementById('multiFileRecipientsList');
+      box.innerHTML = dbUsers
+        .filter(u => !currentUser || String(u.id) !== String(currentUser.id))
+        .map(u => `
+          <label class="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 cursor-pointer">
+            <input type="checkbox" name="multiFileRecipient" value="${u.id}" class="rounded bg-slate-900 border-slate-600 text-indigo-500" />
+            <span class="text-white truncate">${escapeHtmlSafe(getUserFullName(u))}</span>
+          </label>
+        `).join('');
+      document.getElementById('multiFileUploadInput').value = '';
+      document.getElementById('multiFileLinkInput').value = '';
+      document.getElementById('multiFileNoteInput').value = '';
+      openModal('multiFileModal');
+    }
+
+    function toggleSelectAllRecipients() {
+      const boxes = Array.from(document.querySelectorAll('input[name="multiFileRecipient"]'));
+      const allChecked = boxes.every(b => b.checked);
+      boxes.forEach(b => b.checked = !allChecked);
+    }
+
+    async function submitMultiFileSend() {
+      const recipientIds = Array.from(document.querySelectorAll('input[name="multiFileRecipient"]:checked')).map(b => b.value);
+      const fileObj = document.getElementById('multiFileUploadInput').files[0];
+      const linkUrl = document.getElementById('multiFileLinkInput').value.trim();
+      const note = document.getElementById('multiFileNoteInput').value.trim();
+
+      if (recipientIds.length === 0) return showAppNotice('Vui lòng chọn ít nhất 1 thành viên nhận tài liệu!', '⚠️ Thiếu người nhận');
+      if (!fileObj && !linkUrl) return showAppNotice('Vui lòng chọn tệp tin hoặc nhập liên kết Google Drive!', '⚠️ Thiếu tài liệu');
+      if (fileObj && fileObj.size > 3 * 1024 * 1024) return showAppNotice('Tệp tin vượt quá 3MB!', '⚠️ Giới hạn dung lượng');
+
+      const sendToAll = async (finalUrl, finalName) => {
+        const senderFull = getUserFullName(currentUser);
+        for (const uid of recipientIds) {
+          const pair = [String(currentUser.id), String(uid)].sort();
+          const dmKey = `DM_${pair[0]}_${pair[1]}`;
+          await sb.from('team_messages').insert([{
+            channel_id: dmKey,
+            sender_name: senderFull,
+            sender_role: currentUser.role_title || 'Thành viên',
+            msg_type: 'FILE',
+            content: `📤 Tài liệu gửi riêng${note ? ': ' + note : ''}`,
+            file_name: finalName,
+            file_url: finalUrl
+          }]);
+
+          const peerObj = dbUsers.find(u => String(u.id) === String(uid));
+          if (peerObj && peerObj.telegram_chat_id) {
+            await callGasWebhook({
+              action: 'SECURITY_ALERT',
+              chatId: String(peerObj.telegram_chat_id),
+              message: `📤 <b>TÀI LIỆU MỚI TỪ ${senderFull.toUpperCase()}</b>\n• Tên tài liệu: <b>${finalName}</b>${note ? `\n• Ghi chú: <i>${note}</i>` : ''}\n• Vui lòng mở mục <b>Trao đổi riêng 1-1</b> trên Web App để tải về.`
+            });
+          }
+        }
+        await syncAllFromSupabase(true);
+        closeModal('multiFileModal');
+        showAppNotice(`Đã gửi tài liệu tới ${recipientIds.length} thành viên thành công!`, '📤 Đã gửi tài liệu');
+      };
+
+      if (fileObj) {
+        const reader = new FileReader();
+        reader.onload = e => sendToAll(e.target.result, fileObj.name);
+        reader.readAsDataURL(fileObj);
+      } else {
+        await sendToAll(linkUrl, 'Tài liệu liên kết Google Drive');
+      }
+    }
+
+    function openBackupModal() {
+      const sel = document.getElementById('backupScopeSelect');
+      const isFull = isSystemFullAdmin(currentUser);
+      sel.innerHTML = (isFull ? '<option value="ALL">🌐 Toàn bộ dữ liệu hệ thống</option>' : '') +
+        getVisibleChannelsForCurrentUser().map(c => `<option value="${c.id}"># Dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
+      document.getElementById('systemBackupScheduleBox').style.display = isFull ? 'block' : 'none';
+      document.getElementById('systemRestoreBox').style.display = isFull ? 'block' : 'none';
+      openModal('backupModal');
+    }
+
+    function buildBackupPayload() {
+      const scope = document.getElementById('backupScopeSelect').value;
+      return {
+        exportedAt: new Date().toISOString(),
+        exportedBy: currentUser ? getUserFullName(currentUser) : '',
+        scope,
+        channels: scope === 'ALL' ? dbChannels : dbChannels.filter(c => String(c.id) === String(scope)),
+        messages: scope === 'ALL' ? dbMessages : dbMessages.filter(m => String(m.channel_id) === String(scope)),
+        tasks: scope === 'ALL' ? dbTasks : dbTasks.filter(t => String(t.channel_id) === String(scope))
+      };
+    }
+
+    function downloadBackupNow() {
+      const payload = buildBackupPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `TeamWork_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+    }
+
+    async function backupToGoogleDriveNow() {
+      const payload = buildBackupPayload();
+      const fileName = `TeamWork_Backup_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
+      await callGasWebhook({
+        action: 'BACKUP_TO_DRIVE',
+        fileName,
+        content: JSON.stringify(payload, null, 2),
+        notifyTelegram: true,
+        notifyChatId: currentUser?.telegram_chat_id || DEFAULT_APPROVER_CHAT_ID
+      });
+      showAppNotice('Đã gửi yêu cầu sao lưu tệp JSON lên Google Drive và báo link qua Telegram!', '☁️ Đang sao lưu Drive');
+    }
+
+    async function triggerDailyDigestNow() {
+      await callGasWebhook({ action: 'RUN_DAILY_DIGEST_NOW' });
+      showAppNotice('Đã kích hoạt gửi Báo cáo tổng hợp tiến độ cuối ngày về Telegram!', '📊 Đã gửi báo cáo');
+    }
+
+    async function restoreFromJsonFile() {
+      if (!isSystemFullAdmin(currentUser)) return;
+      const file = document.getElementById('restoreFileInput').files[0];
+      if (!file) return showAppNotice('Vui lòng chọn tệp sao lưu (.json)!', '⚠️ Thiếu tệp');
+      const reader = new FileReader();
+      reader.onload = async e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed.tasks) && parsed.tasks.length) {
+            await sb.from('team_tasks').upsert(parsed.tasks);
+          }
+          await syncAllFromSupabase(true);
+          closeModal('backupModal');
+          showAppNotice('Đã khôi phục dữ liệu từ bản sao lưu thành công!', '♻️ Khôi phục hoàn tất');
+        } catch (err) {
+          showAppNotice('Tệp sao lưu không đúng định dạng JSON hợp lệ!', '❌ Lỗi tệp');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // 15. KHỞI ĐỘNG ỨNG DỤNG & ĐỒNG BỘ REALTIME
     // =========================================================================
     function openModal(id) {
       const el = document.getElementById(id);
@@ -4120,6 +3565,7 @@ function openMyTasksModal() {
       el.classList.remove('hidden');
       el.classList.add('flex');
     }
+
     function closeModal(id) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -4127,22 +3573,14 @@ function openMyTasksModal() {
       el.classList.remove('flex');
     }
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      await syncAllFromSupabase();
-
-      sb.channel('teamwork_realtime_v7')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages' }, () => syncAllFromSupabase(true))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_tasks' }, () => syncAllFromSupabase(true))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_users' }, () => syncAllFromSupabase(true))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'team_channels' }, () => syncAllFromSupabase(true))
-        .subscribe();
-
+    async function initApp() {
+      await syncAllFromSupabase(false);
       setInterval(() => {
-        if (currentUser && !isAnyModalCurrentlyOpen()) {
-          syncAllFromSupabase(true);
-        }
-      }, 20000);
-    });
+        if (currentUser) syncAllFromSupabase(true);
+      }, 15000);
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
   </script>
 </body>
 </html>
