@@ -3579,73 +3579,309 @@
       showAppNotice('Đã khôi phục dữ liệu thành công!', '♻️ Hoàn tất');
     }
 
-    // =========================================================================
-    // [LOCKED MODULE 18 & 19]: GỬI TIN NHẮN, ĐÍNH KÈM FILE, VỊ TRÍ GPS & NHẮC HẸN
-    // =========================================================================
-    async function handleQuickChatFileAttach(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file || !currentUser) return;
-      if (file.size > 3 * 1024 * 1024) {
-        event.target.value = '';
-        return showAppNotice('Tệp đính kèm vượt quá giới hạn 3MB!', '⚠️ Tệp quá lớn');
-      }
-      const dataUrl = await readFileAsBase64(file);
-      const { data } = await sb.from('team_messages').insert([{
-        channel_id: getCurrentConversationChannelKey(),
-        sender_name: getUserFullName(currentUser),
-        sender_role: currentUser.role_title || 'Thành viên',
-        msg_type: 'FILE',
-        content: `📎 Đã gửi tệp đính kèm: ${file.name}`,
-        file_name: file.name,
-        file_url: dataUrl
-      }]).select();
+   <!-- ========================================================================= -->
+<!-- [LOCKED MODULE 18]: XÓA KÝ TỰ '#' TRƯỚC TÊN NHÓM / TIÊU ĐỀ (DO NOT EDIT)  -->
+<!-- ========================================================================= -->
+<script>
+  (function initLockedCleanTitles() {
+    function stripHashPrefix() {
+      // 1. Làm sạch tiêu đề nhóm trên thanh Header
+      const headerEls = document.querySelectorAll('h1, h2, h3, [id*="channelName"], [id*="ChannelName"], [id*="headerTitle"]');
+      headerEls.forEach(el => {
+        if (el.childNodes.length === 1 && el.textContent.trim().startsWith('#')) {
+          el.textContent = el.textContent.replace(/^\s*#\s*/, '');
+        }
+      });
 
-      event.target.value = '';
-      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-      renderMessages();
-      renderChannelFiles();
+      // 2. Làm sạch toàn bộ tên nhóm ở cột trái & các danh sách tiêu đề
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+      let node;
+      while ((node = walker.nextNode())) {
+        const parentTag = node.parentElement ? node.parentElement.tagName : '';
+        if (parentTag === 'SCRIPT' || parentTag === 'STYLE' || parentTag === 'TEXTAREA' || parentTag === 'INPUT') continue;
+        if (/^\s*#\s+[^\s#]/.test(node.nodeValue)) {
+          node.nodeValue = node.nodeValue.replace(/^(\s*)#\s+/, '$1');
+        }
+      }
     }
 
-    async function sendChatMessage() {
-      const inp = document.getElementById('chatInput');
-      let rawText = inp.value.trim();
-      if (!rawText || !currentUser) return;
+    // Chạy ngay khi tải trang và tự động theo dõi khi chuyển nhóm hoặc tạo nhóm mới
+    stripHashPrefix();
+    const observer = new MutationObserver(() => stripHashPrefix());
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  })();
+</script>
 
-      rawText = replaceQuickEmojis(rawText);
-      inp.value = '';
-      document.getElementById('pollQuickSuggestBar').classList.add('hidden');
+<!-- ========================================================================= -->
+<!-- [LOCKED MODULE 19]: MENU ĐÍNH KÈM (ẢNH, FILE, VỊ TRÍ, NHẮC HẸN)           -->
+<!-- ========================================================================= -->
+<input type="file" id="twLockedImageInput" accept="image/*" class="hidden" />
 
-      if (editingMsgId) {
-        const targetId = editingMsgId;
-        cancelChatActionBanner();
-        const editedText = `${rawText} (đã chỉnh sửa)`;
-        await sb.from('team_messages').update({ content: editedText }).eq('id', targetId);
-        const msgObj = dbMessages.find(m => String(m.id) === String(targetId));
-        if (msgObj) msgObj.content = editedText;
-        renderMessages();
+<!-- Popup Menu 4 lựa chọn khi bấm nút Kẹp giấy (Attach) -->
+<div id="twLockedAttachMenu" class="hidden fixed z-[90] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 w-56 text-xs text-slate-100">
+  <button type="button" onclick="twAttachSelect('IMAGE')" class="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 flex items-center gap-3 text-left transition">
+    <span class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-base">🖼️</span>
+    <div>
+      <div class="font-bold text-slate-100">Hình ảnh</div>
+      <div class="text-[10px] text-slate-400">Chọn ảnh từ thiết bị</div>
+    </div>
+  </button>
+  <button type="button" onclick="twAttachSelect('FILE')" class="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 flex items-center gap-3 text-left transition">
+    <span class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-base">📄</span>
+    <div>
+      <div class="font-bold text-slate-100">File tài liệu</div>
+      <div class="text-[10px] text-slate-400">PDF, Word, Excel, ZIP...</div>
+    </div>
+  </button>
+  <button type="button" onclick="twAttachSelect('LOCATION')" class="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 flex items-center gap-3 text-left transition">
+    <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-base">📍</span>
+    <div>
+      <div class="font-bold text-slate-100">Vị trí hiện tại</div>
+      <div class="text-[10px] text-slate-400">Gửi tọa độ & bản đồ GPS</div>
+    </div>
+  </button>
+  <button type="button" onclick="twAttachSelect('REMINDER')" class="w-full px-3 py-2.5 rounded-xl hover:bg-slate-800 flex items-center gap-3 text-left transition">
+    <span class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-base">⏰</span>
+    <div>
+      <div class="font-bold text-slate-100">Nhắc hẹn</div>
+      <div class="text-[10px] text-slate-400">Đặt lịch nhắc cá nhân / nhóm</div>
+    </div>
+  </button>
+</div>
+
+<!-- Modal Tạo Nhắc Hẹn Mới (Chuẩn giao diện mẫu) -->
+<div id="twLockedReminderModal" class="hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3">
+  <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden text-slate-100">
+    <!-- Header Modal -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-950/60">
+      <button type="button" onclick="closeTwReminderModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-1">✕</button>
+      <div class="text-center">
+        <div class="font-bold text-sm text-white">Tạo nhắc hẹn mới</div>
+        <div id="twReminderChannelSub" class="text-[11px] text-slate-400">Phòng Điều Hành Chung</div>
+      </div>
+      <button type="button" onclick="submitTwReminder()" class="text-sky-400 hover:text-sky-300 font-bold text-sm px-2 py-1">Xong</button>
+    </div>
+
+    <!-- Body Modal -->
+    <div class="divide-y divide-slate-800 text-sm">
+      <!-- 1. Tiêu đề nhắc hẹn -->
+      <div class="flex items-center gap-3 px-4 py-3.5">
+        <span class="text-xl">⏰</span>
+        <input id="twReminderTitle" type="text" placeholder="Nhập tiêu đề nhắc hẹn..." class="w-full bg-transparent text-white placeholder-slate-500 focus:outline-none text-sm font-medium" />
+      </div>
+
+      <!-- 2. Thời gian nhắc -->
+      <div class="flex items-center gap-3 px-4 py-3.5">
+        <span class="text-lg text-slate-400">🕒</span>
+        <div class="flex-1">
+          <div class="text-[11px] text-slate-400 mb-0.5">Thời gian nhắc</div>
+          <input id="twReminderDateTime" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500" />
+        </div>
+      </div>
+
+      <!-- 3. Kiểu lặp lại -->
+      <div class="flex items-center gap-3 px-4 py-3.5">
+        <span class="text-lg text-slate-400">🔁</span>
+        <div class="flex-1">
+          <select id="twReminderRepeat" class="w-full bg-transparent text-slate-200 focus:outline-none text-sm cursor-pointer">
+            <option value="Không lặp lại" class="bg-slate-900">Chọn kiểu lặp lại (Mặc định: Không lặp lại)</option>
+            <option value="Hàng ngày" class="bg-slate-900">Hàng ngày</option>
+            <option value="Hàng tuần" class="bg-slate-900">Hàng tuần</option>
+            <option value="Hàng tháng" class="bg-slate-900">Hàng tháng</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 4. Nhắc cho: Chỉ mình tôi / Cả nhóm -->
+      <div class="flex items-start gap-3 px-4 py-4">
+        <span class="text-lg text-slate-400 mt-0.5">🔒</span>
+        <div class="flex-1">
+          <div class="text-xs text-slate-400 mb-2.5">Nhắc cho</div>
+          <div class="flex items-center gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="twReminderTarget" value="Chỉ mình tôi" class="w-4 h-4 accent-sky-500" />
+              <span class="text-sm text-slate-200">Chỉ mình tôi</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="twReminderTarget" value="Cả nhóm" checked class="w-4 h-4 accent-sky-500" />
+              <span class="text-sm text-white font-semibold">Cả nhóm</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function initLockedAttachSuite() {
+    let originalFileInput = null;
+    let attachBtnRef = null;
+
+    // Hàm hỗ trợ đẩy nội dung vào khung chat và bấm Gửi tự động theo cơ chế gốc
+    function sendTextToActiveChat(messageText) {
+      const chatInput = document.querySelector('input[placeholder*="Nhập trao đổi"], textarea[placeholder*="Nhập trao đổi"]');
+      if (!chatInput) {
+        alert('Không tìm thấy khung nhập trao đổi hiện tại.');
+        return;
+      }
+      chatInput.value = messageText;
+      chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Tìm nút Gửi bên cạnh khung chat
+      const formOrBar = chatInput.closest('form') || chatInput.parentElement;
+      const sendBtn = formOrBar ? Array.from(formOrBar.querySelectorAll('button')).find(b => b.textContent.trim() === 'Gửi') : null;
+      if (sendBtn) {
+        sendBtn.click();
+      } else if (typeof window.sendMessage === 'function') {
+        window.sendMessage();
+      }
+    }
+
+    // Gắn sự kiện mở Menu 4 chức năng cho nút Kẹp giấy (Attach)
+    function bindAttachButton() {
+      const chatInput = document.querySelector('input[placeholder*="Nhập trao đổi"], textarea[placeholder*="Nhập trao đổi"]');
+      if (!chatInput) return;
+      const bar = chatInput.parentElement;
+      if (!bar) return;
+
+      // Tìm nút kẹp giấy đầu tiên bên trái khung nhập
+      const buttons = Array.from(bar.querySelectorAll('button'));
+      const clipBtn = buttons.find(b => b.innerHTML.includes('paperclip') || b.textContent.includes('📎') || (b.querySelector('svg') && b === buttons[0]));
+      if (!clipBtn || clipBtn.dataset.twAttachBound === '1') return;
+
+      clipBtn.dataset.twAttachBound = '1';
+      attachBtnRef = clipBtn;
+
+      // Lưu tham chiếu input file gốc của hệ thống để dùng cho mục "File tài liệu" & "Hình ảnh"
+      originalFileInput = document.querySelector('input[type="file"]:not(#twLockedImageInput)');
+
+      clipBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const menu = document.getElementById('twLockedAttachMenu');
+        if (!menu) return;
+        const rect = clipBtn.getBoundingClientRect();
+        menu.style.left = Math.max(12, rect.left) + 'px';
+        menu.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+        menu.classList.toggle('hidden');
+      }, true);
+    }
+
+    // Đóng menu khi bấm ra ngoài
+    document.addEventListener('click', function (e) {
+      const menu = document.getElementById('twLockedAttachMenu');
+      if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== attachBtnRef) {
+        menu.classList.add('hidden');
+      }
+    });
+
+    // Chuyển tiếp ảnh sang bộ tải file gốc của hệ thống
+    const imgInput = document.getElementById('twLockedImageInput');
+    if (imgInput) {
+      imgInput.addEventListener('change', function () {
+        if (this.files && this.files.length > 0 && originalFileInput) {
+          const dt = new DataTransfer();
+          for (let i = 0; i < this.files.length; i++) dt.items.add(this.files[i]);
+          originalFileInput.files = dt.files;
+          originalFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+          this.value = '';
+        }
+      });
+    }
+
+    window.twAttachSelect = function (type) {
+      const menu = document.getElementById('twLockedAttachMenu');
+      if (menu) menu.classList.add('hidden');
+
+      if (type === 'IMAGE') {
+        document.getElementById('twLockedImageInput').click();
+      } else if (type === 'FILE') {
+        if (originalFileInput) originalFileInput.click();
+      } else if (type === 'LOCATION') {
+        if (!navigator.geolocation) {
+          alert('Trình duyệt của anh không hỗ trợ định vị GPS.');
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            const lat = pos.coords.latitude.toFixed(6);
+            const lng = pos.coords.longitude.toFixed(6);
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            sendTextToActiveChat(`📍 Vị trí hiện tại của tôi:\n• Tọa độ: ${lat}, ${lng}\n• Xem bản đồ: ${mapUrl}`);
+          },
+          function () {
+            alert('Không lấy được vị trí. Anh vui lòng cấp quyền Vị trí (Location) cho trình duyệt.');
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } else if (type === 'REMINDER') {
+        // Cập nhật tên nhóm hiện tại lên tiêu đề phụ modal
+        const activeTitle = document.querySelector('h1, h2, [id*="channelName"], [id*="ChannelName"]');
+        const subEl = document.getElementById('twReminderChannelSub');
+        if (activeTitle && subEl) {
+          subEl.textContent = activeTitle.textContent.replace(/^\s*#\s*/, '').trim();
+        }
+        // Đặt thời gian mặc định là +1 giờ tới
+        const now = new Date(Date.now() + 60 * 60 * 1000);
+        const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('twReminderDateTime').value = localIso;
+        document.getElementById('twReminderTitle').value = '';
+        document.getElementById('twLockedReminderModal').classList.remove('hidden');
+        setTimeout(() => document.getElementById('twReminderTitle').focus(), 100);
+      }
+    };
+
+    window.closeTwReminderModal = function () {
+      document.getElementById('twLockedReminderModal').classList.add('hidden');
+    };
+
+    window.submitTwReminder = function () {
+      const title = document.getElementById('twReminderTitle').value.trim();
+      const dtRaw = document.getElementById('twReminderDateTime').value;
+      const repeat = document.getElementById('twReminderRepeat').value;
+      const targetEl = document.querySelector('input[name="twReminderTarget"]:checked');
+      const target = targetEl ? targetEl.value : 'Cả nhóm';
+
+      if (!title) {
+        alert('Anh vui lòng nhập tiêu đề nhắc hẹn!');
         return;
       }
 
-      let finalContent = rawText;
-      if (replyToMsgObj) {
-        const quotePreview = String(replyToMsgObj.content || '').replace(/<[^>]*>/g, ' ').slice(0, 70);
-        finalContent = `↩️ Trả lời ${replyToMsgObj.sender_name}: "${quotePreview}"\n──────────────\n${rawText}`;
-        cancelChatActionBanner();
+      let timeFormatted = dtRaw;
+      if (dtRaw) {
+        const d = new Date(dtRaw);
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mo = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        timeFormatted = `${hh}:${mm} ngày ${dd}/${mo}/${yyyy}`;
       }
 
-      const { data } = await sb.from('team_messages').insert([{
-        channel_id: getCurrentConversationChannelKey(),
-        sender_name: getUserFullName(currentUser),
-        sender_role: currentUser.role_title || 'Thành viên',
-        msg_type: 'CHAT',
-        content: finalContent
-      }]).select();
+      // Đặt báo thức cục bộ trên trình duyệt nếu trong phiên làm việc
+      if (dtRaw) {
+        const delayMs = new Date(dtRaw).getTime() - Date.now();
+        if (delayMs > 0 && delayMs < 86400000) {
+          setTimeout(() => {
+            alert(`⏰ NHẮC HẸN ĐẾN GIỜ:\n${title}\nThời gian: ${timeFormatted}`);
+          }, delayMs);
+        }
+      }
 
-      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-      renderMessages();
-    }
+      closeTwReminderModal();
+      const msg = `⏰ NHẮC HẸN MỚI: ${title}\n• Thời gian: ${timeFormatted}\n• Lặp lại: ${repeat}\n• Nhắc cho: ${target}`;
+      sendTextToActiveChat(msg);
+    };
 
- <!-- ========================================================================= -->
+    bindAttachButton();
+    const attachObserver = new MutationObserver(() => bindAttachButton());
+    attachObserver.observe(document.body, { childList: true, subtree: true });
+  })();
+</script>
+<!-- ========================================================================= -->
+
+<!-- ========================================================================= -->
 <!-- [LOCKED MODULE 20]: NHÚNG GOOGLE MAPS CỐ ĐỊNH KHÔNG NHẤP NHÁY (DO NOT EDIT) -->
 <!-- ========================================================================= -->
 <div id="twLockedMapSuggestBar" class="hidden fixed z-[85] bg-slate-900/95 border border-sky-500/60 backdrop-blur-md rounded-2xl shadow-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-slate-100 max-w-xl">
