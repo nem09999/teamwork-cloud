@@ -4185,13 +4185,15 @@
       }
     }
 
-    // 2. Render DUY NHẤT 1 khung bản đồ cho mỗi tin nhắn (Không trùng 3 khung, không chớp nháy)
+    // 2. Quét toàn bộ document.body bằng TreeWalker để bắt đúng nút chữ chứa thẻ bản đồ
     function renderEmbeddedMapsInMessages() {
-      const chatArea = document.querySelector('#messagesContainer, #chatMessages, [id*="messageList"], [class*="overflow-y-auto"]') || document.body;
-      const walker = document.createTreeWalker(chatArea, NodeFilter.SHOW_TEXT, null, false);
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
       const matchedTextNodes = [];
       let n;
       while ((n = walker.nextNode())) {
+        const pTag = n.parentElement ? n.parentElement.tagName : '';
+        if (pTag === 'SCRIPT' || pTag === 'STYLE' || pTag === 'TEXTAREA' || pTag === 'INPUT') continue;
+        if (n.parentElement && n.parentElement.closest('#twLockedMapSuggestBar')) continue;
         if (n.nodeValue && n.nodeValue.includes('[BẢN ĐỒ VỊ TRÍ:')) {
           matchedTextNodes.push(n);
         }
@@ -4201,7 +4203,7 @@
         const msgContainer = textNode.parentElement;
         if (!msgContainer) return;
 
-        // Kiểm tra nếu tin nhắn này đã có khung bản đồ rồi thì bỏ qua tuyệt đối
+        // Chống chèn trùng trong cùng một bong bóng tin nhắn
         const bubbleBox = msgContainer.closest('[class*="rounded"]') || msgContainer;
         if (bubbleBox.querySelector('.tw-embedded-map-card')) return;
 
@@ -4209,7 +4211,7 @@
         if (!match) return;
 
         const locationQuery = match[1].trim();
-        // Làm gọn chuỗi kỹ thuật trong tin nhắn cho đẹp mắt
+        // Xóa bỏ chuỗi kỹ thuật để tin nhắn hiển thị sạch đẹp
         textNode.nodeValue = textNode.nodeValue.replace(/\n?🗺️?\s*\[BẢN ĐỒ VỊ TRÍ:\s*[^\]]+\]/, '').trim();
 
         const encodedQuery = encodeURIComponent(locationQuery);
@@ -4232,7 +4234,6 @@
     bindChatInputMapWatcher();
     renderEmbeddedMapsInMessages();
 
-    // Dùng Debounce 250ms để tránh kích hoạt lại liên tục khi giao diện tự đồng bộ
     const mapObserver = new MutationObserver((mutations) => {
       const hasRelevantChange = mutations.some(m => {
         if (m.target && m.target.closest && m.target.closest('.tw-embedded-map-card')) return false;
