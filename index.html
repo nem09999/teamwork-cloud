@@ -1339,32 +1339,31 @@
     }
 
     function applyPermissionUI() {
-      if (!currentUser) return;
-      const fullName = getUserFullName(currentUser);
-      document.getElementById('currentUserName').textContent = fullName;
-      document.getElementById('currentUserRole').textContent = currentUser.role_title || 'Thành viên';
+  if (!currentUser) return;
+  const fullName = getUserFullName(currentUser);
+  document.getElementById('currentUserName').textContent = fullName;
+  document.getElementById('currentUserRole').textContent = '';
 
-      const mobName = document.getElementById('mobileMenuUserName');
-      const mobRole = document.getElementById('mobileMenuUserRole');
-      if (mobName) mobName.textContent = fullName;
-      if (mobRole) mobRole.textContent = currentUser.role_title || 'Thành viên';
+  const mobName = document.getElementById('mobileMenuUserName');
+  const mobRole = document.getElementById('mobileMenuUserRole');
+  if (mobName) mobName.textContent = fullName;
+  if (mobRole) mobRole.textContent = '';
 
-      const badgeEl = document.getElementById('currentUserPermBadge');
-      if (badgeEl) badgeEl.classList.add('hidden');
+  const badgeEl = document.getElementById('currentUserPermBadge');
+  if (badgeEl) badgeEl.classList.add('hidden');
 
-      const btnNewGroup = document.getElementById('btnNewGroupSidebar');
-      if (btnNewGroup) btnNewGroup.style.display = isSystemFullAdmin(currentUser) ? 'inline-block' : 'none';
+  const btnNewGroup = document.getElementById('btnNewGroupSidebar');
+  if (btnNewGroup) btnNewGroup.style.display = isSystemFullAdmin(currentUser) ? 'inline-block' : 'none';
 
-      const btnAssign = document.getElementById('btnAssignTaskTop');
-      if (btnAssign) btnAssign.style.display = canAssignOrManageTasks(currentUser) ? 'inline-block' : 'none';
+  const btnAssign = document.getElementById('btnAssignTaskTop');
+  if (btnAssign) btnAssign.style.display = canAssignOrManageTasks(currentUser) ? 'inline-block' : 'none';
 
-      const btnMeet = document.getElementById('btnMenuMeeting');
-      if (btnMeet) btnMeet.style.display = canScheduleMeetings(currentUser) ? 'flex' : 'none';
+  const btnMeet = document.getElementById('btnMenuMeeting');
+  if (btnMeet) btnMeet.style.display = canScheduleMeetings(currentUser) ? 'flex' : 'none';
 
-      const btnAudit = document.getElementById('menuBtnAuditLog');
-      if (btnAudit) btnAudit.style.display = isSystemFullAdmin(currentUser) ? 'flex' : 'none';
-    }
-
+  const btnAudit = document.getElementById('menuBtnAuditLog');
+  if (btnAudit) btnAudit.style.display = isSystemFullAdmin(currentUser) ? 'flex' : 'none';
+}
     function updateTelegramIndicator() {
       const dot = document.getElementById('tgStatusDot');
       if (currentUser && currentUser.telegram_chat_id) {
@@ -1923,18 +1922,17 @@
       }).join('');
 
       document.getElementById('dmUserList').innerHTML = dbUsers.filter(u => !currentUser || String(u.id) !== String(currentUser.id)).map(u => {
-        const isActiveDm = activeDmPeer && String(activeDmPeer.id) === String(u.id);
-        const fullName = getUserFullName(u);
-        return `
-          <button onclick="selectDirectMessage('${u.id}')" class="w-full px-2.5 py-2 rounded-lg text-left text-xs flex items-center justify-between transition ${isActiveDm ? 'bg-amber-600/30 text-amber-200 border border-amber-500/40' : 'hover:bg-slate-800 text-slate-300'}">
-            <div class="truncate min-w-0 pr-1">
-              <div class="font-medium truncate">👤 ${escapeHtmlSafe(fullName)}</div>
-              <div class="text-[10px] text-slate-400 truncate">${escapeHtmlSafe(u.role_title || 'Thành viên')}</div>
-            </div>
-            <span class="text-[11px] shrink-0 text-amber-400">🔒</span>
-          </button>
-        `;
-      }).join('');
+  const isActiveDm = activeDmPeer && String(activeDmPeer.id) === String(u.id);
+  const fullName = getUserFullName(u);
+  return `
+    <button onclick="selectDirectMessage('${u.id}')" class="w-full px-2.5 py-2 rounded-lg text-left text-xs flex items-center justify-between transition ${isActiveDm ? 'bg-amber-600/30 text-amber-200 border border-amber-500/40' : 'hover:bg-slate-800 text-slate-300'}">
+      <div class="truncate min-w-0 pr-1">
+        <div class="font-medium truncate">👤 ${escapeHtmlSafe(fullName)}</div>
+      </div>
+      <span class="text-[11px] shrink-0 text-amber-400">🔒</span>
+    </button>
+  `;
+}).join('');
 
       const dmBadge = document.getElementById('dmBadge');
       const memBadge = document.getElementById('channelMemberBadge');
@@ -2494,25 +2492,25 @@
       openModal('assignModal');
     }
 
-    function onAssignProjectChange() {
-      const chanId = document.getElementById('taskProjectSelect').value;
-      const meta = dbGroupMetaMap[String(chanId)];
-      const memberIds = (meta && Array.isArray(meta.members) && meta.members.length > 0)
-        ? meta.members.map(String)
-        : dbUsers.map(u => String(u.id));
+   function onAssignProjectChange() {
+  const chanId = document.getElementById('taskProjectSelect').value;
+  const meta = dbGroupMetaMap[String(chanId)];
+  const memberIds = (meta && Array.isArray(meta.members) && meta.members.length > 0)
+    ? meta.members.map(String)
+    : dbUsers.map(u => String(u.id));
 
-      const groupUsers = dbUsers.filter(u => memberIds.includes(String(u.id)));
-      const list = groupUsers.length ? groupUsers : dbUsers;
+  const groupUsers = dbUsers.filter(u => memberIds.includes(String(u.id)));
+  const list = groupUsers.length ? groupUsers : dbUsers;
 
-      document.getElementById('taskAssignee').innerHTML = list.map(u =>
-        `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}${u.role_title ? ' — ' + escapeHtmlSafe(u.role_title) : ''}</option>`
-      ).join('');
+  document.getElementById('taskAssignee').innerHTML = list.map(u =>
+    `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}</option>`
+  ).join('');
 
-      const nonMembers = dbUsers.filter(u => !memberIds.includes(String(u.id)));
-      document.getElementById('quickAddMemberSelect').innerHTML = nonMembers.length
-        ? nonMembers.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}</option>`).join('')
-        : '<option value="">Tất cả nhân sự đã có trong nhóm</option>';
-    }
+  const nonMembers = dbUsers.filter(u => !memberIds.includes(String(u.id)));
+  document.getElementById('quickAddMemberSelect').innerHTML = nonMembers.length
+    ? nonMembers.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}</option>`).join('')
+    : '<option value="">Tất cả nhân sự đã có trong nhóm</option>';
+}
 
     function toggleQuickAddMemberToTaskGroup() {
       document.getElementById('quickAddMemberBox').classList.toggle('hidden');
@@ -2750,20 +2748,20 @@
     // 12. TRÌNH PHÊ DUYỆT, SỬA/XÓA PHIẾU TRÌNH, CHỐT LỊCH HỌP
     // =========================================================================
     function openApprovalModal() {
-      document.getElementById('editingApprovalId').value = '';
-      document.getElementById('approvalModalTitle').textContent = '📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình';
-      document.getElementById('btnSubmitApproval').textContent = 'Gửi Trình Duyệt & Báo Telegram';
-      document.getElementById('approvalApproverBox').style.display = 'block';
+  document.getElementById('editingApprovalId').value = '';
+  document.getElementById('approvalModalTitle').textContent = '📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình';
+  document.getElementById('btnSubmitApproval').textContent = 'Gửi Trình Duyệt & Báo Telegram';
+  document.getElementById('approvalApproverBox').style.display = 'block';
 
-      const sel = document.getElementById('approvalApprover');
-      const approvers = dbUsers.filter(u => canApproveItems(u));
-      const list = approvers.length ? approvers : dbUsers;
-      sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}${u.role_title ? ' — ' + escapeHtmlSafe(u.role_title) : ''}</option>`).join('');
-      document.getElementById('approvalContent').value = '';
-      document.getElementById('approvalFileUrl').value = '';
-      document.getElementById('approvalFileInput').value = '';
-      openModal('approvalModal');
-    }
+  const sel = document.getElementById('approvalApprover');
+  const approvers = dbUsers.filter(u => canApproveItems(u));
+  const list = approvers.length ? approvers : dbUsers;
+  sel.innerHTML = list.map(u => `<option value="${u.id}">${escapeHtmlSafe(getUserFullName(u))}</option>`).join('');
+  document.getElementById('approvalContent').value = '';
+  document.getElementById('approvalFileUrl').value = '';
+  document.getElementById('approvalFileInput').value = '';
+  openModal('approvalModal');
+}
 
     function openEditApprovalModal(msgId) {
       const msg = dbMessages.find(m => String(m.id) === String(msgId));
