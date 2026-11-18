@@ -4031,7 +4031,7 @@
   })();
 </script>  
 <!-- ========================================================================= -->
-<!-- [LOCKED MODULE 20]: NHÚNG GOOGLE MAPS CÓ XÁC NHẬN CHỦ ĐỘNG (DO NOT EDIT)  -->
+<!-- [LOCKED MODULE 20]: NHÚNG GOOGLE MAPS CỐ ĐỊNH KHÔNG NHẤP NHÁY (DO NOT EDIT) -->
 <!-- ========================================================================= -->
 <div id="twLockedMapSuggestBar" class="hidden fixed z-[85] bg-slate-900/95 border border-sky-500/60 backdrop-blur-md rounded-2xl shadow-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-slate-100 max-w-xl">
   <div class="flex items-center gap-2.5 min-w-0">
@@ -4049,12 +4049,15 @@
   </div>
 </div>
 
+<!-- Lớp chứa khung bản đồ độc lập (Không bị phá hủy khi chat tự đồng bộ dữ liệu) -->
+<div id="twLockedMapViewport" style="position:fixed; pointer-events:none; overflow:hidden; z-index:15; display:none;"></div>
+
 <script>
   (function initLockedGoogleMapsEmbedder() {
     let currentDetectedLocation = '';
     let mapAttachedForCurrentDraft = false;
     let dismissedText = '';
-    let renderDebounceTimer = null;
+    const liveMapRegistry = new Map(); // Lưu trữ các khung iframe đã tải để không bao giờ nạp lại
 
     // 1. Bộ nhận diện địa điểm / địa chỉ / tọa độ chính xác
     function detectValidLocation(rawText) {
@@ -4185,15 +4188,15 @@
       }
     }
 
-    // 2. Quét toàn bộ document.body bằng TreeWalker để bắt đúng nút chữ chứa thẻ bản đồ
-    function renderEmbeddedMapsInMessages() {
+    // 2. Chuyển đổi chuỗi thẻ bản đồ thành khung giữ chỗ nhẹ (không chứa iframe)
+    function prepareMapPlaceholders() {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
       const matchedTextNodes = [];
       let n;
       while ((n = walker.nextNode())) {
         const pTag = n.parentElement ? n.parentElement.tagName : '';
         if (pTag === 'SCRIPT' || pTag === 'STYLE' || pTag === 'TEXTAREA' || pTag === 'INPUT') continue;
-        if (n.parentElement && n.parentElement.closest('#twLockedMapSuggestBar')) continue;
+        if (n.parentElement && n.parentElement.closest('#twLockedMapSuggestBar, #twLockedMapViewport')) continue;
         if (n.nodeValue && n.nodeValue.includes('[BẢN ĐỒ VỊ TRÍ:')) {
           matchedTextNodes.push(n);
         }
@@ -4203,49 +4206,128 @@
         const msgContainer = textNode.parentElement;
         if (!msgContainer) return;
 
-        // Chống chèn trùng trong cùng một bong bóng tin nhắn
         const bubbleBox = msgContainer.closest('[class*="rounded"]') || msgContainer;
-        if (bubbleBox.querySelector('.tw-embedded-map-card')) return;
+        if (bubbleBox.querySelector('.tw-map-slot')) return;
 
         const match = textNode.nodeValue.match(/🗺️?\s*\[BẢN ĐỒ VỊ TRÍ:\s*([^\]]+)\]/);
         if (!match) return;
 
         const locationQuery = match[1].trim();
-        // Xóa bỏ chuỗi kỹ thuật để tin nhắn hiển thị sạch đẹp
         textNode.nodeValue = textNode.nodeValue.replace(/\n?🗺️?\s*\[BẢN ĐỒ VỊ TRÍ:\s*[^\]]+\]/, '').trim();
 
-        const encodedQuery = encodeURIComponent(locationQuery);
-        const embedUrl = `https://maps.google.com/maps?q=${encodedQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-        const externalUrl = `https://www.google.com/maps?q=${encodedQuery}`;
-
-        const card = document.createElement('div');
-        card.className = 'tw-embedded-map-card mt-2.5 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow-lg w-full max-w-md';
-        card.innerHTML = `
-          <div class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
-            <span class="font-bold text-sky-400 truncate">📍 ${locationQuery}</span>
-            <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">Mở Google Maps ↗</a>
-          </div>
-          <iframe src="${embedUrl}" width="100%" height="220" style="border:0; display:block;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        `;
-        msgContainer.appendChild(card);
+        const slot = document.createElement('div');
+        slot.className = 'tw-map-slot mt-2.5 w-full max-w-md';
+        slot.dataset.mapLoc = locationQuery;
+        slot.style.height = '258px';
+        slot.style.minWidth = '280px';
+        msgContainer.appendChild(slot);
       });
     }
 
-    bindChatInputMapWatcher();
-    renderEmbeddedMapsInMessages();
+    // 3. Tạo thẻ bản đồ duy nhất 1 lần trong lớp độc lập (Không bao giờ nạp lại iframe)
+    function getOrCreatePersistentMapCard(mapKey, locationQuery) {
+      if (liveMapRegistry.has(mapKey)) {
+        const entry = liveMapRegistry.get(mapKey);
+        entry.lastSeenAt = Date.now();
+        return entry;
+      }
 
-    const mapObserver = new MutationObserver((mutations) => {
-      const hasRelevantChange = mutations.some(m => {
-        if (m.target && m.target.closest && m.target.closest('.tw-embedded-map-card')) return false;
-        return true;
+      const viewport = document.getElementById('twLockedMapViewport');
+      const encodedQuery = encodeURIComponent(locationQuery);
+      const embedUrl = `https://maps.google.com/maps?q=${encodedQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      const externalUrl = `https://www.google.com/maps?q=${encodedQuery}`;
+
+      const card = document.createElement('div');
+      card.style.cssText = 'position:absolute; top:0; left:0; pointer-events:auto; will-change:transform;';
+      card.className = 'rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow-lg';
+      card.innerHTML = `
+        <div class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
+          <span class="font-bold text-sky-400 truncate">📍 ${locationQuery}</span>
+          <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">Mở Google Maps ↗</a>
+        </div>
+        <iframe src="${embedUrl}" width="100%" height="220" style="border:0; display:block;" loading="eager" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      `;
+      viewport.appendChild(card);
+
+      const entry = { el: card, loc: locationQuery, lastSeenAt: Date.now() };
+      liveMapRegistry.set(mapKey, entry);
+      return entry;
+    }
+
+    // 4. Đồng bộ tọa độ khung bản đồ độc lập khớp khít 60fps với khung giữ chỗ trong tin nhắn
+    function syncMapPositionsLoop() {
+      const viewport = document.getElementById('twLockedMapViewport');
+      const slots = Array.from(document.querySelectorAll('.tw-map-slot'));
+      const now = Date.now();
+
+      if (slots.length > 0 && viewport) {
+        // Xác định khung cuộn hội thoại chứa tin nhắn
+        let scrollParent = slots[0].parentElement;
+        while (scrollParent && scrollParent !== document.body) {
+          const cls = scrollParent.className || '';
+          if (typeof cls === 'string' && (cls.includes('overflow-y-auto') || cls.includes('overflow-auto'))) {
+            break;
+          }
+          scrollParent = scrollParent.parentElement;
+        }
+        const vpRect = (scrollParent && scrollParent !== document.body)
+          ? scrollParent.getBoundingClientRect()
+          : { top: 60, left: 0, width: window.innerWidth, height: window.innerHeight - 130 };
+
+        if (vpRect.width > 0 && vpRect.height > 0) {
+          viewport.style.display = 'block';
+          viewport.style.top = vpRect.top + 'px';
+          viewport.style.left = vpRect.left + 'px';
+          viewport.style.width = vpRect.width + 'px';
+          viewport.style.height = vpRect.height + 'px';
+
+          const seenKeys = new Set();
+          slots.forEach((slot, idx) => {
+            const loc = slot.dataset.mapLoc || '';
+            const mapKey = `${loc}__${idx}`;
+            seenKeys.add(mapKey);
+
+            const entry = getOrCreatePersistentMapCard(mapKey, loc);
+            const sRect = slot.getBoundingClientRect();
+            const relX = Math.round(sRect.left - vpRect.left);
+            const relY = Math.round(sRect.top - vpRect.top);
+
+            entry.el.style.display = 'block';
+            entry.el.style.width = Math.round(sRect.width) + 'px';
+            entry.el.style.transform = `translate3d(${relX}px, ${relY}px, 0)`;
+          });
+
+          // Ẩn tạm các bản đồ chưa thấy trong khung hình hiện tại
+          liveMapRegistry.forEach((entry, key) => {
+            if (!seenKeys.has(key)) {
+              entry.el.style.display = 'none';
+            }
+          });
+        } else {
+          viewport.style.display = 'none';
+        }
+      } else if (viewport && liveMapRegistry.size === 0) {
+        viewport.style.display = 'none';
+      }
+
+      // Dọn dẹp bản đồ của kênh cũ nếu không còn xuất hiện quá 800ms (tránh xóa nhầm lúc chat đang sync)
+      liveMapRegistry.forEach((entry, key) => {
+        if (now - entry.lastSeenAt > 800) {
+          entry.el.remove();
+          liveMapRegistry.delete(key);
+        }
       });
-      if (!hasRelevantChange) return;
 
-      clearTimeout(renderDebounceTimer);
-      renderDebounceTimer = setTimeout(() => {
-        bindChatInputMapWatcher();
-        renderEmbeddedMapsInMessages();
-      }, 250);
+      requestAnimationFrame(syncMapPositionsLoop);
+    }
+
+    bindChatInputMapWatcher();
+    prepareMapPlaceholders();
+    requestAnimationFrame(syncMapPositionsLoop);
+
+    const mapObserver = new MutationObserver(() => {
+      bindChatInputMapWatcher();
+      prepareMapPlaceholders();
     });
     mapObserver.observe(document.body, { childList: true, subtree: true });
   })();
