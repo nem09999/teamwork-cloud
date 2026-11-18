@@ -4031,5 +4031,211 @@
   })();
 </script>  
 <!-- ========================================================================= -->
+    <!-- ========================================================================= -->
+<!-- [LOCKED MODULE 20]: NHÚNG GOOGLE MAPS CÓ XÁC NHẬN CHỦ ĐỘNG (DO NOT EDIT)  -->
+<!-- ========================================================================= -->
+<div id="twLockedMapSuggestBar" class="hidden fixed z-[85] bg-slate-900/95 border border-sky-500/60 backdrop-blur-md rounded-2xl shadow-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-slate-100 max-w-xl">
+  <div class="flex items-center gap-2.5 min-w-0">
+    <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm shrink-0">🗺️</span>
+    <div class="truncate">
+      <div class="text-[10px] text-slate-400">Phát hiện địa điểm / tọa độ:</div>
+      <div id="twMapDetectedText" class="font-bold text-white truncate"></div>
+    </div>
+  </div>
+  <div class="flex items-center gap-1.5 shrink-0">
+    <button type="button" id="twBtnAttachMap" onclick="confirmAttachGoogleMap()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5">
+      <span>📍 Thêm bản đồ vị trí này vào trò chuyện</span>
+    </button>
+    <button type="button" onclick="dismissMapSuggestBar()" title="Bỏ qua" class="text-slate-400 hover:text-white px-2 py-1.5 rounded-lg">✕</button>
+  </div>
+</div>
+
+<script>
+  (function initLockedGoogleMapsEmbedder() {
+    let currentDetectedLocation = '';
+    let mapAttachedForCurrentDraft = false;
+    let dismissedText = '';
+
+    // Bộ nhận diện địa điểm / địa chỉ / tọa độ chính xác
+    function detectValidLocation(rawText) {
+      const text = (rawText || '').trim();
+      if (text.length < 5 || text.length > 220) return null;
+      // Bỏ qua nếu đã đính kèm bản đồ rồi
+      if (text.includes('[BẢN ĐỒ VỊ TRÍ:')) return null;
+
+      // 1. Kiểm tra tọa độ GPS (VD: 10.776889, 106.700806)
+      const coordMatch = text.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
+      if (coordMatch) {
+        return `${coordMatch[1]}, ${coordMatch[2]}`;
+      }
+
+      // 2. Kiểm tra địa chỉ chi tiết có số nhà + đơn vị hành chính (phường/xã/quận/huyện/tỉnh/thành phố)
+      const fullAddressRegex = /(?:số\s*)?\d+[a-zA-Z0-9\/\-]*\s+[^,]+,\s*(?:phường|p\.|xã|x\.|thị trấn|tt\.)\s*[^,]+,\s*(?:quận|q\.|huyện|h\.|thành phố|tp\.|thị xã|tx\.|tỉnh)\s*[^,]+/i;
+      if (fullAddressRegex.test(text)) {
+        return text;
+      }
+
+      // 3. Kiểm tra địa chỉ có ít nhất 2 cấp hành chính rõ ràng (VD: Phường Long Thới, Nhà Bè, TP.HCM)
+      const adminMultiLevelRegex = /(?:phường|p\.|xã|x\.|thị trấn|tt\.)\s*[a-zA-ZÀ-ỹ0-9\s]+,\s*(?:quận|q\.|huyện|h\.|thành phố|tp\.|thị xã|tx\.|tỉnh)\s*[a-zA-ZÀ-ỹ0-9\s]+/i;
+      if (adminMultiLevelRegex.test(text)) {
+        return text;
+      }
+
+      // 4. Kiểm tra tên tỉnh / thành phố / địa danh hành chính cụ thể (VD: tỉnh Lạng Sơn, thành phố Đà Lạt)
+      const provinceOrCityRegex = /^(?:tỉnh|thành phố|tp\.?)\s+[A-ZÀ-Ỹa-zà-ỹ][a-zA-ZÀ-ỹ\s]{2,40}$/i;
+      if (provinceOrCityRegex.test(text)) {
+        return text;
+      }
+
+      return null;
+    }
+
+    function positionSuggestBar(chatInput) {
+      const bar = document.getElementById('twLockedMapSuggestBar');
+      if (!bar || !chatInput) return;
+      const rect = chatInput.getBoundingClientRect();
+      bar.style.left = Math.max(12, rect.left) + 'px';
+      bar.style.bottom = (window.innerHeight - rect.top + 12) + 'px';
+    }
+
+    function updateSuggestUI(chatInput) {
+      const bar = document.getElementById('twLockedMapSuggestBar');
+      const textEl = document.getElementById('twMapDetectedText');
+      const btnEl = document.getElementById('twBtnAttachMap');
+      if (!bar || !textEl || !btnEl || !chatInput) return;
+
+      const val = chatInput.value;
+      const detected = detectValidLocation(val);
+
+      if (!detected || detected === dismissedText) {
+        bar.classList.add('hidden');
+        currentDetectedLocation = '';
+        mapAttachedForCurrentDraft = false;
+        return;
+      }
+
+      if (detected !== currentDetectedLocation) {
+        currentDetectedLocation = detected;
+        mapAttachedForCurrentDraft = false;
+      }
+
+      textEl.textContent = detected;
+      if (mapAttachedForCurrentDraft) {
+        btnEl.className = 'bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-default';
+        btnEl.innerHTML = '<span>✅ Đã gắn bản đồ (Bấm Gửi để đăng)</span>';
+      } else {
+        btnEl.className = 'bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5';
+        btnEl.innerHTML = '<span>📍 Thêm bản đồ vị trí này vào trò chuyện</span>';
+      }
+
+      positionSuggestBar(chatInput);
+      bar.classList.remove('hidden');
+    }
+
+    window.confirmAttachGoogleMap = function () {
+      if (!currentDetectedLocation) return;
+      mapAttachedForCurrentDraft = true;
+      const chatInput = document.querySelector('input[placeholder*="Nhập trao đổi"], textarea[placeholder*="Nhập trao đổi"]');
+      if (chatInput) {
+        updateSuggestUI(chatInput);
+        chatInput.focus();
+      }
+    };
+
+    window.dismissMapSuggestBar = function () {
+      dismissedText = currentDetectedLocation;
+      mapAttachedForCurrentDraft = false;
+      const bar = document.getElementById('twLockedMapSuggestBar');
+      if (bar) bar.classList.add('hidden');
+    };
+
+    // Chèn thẻ định danh bản đồ vào nội dung tin nhắn CHỈ KHI người dùng đã click chọn nút xác nhận
+    function injectMapTagBeforeSend(chatInput) {
+      if (!mapAttachedForCurrentDraft || !currentDetectedLocation) return;
+      const loc = currentDetectedLocation;
+      const encoded = encodeURIComponent(loc);
+      const currentVal = chatInput.value.trim();
+      if (!currentVal.includes('[BẢN ĐỒ VỊ TRÍ:')) {
+        chatInput.value = `${currentVal}\n🗺️ [BẢN ĐỒ VỊ TRÍ: ${loc}]\n🔗 https://www.google.com/maps?q=${encoded}`;
+        chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      mapAttachedForCurrentDraft = false;
+      currentDetectedLocation = '';
+      const bar = document.getElementById('twLockedMapSuggestBar');
+      if (bar) bar.classList.add('hidden');
+    }
+
+    // Lắng nghe thao tác gõ phím và bấm Gửi trên ô chat
+    function bindChatInputMapWatcher() {
+      const chatInput = document.querySelector('input[placeholder*="Nhập trao đổi"], textarea[placeholder*="Nhập trao đổi"]');
+      if (!chatInput || chatInput.dataset.twMapBound === '1') return;
+      chatInput.dataset.twMapBound = '1';
+
+      chatInput.addEventListener('input', function () {
+        if (!chatInput.value.trim()) {
+          dismissedText = '';
+          mapAttachedForCurrentDraft = false;
+        }
+        updateSuggestUI(chatInput);
+      });
+
+      chatInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          injectMapTagBeforeSend(chatInput);
+        }
+      }, true);
+
+      const formOrBar = chatInput.closest('form') || chatInput.parentElement;
+      if (formOrBar) {
+        const sendBtn = Array.from(formOrBar.querySelectorAll('button')).find(b => b.textContent.trim() === 'Gửi');
+        if (sendBtn && sendBtn.dataset.twMapSendBound !== '1') {
+          sendBtn.dataset.twMapSendBound = '1';
+          sendBtn.addEventListener('click', function () {
+            injectMapTagBeforeSend(chatInput);
+          }, true);
+        }
+      }
+    }
+
+    // Tự động dựng khung Google Maps trực quan cho các tin nhắn đã được xác nhận đính kèm bản đồ
+    function renderEmbeddedMapsInMessages() {
+      const msgNodes = document.querySelectorAll('div, p, span');
+      msgNodes.forEach(el => {
+        if (el.dataset.twMapRendered === '1') return;
+        if (el.children.length > 3) return;
+        const txt = el.textContent || '';
+        const match = txt.match(/🗺️\s*\[BẢN ĐỒ VỊ TRÍ:\s*([^\]]+)\]/);
+        if (!match) return;
+
+        el.dataset.twMapRendered = '1';
+        const locationQuery = match[1].trim();
+        const encodedQuery = encodeURIComponent(locationQuery);
+        const embedUrl = `https://maps.google.com/maps?q=${encodedQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        const externalUrl = `https://www.google.com/maps?q=${encodedQuery}`;
+
+        const card = document.createElement('div');
+        card.className = 'mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow-lg max-w-md';
+        card.innerHTML = `
+          <div class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <span class="font-bold text-sky-400 truncate">📍 ${locationQuery}</span>
+            <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] bg-sky-600/20 hover:bg-sky-600/40 text-sky-300 px-2 py-0.5 rounded-lg shrink-0 font-semibold">Mở Google Maps ↗</a>
+          </div>
+          <iframe src="${embedUrl}" width="100%" height="210" style="border:0; display:block;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        `;
+        el.appendChild(card);
+      });
+    }
+
+    bindChatInputMapWatcher();
+    renderEmbeddedMapsInMessages();
+
+    const mapObserver = new MutationObserver(() => {
+      bindChatInputMapWatcher();
+      renderEmbeddedMapsInMessages();
+    });
+    mapObserver.observe(document.body, { childList: true, subtree: true });
+  })();
+</script>
+<!-- ========================================================================= -->
 </body>
 </html>
