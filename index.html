@@ -115,7 +115,10 @@
 
       <!-- MENU TÁC VỤ MỞ RỘNG (LUÔN HIỂN THỊ RÕ TRÊN MỌI MÀN HÌNH) -->
       <div class="relative">
-        <button type="button" onclick="toggleHeaderMoreMenu(event)" title="Menu tác vụ mở rộng" class="bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1.5 rounded-xl text-xs font-extrabold border border-slate-600">⋮</button>
+        <button type="button" onclick="toggleHeaderMoreMenu(event)" title="Menu tác vụ mở rộng" class="bg-slate-800 hover:bg-slate-700 text-amber-300 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold border border-slate-600 flex items-center gap-1">
+  <span>⚙️ Tác vụ</span><span>▾</span>
+</button>
+       <!-- <button type="button" onclick="toggleHeaderMoreMenu(event)" title="Menu tác vụ mở rộng" class="bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1.5 rounded-xl text-xs font-extrabold border border-slate-600">⋮</button> -->
         <div id="headerMoreMenu" onclick="event.stopPropagation()" class="hidden fixed sm:absolute right-2 sm:right-0 top-14 sm:top-full sm:mt-2 w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-1.5 z-[70] text-xs">
           <button id="btnMenuMeeting" onclick="closeAllDropdowns(); openMeetingModal()" class="w-full px-3.5 py-2.5 text-left hover:bg-slate-800 flex items-center gap-2 text-emerald-300 font-semibold">📅 Chốt lịch họp & Giao việc</button>
           <button onclick="closeAllDropdowns(); openProgressModal('ALL')" class="w-full px-3.5 py-2.5 text-left hover:bg-slate-800 flex items-center gap-2 text-blue-300 font-semibold">📊 Dashboard Tiến độ Dự án & Cá nhân</button>
