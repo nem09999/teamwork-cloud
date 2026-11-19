@@ -4414,7 +4414,7 @@
 
       return Array.from(chatSet).filter(Boolean);
     }
-
+      
     submitNewTask = async function () {
       const projId = document.getElementById('taskProjectSelect').value;
       const assigneeId = document.getElementById('taskAssignee').value;
@@ -4436,7 +4436,6 @@
         const { data: insertedTasks, error: taskErr } = await sb.from('team_tasks').insert([{
           channel_id: String(projId),
           task_title: content,
-          assignee_id: assigneeId || null,
           assignee_name: assigneeName,
           assigned_by: assignedBy,
           start_date: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
@@ -4515,6 +4514,7 @@
         btn.textContent = 'Giao Việc & Gửi Telegram';
       }
     };
+      
     // =========================================================================
     // [BỔ SUNG 03]: ĐẨY THÔNG BÁO CẬP NHẬT / ĐÃ XONG VIỆC TỪ WEB APP SANG TELEGRAM
     // =========================================================================
