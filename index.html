@@ -3224,13 +3224,11 @@
       btn.textContent = 'Đang giao việc...';
 
       try {
-        const { data: insertedTasks } = await sb.from('team_tasks').insert([{
+        const { data: insertedTasks, error: taskErr } = await sb.from('team_tasks').insert([{
           channel_id: String(projId),
           task_title: content,
-          assignee_id: assigneeId || null,
           assignee_name: assigneeName,
           assigned_by: assignedBy,
-          start_date: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
           due_date: dueTime ? new Date(dueTime).toISOString() : null,
           status: 'PENDING'
         }]).select();
