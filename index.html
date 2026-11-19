@@ -3,22 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeamWork Cloud — Điều Hành &amp; Quản Trị Dự Án</title>
+  <title>TeamWork Cloud — Điều Hành & Quản Trị Dự Án</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #090e1a; color: #e2e8f0; }
     .glass { background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.16); }
     .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
     .scroll-thin::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 9999px; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-950 text-slate-100">
 
 <!-- ============================================================================
      [LOCKED CORE — KHỐI KHÉP KÍN: CONFIG, SCHEMA-AUTO-ADAPTER & TELEGRAM GATEWAY]
-     - Cấm mở quyền sửa trực tiếp logic bên trong khối này khi thêm tính năng mới.
-     - Đổi tài khoản mới: chỉnh TW_DEFAULT_CONFIG hoặc bấm nút "Cấu hình Kết nối".
+     - Giữ nguyên 100% logic kết nối Supabase 4 bảng + GAS + Telegram 3 nút bấm.
+     - Đổi tài khoản mới: chỉnh TW_DEFAULT_CONFIG hoặc bấm nút "Cấu hình".
      ============================================================================ -->
 <script>
 const TW_DEFAULT_CONFIG = Object.freeze({
@@ -30,6 +35,8 @@ const TW_DEFAULT_CONFIG = Object.freeze({
   WEB_APP_URL: 'https://nem09999.github.io/teamwork-cloud/',
   REQUEST_TIMEOUT_MS: 12000,
   STORAGE_KEY: 'tw_locked_portable_cfg_v3',
+  SESSION_KEY: 'tw_logged_in_user_v3',
+  AUDIT_LOCAL_KEY: 'tw_local_audit_logs_v3',
   TABLES: Object.freeze({
     USERS: 'team_users',
     CHANNELS: 'team_channels',
@@ -59,12 +66,13 @@ const TW_CONFIG = (() => {
     WEB_APP_URL: TW_DEFAULT_CONFIG.WEB_APP_URL,
     REQUEST_TIMEOUT_MS: TW_DEFAULT_CONFIG.REQUEST_TIMEOUT_MS,
     STORAGE_KEY: TW_DEFAULT_CONFIG.STORAGE_KEY,
+    SESSION_KEY: TW_DEFAULT_CONFIG.SESSION_KEY,
+    AUDIT_LOCAL_KEY: TW_DEFAULT_CONFIG.AUDIT_LOCAL_KEY,
     TABLES: TW_DEFAULT_CONFIG.TABLES
   });
 })();
 
 const TeamLockedSchema = (() => {
-  // Lưu danh sách cột thực tế phát hiện được từ Supabase để không bao giờ gửi cột thừa gây lỗi 400
   const detectedCols = {
     team_users: null,
     team_channels: null,
@@ -102,54 +110,97 @@ const TeamLockedSchema = (() => {
 
   function normalizeUser(row = {}) {
     const perm = String(row.permission || (row.is_admin ? 'FULL' : 'MEMBER')).trim();
+    const isAdmin = Boolean(row.is_admin || ['ADMIN', 'FULL', 'APPROVER', 'OWNER'].includes(perm.toUpperCase()));
     return {
       id: String(row.id || genUuid()),
       display_name: String(row.display_name || row.full_name || row.name || row.username || '').trim(),
+      full_name: String(row.display_name || row.full_name || row.name || row.username || '').trim(),
       username: String(row.username || '').trim(),
       role_title: String(row.role_title || row.role || 'Thành viên').trim(),
       permission: perm,
       pin_code: String(row.pin_code || row.pin || '').trim(),
       telegram_chat_id: String(row.telegram_chat_id || '').trim(),
-      is_admin: Boolean(row.is_admin || ['ADMIN', 'FULL', 'APPROVER', 'OWNER'].includes(perm.toUpperCase()))
+      is_admin: isAdmin,
+      custom_perms: (row.custom_perms && typeof row.custom_perms === 'object') ? row.custom_perms : {}
     };
   }
 
   function buildUserInsertPayload(input = {}) {
     const perm = String(input.permission || 'MEMBER').trim() || 'MEMBER';
     const isAdmin = ['ADMIN', 'FULL', 'APPROVER', 'OWNER'].includes(perm.toUpperCase());
+    const nameVal = String(input.display_name || input.full_name || '').trim();
     const fullPayload = {
       id: isUuid(input.id) ? String(input.id).trim() : genUuid(),
-      display_name: String(input.display_name || '').trim(),
+      display_name: nameVal,
+      full_name: nameVal,
       username: String(input.username || '').trim(),
       role_title: String(input.role_title || 'Thành viên').trim() || 'Thành viên',
       permission: perm,
       pin_code: String(input.pin_code || '').trim(),
       telegram_chat_id: String(input.telegram_chat_id || '').trim(),
-      is_admin: isAdmin
+      is_admin: isAdmin,
+      custom_perms: input.custom_perms || {}
     };
     return filterByKnownCols('team_users', fullPayload);
   }
 
   function normalizeChannel(row = {}) {
+    const meta = (row.meta && typeof row.meta === 'object') ? row.meta : {};
     return {
       id: String(row.id || genUuid()),
       name: String(row.name || 'Phòng Điều Hành Chung').trim(),
       description: String(row.description || '').trim(),
-      type: String(row.type || 'GROUP').trim().toUpperCase()
+      type: String(row.type || 'GROUP').trim().toUpperCase(),
+      members: Array.isArray(row.members) ? row.members : [],
+      meta,
+      pinned_message: String(row.pinned_message || meta.pinned_message || '').trim(),
+      map_url: String(row.map_url || meta.map_url || '').trim()
     };
+  }
+
+  function buildChannelInsertPayload(input = {}) {
+    const meta = {
+      ...(input.meta || {}),
+      pinned_message: input.pinned_message || '',
+      map_url: input.map_url || ''
+    };
+    const fullPayload = {
+      id: isUuid(input.id) ? String(input.id).trim() : genUuid(),
+      name: String(input.name || '').trim(),
+      description: String(input.description || 'Kênh dự án').trim(),
+      type: String(input.type || 'GROUP').trim().toUpperCase(),
+      members: Array.isArray(input.members) ? input.members : [],
+      meta
+    };
+    return filterByKnownCols('team_channels', fullPayload);
   }
 
   function normalizeTask(row = {}) {
     const st = String(row.status || 'PENDING').trim().toUpperCase();
+    let normStatus = 'PENDING';
+    if (['DONE', 'COMPLETED', 'ĐÃ XONG'].includes(st)) normStatus = 'DONE';
+    else if (['IN_PROGRESS', 'DOING', 'ĐANG LÀM', 'CONFIRMED'].includes(st)) normStatus = 'IN_PROGRESS';
+
+    const title = String(row.content || row.task_title || '').trim();
+    const assignee = String(row.assignee || row.assignee_name || '').trim();
+    const assigner = String(row.assigner || row.assigned_by || '').trim();
+    const due = String(row.due_time || row.due_date || '').trim();
+    const note = String(row.reply_note || row.progress_note || '').trim();
+
     return {
       id: String(row.id || genUuid()),
       channel_id: String(row.channel_id || '').trim(),
-      content: String(row.content || row.task_title || '').trim(),
-      assignee: String(row.assignee || row.assignee_name || '').trim(),
-      assigner: String(row.assigner || row.assigned_by || '').trim(),
-      due_time: String(row.due_time || row.due_date || '').trim(),
-      status: ['DONE', 'COMPLETED', 'ĐÃ XONG'].includes(st) ? 'DONE' : 'PENDING',
-      reply_note: String(row.reply_note || row.progress_note || '').trim(),
+      content: title,
+      task_title: title,
+      assignee,
+      assignee_name: assignee,
+      assigner,
+      assigned_by: assigner,
+      due_time: due,
+      due_date: due,
+      status: normStatus,
+      reply_note: note,
+      progress_note: note,
       created_at: String(row.created_at || new Date().toISOString())
     };
   }
@@ -164,9 +215,9 @@ const TeamLockedSchema = (() => {
       channel_id: isUuid(input.channel_id) ? String(input.channel_id).trim() : null,
       content: title,
       task_title: title,
-      assignee: assignee,
+      assignee,
       assignee_name: assignee,
-      assigner: assigner,
+      assigner,
       assigned_by: assigner,
       due_time: due,
       due_date: due,
@@ -178,14 +229,21 @@ const TeamLockedSchema = (() => {
   }
 
   function normalizeMessage(row = {}) {
+    const sender = String(row.sender || row.sender_name || '').trim();
+    const role = String(row.role_title || row.sender_role || '').trim();
     return {
       id: String(row.id || genUuid()),
       channel_id: String(row.channel_id || '').trim(),
-      sender: String(row.sender || row.sender_name || '').trim(),
-      role_title: String(row.role_title || row.sender_role || '').trim(),
+      sender,
+      sender_name: sender,
+      role_title: role,
+      sender_role: role,
       content: String(row.content || '').trim(),
       msg_type: String(row.msg_type || 'CHAT').trim().toUpperCase(),
-      approval_status: String(row.approval_status || '').trim(),
+      approval_status: String(row.approval_status || '').trim().toUpperCase(),
+      approver_name: String(row.approver_name || '').trim(),
+      approval_note: String(row.approval_note || '').trim(),
+      approved_at: String(row.approved_at || '').trim(),
       created_at: String(row.created_at || new Date().toISOString())
     };
   }
@@ -193,15 +251,20 @@ const TeamLockedSchema = (() => {
   function buildMessageInsertPayload(input = {}) {
     const sender = String(input.sender || input.sender_name || '').trim();
     const role = String(input.role_title || input.sender_role || '').trim();
+    const mType = String(input.msg_type || 'CHAT').trim().toUpperCase();
     const fullPayload = {
       id: isUuid(input.id) ? String(input.id).trim() : genUuid(),
       channel_id: isUuid(input.channel_id) ? String(input.channel_id).trim() : null,
-      sender: sender,
+      sender,
       sender_name: sender,
       role_title: role,
       sender_role: role,
       content: String(input.content || '').trim(),
-      msg_type: String(input.msg_type || 'CHAT').trim().toUpperCase()
+      msg_type: mType,
+      approval_status: mType === 'APPROVAL' ? (input.approval_status || 'PENDING') : (input.approval_status || null),
+      approver_name: input.approver_name || null,
+      approval_note: input.approval_note || null,
+      approved_at: input.approved_at || null
     };
     return filterByKnownCols('team_messages', fullPayload);
   }
@@ -210,9 +273,11 @@ const TeamLockedSchema = (() => {
     isUuid,
     genUuid,
     registerSampleRows,
+    filterByKnownCols,
     normalizeUser,
     buildUserInsertPayload,
     normalizeChannel,
+    buildChannelInsertPayload,
     normalizeTask,
     buildTaskInsertPayload,
     normalizeMessage,
@@ -300,7 +365,6 @@ const TelegramLockedGateway = (() => {
     return enqueue(() => postGasRaw(payload));
   }
 
-  // Gửi đúng action NOTIFY_TASK để GAS hiện tại tạo 3 nút bấm (Xác nhận / Đã xong / Hồi đáp tiến độ)
   function notifyNewTask({ task, channelName, staffList }) {
     const assigneeObj = findUserByName(staffList, task.assignee);
     const assignerObj = findUserByName(staffList, task.assigner);
@@ -336,6 +400,19 @@ const TelegramLockedGateway = (() => {
     });
   }
 
+  function notifyApproval({ message, channelName, staffList }) {
+    const targetChatIds = resolveTargetChatIds(staffList, '', message.sender);
+    return dispatch({
+      action: 'NOTIFY_APPROVAL',
+      messageId: message.id,
+      channelName: channelName || 'Phòng Điều Hành Chung',
+      senderName: message.sender,
+      content: message.content,
+      status: message.approval_status || 'PENDING',
+      targetChatIds
+    });
+  }
+
   function sendDirectTest(chatId, text) {
     return dispatch({
       action: 'send_telegram',
@@ -352,85 +429,185 @@ const TelegramLockedGateway = (() => {
     dispatch,
     notifyNewTask,
     notifyTaskStatusUpdate,
+    notifyApproval,
     sendDirectTest
   });
 })();
 </script>
 
 <!-- ============================================================================
-     [GIAO DIỆN ĐIỀU HÀNH TEAMWORK CLOUD]
+     [MÀN HÌNH ĐĂNG NHẬP PIN & KHÔI PHỤC PIN QUA TELEGRAM]
      ============================================================================ -->
-<header class="glass border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30">
+<div id="loginOverlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+  <div class="glass w-full max-w-md rounded-2xl p-6 space-y-5 shadow-2xl border border-slate-700/70">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300 font-bold text-lg">TW</div>
+      <div>
+        <h2 class="text-lg font-bold text-white">TeamWork Cloud</h2>
+        <p class="text-xs text-slate-400">Đăng nhập định danh nội bộ &amp; điều hành dự án</p>
+      </div>
+    </div>
+
+    <form id="loginForm" class="space-y-3.5">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Chọn tài khoản / Nhập tên đăng nhập</label>
+        <select id="loginUserSelect" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
+          <option value="">-- Đang tải danh sách nhân sự --</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Mã PIN bảo mật</label>
+        <input id="loginPinInput" type="password" autocomplete="current-password" placeholder="Nhập mã PIN (để trống nếu chưa đặt PIN)" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500" />
+      </div>
+      <div id="loginErrorMsg" class="hidden text-xs text-rose-300 bg-rose-950/80 border border-rose-700/50 rounded-lg px-3 py-2"></div>
+      <button type="submit" class="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold shadow-lg">Vào Hệ Thống Điều Hành</button>
+    </form>
+
+    <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+      <button id="btnForgotPinTg" type="button" class="text-sky-400 hover:text-sky-300">Quên PIN? Gửi về Telegram</button>
+      <button id="btnQuickAdminBypass" type="button" class="text-slate-400 hover:text-slate-200">Vào nhanh chế độ Quản trị</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     [THANH ĐIỀU HƯỚNG TOPBAR & MENU ĐẦY ĐỦ]
+     ============================================================================ -->
+<header class="glass border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30 no-print">
   <div class="flex items-center gap-3">
     <div class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300 font-bold">TW</div>
     <div>
-      <h1 class="text-base font-semibold text-white">TeamWork Cloud</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-base font-semibold text-white">TeamWork Cloud</h1>
+        <span id="dbConnectionBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Đang kết nối</span>
+      </div>
       <p id="activeUserBanner" class="text-xs text-slate-400">Đang đồng bộ hệ thống...</p>
     </div>
   </div>
-  <div class="flex flex-wrap items-center gap-2">
+
+  <div class="flex flex-wrap items-center gap-1.5">
     <button id="btnOpenTaskModal" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium">+ Giao việc</button>
-    <button id="btnOpenStaffModal" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs font-medium">Quản lý nhân sự</button>
-    <button id="btnOpenConfigModal" class="px-3 py-1.5 rounded-lg bg-indigo-900/80 hover:bg-indigo-800 border border-indigo-600/50 text-indigo-100 text-xs font-medium">Cấu hình Kết nối</button>
-    <button id="btnTestTelegram" class="px-3 py-1.5 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-emerald-50 text-xs font-medium">Test Telegram</button>
-    <button id="btnReloadAll" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium">Làm mới</button>
+    <button id="btnOpenMeetingModal" class="px-3 py-1.5 rounded-lg bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium">Chốt lịch họp</button>
+    <button id="btnOpenDashboardModal" class="px-3 py-1.5 rounded-lg bg-violet-700/85 hover:bg-violet-600 text-white text-xs font-medium">Dashboard &amp; Xuất BC</button>
+    <button id="btnOpenApprovalCenter" class="px-3 py-1.5 rounded-lg bg-teal-700/85 hover:bg-teal-600 text-white text-xs font-medium">Trình duyệt <span id="pendingApprovalBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-black/30 text-[10px]">0</span></button>
+    <button id="btnOpenStaffModal" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs font-medium">Nhân sự</button>
+    <button id="btnOpenBackupAuditModal" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs font-medium">Sao lưu &amp; Log</button>
+    <button id="btnOpenConfigModal" class="px-3 py-1.5 rounded-lg bg-indigo-900/80 hover:bg-indigo-800 border border-indigo-600/50 text-indigo-100 text-xs font-medium">Cấu hình</button>
+    <button id="btnTestTelegram" class="px-3 py-1.5 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-emerald-50 text-xs font-medium">Test TG</button>
+    <button id="btnReloadAll" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium" title="Làm mới dữ liệu">↻</button>
+    <button id="btnSwitchAccount" class="px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-700/50 text-rose-200 text-xs font-medium" title="Đổi tài khoản / Đăng xuất">Đổi user</button>
   </div>
 </header>
 
 <div id="statusToast" class="hidden fixed bottom-4 right-4 z-50 max-w-md px-4 py-3 rounded-xl shadow-xl border text-xs font-medium"></div>
 
+<!-- ============================================================================
+     [BỐ CỤC 3 CỘT ĐIỀU HÀNH TRUNG TÂM]
+     ============================================================================ -->
 <main class="flex-1 grid grid-cols-1 lg:grid-cols-12">
   <!-- Cột trái: Nhóm/Dự án & Nhân sự -->
   <aside class="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-slate-800 p-4 flex flex-col gap-4 bg-slate-900/50">
     <div class="flex items-center justify-between">
       <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Nhóm / Dự án</h2>
-      <button id="btnQuickChannel" class="text-xs text-sky-400 hover:text-sky-300">+ Tạo mới</button>
+      <button id="btnQuickChannel" class="text-xs text-sky-400 hover:text-sky-300 font-medium">+ Tạo mới</button>
     </div>
     <div id="channelListEl" class="space-y-1.5 max-h-56 overflow-y-auto scroll-thin"></div>
 
-    <div class="pt-3 border-t border-slate-800">
+    <div class="pt-3 border-t border-slate-800 flex-1 flex flex-col">
       <div class="flex items-center justify-between mb-2">
         <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Thành viên</h2>
         <span id="staffCountBadge" class="text-[11px] text-slate-400">0</span>
       </div>
-      <div id="sidebarStaffListEl" class="space-y-1.5 max-h-72 overflow-y-auto scroll-thin"></div>
+      <div id="sidebarStaffListEl" class="space-y-1.5 max-h-80 overflow-y-auto scroll-thin"></div>
     </div>
   </aside>
 
-  <!-- Cột giữa: Bảng tin điều hành & Trạng thái giao việc -->
-  <section class="lg:col-span-5 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col min-h-[440px]">
-    <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+  <!-- Cột giữa: Bảng tin điều hành, Ghim chỉ đạo, Poll, Maps, Trình duyệt -->
+  <section class="lg:col-span-5 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col min-h-[480px]">
+    <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-900/40">
       <div>
         <h2 id="activeChannelTitle" class="text-sm font-semibold text-white">Phòng Điều Hành Chung</h2>
-        <p id="activeChannelDesc" class="text-xs text-slate-400">Tự động đồng bộ phản hồi Telegram 2 chiều (mỗi 10 giây)</p>
+        <p id="activeChannelDesc" class="text-xs text-slate-400">Đồng bộ phản hồi Telegram 2 chiều (10s/lần)</p>
       </div>
-      <span id="dbConnectionBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Đang kết nối</span>
+      <div class="flex items-center gap-1.5">
+        <button id="btnPinDirective" class="px-2 py-1 rounded bg-amber-950/80 hover:bg-amber-900 border border-amber-700/50 text-amber-200 text-[11px]">📌 Ghim chỉ đạo</button>
+        <button id="btnOpenPollModal" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px]">📊 Bình chọn</button>
+        <button id="btnOpenMapModal" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px]">📍 Bản đồ</button>
+      </div>
     </div>
 
-    <div id="messageFeedEl" class="flex-1 p-4 space-y-3 overflow-y-auto scroll-thin max-h-[64vh]"></div>
+    <!-- Banner Ghim Chỉ Đạo -->
+    <div id="pinnedDirectiveBar" class="hidden px-4 py-2.5 bg-amber-950/60 border-b border-amber-700/40 flex items-start justify-between gap-2 text-xs">
+      <div class="text-amber-100"><span class="font-bold text-amber-300">📌 CHỈ ĐẠO GHIM:</span> <span id="pinnedDirectiveText"></span></div>
+      <button id="btnClearPinDirective" class="text-amber-400 hover:text-amber-200 text-[11px] shrink-0">Bỏ ghim</button>
+    </div>
 
-    <form id="messageForm" class="p-3 border-t border-slate-800 bg-slate-900/70 flex gap-2">
-      <input id="messageInput" type="text" placeholder="Nhập trao đổi hoặc báo cáo nhanh..." class="flex-1 rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500" />
-      <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium">Gửi</button>
+    <!-- Khung nhúng Bản Đồ Dự Án (khi kênh có gắn Map) -->
+    <div id="channelMapBox" class="hidden border-b border-slate-800 bg-slate-950 p-2">
+      <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pb-1">
+        <span>📍 Vị trí / Ranh giới dự án đính kèm</span>
+        <button id="btnCloseChannelMap" class="text-slate-400 hover:text-white">Ẩn bản đồ ✕</button>
+      </div>
+      <iframe id="channelMapIframe" class="w-full h-44 rounded-lg border border-slate-800" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+
+    <!-- Danh sách tin nhắn / Trình duyệt / Poll -->
+    <div id="messageFeedEl" class="flex-1 p-4 space-y-3 overflow-y-auto scroll-thin max-h-[60vh]"></div>
+
+    <!-- Thanh nhập trao đổi / Gửi trình duyệt -->
+    <form id="messageForm" class="p-3 border-t border-slate-800 bg-slate-900/70 space-y-2">
+      <div class="flex items-center justify-between text-[11px] text-slate-400">
+        <div class="flex items-center gap-2">
+          <label class="inline-flex items-center gap-1 cursor-pointer">
+            <input type="radio" name="composeMode" value="CHAT" checked class="accent-sky-500" />
+            <span>Trao đổi thường</span>
+          </label>
+          <label class="inline-flex items-center gap-1 cursor-pointer text-teal-300">
+            <input type="radio" name="composeMode" value="APPROVAL" class="accent-teal-500" />
+            <span>Trình phê duyệt (Gửi Lãnh đạo)</span>
+          </label>
+        </div>
+        <span class="text-slate-500">Enter để gửi</span>
+      </div>
+      <div class="flex gap-2">
+        <input id="messageInput" type="text" placeholder="Nhập nội dung trao đổi, báo cáo nhanh hoặc đề xuất trình duyệt..." class="flex-1 rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500" />
+        <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium">Gửi</button>
+      </div>
     </form>
   </section>
 
   <!-- Cột phải: Checklist & Tiến độ công việc -->
   <section class="lg:col-span-4 p-4 flex flex-col bg-slate-900/30">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-sm font-semibold text-white">Checklist Công Việc</h2>
-      <span id="taskCountBadge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">0 việc</span>
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <div class="flex items-center gap-2">
+        <h2 class="text-sm font-semibold text-white">Checklist Công Việc</h2>
+        <span id="taskCountBadge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">0 việc</span>
+      </div>
+      <div class="flex items-center gap-1 text-[11px]">
+        <select id="taskFilterStatus" class="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-slate-200">
+          <option value="ALL">Tất cả</option>
+          <option value="PENDING">Chờ / Đang làm</option>
+          <option value="DONE">Đã xong</option>
+        </select>
+        <select id="taskFilterAssignee" class="rounded bg-slate-900 border border-slate-700 px-2 py-1 text-slate-200 max-w-[120px]">
+          <option value="ALL">Mọi người</option>
+        </select>
+      </div>
     </div>
     <div id="taskListEl" class="space-y-2.5 overflow-y-auto scroll-thin max-h-[72vh]"></div>
   </section>
 </main>
 
-<!-- Modal Cấu Hình Di Động -->
+<!-- ============================================================================
+     [CÁC MODAL CHỨC NĂNG ĐẦY ĐỦ]
+     ============================================================================ -->
+
+<!-- 1. Modal Cấu Hình Di Động -->
 <div id="configModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
   <div class="glass w-full max-w-xl rounded-2xl p-5 space-y-4">
     <div class="flex items-center justify-between border-b border-slate-800 pb-3">
       <h3 class="text-base font-semibold text-white">Cấu Hình Di Động (Đổi Tài Khoản Không Sửa Code)</h3>
-      <button id="btnCloseConfigModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+      <button data-close-modal="configModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
     </div>
     <form id="portableConfigForm" class="space-y-3">
       <div>
@@ -455,19 +632,20 @@ const TelegramLockedGateway = (() => {
           <input name="OWNER_ADMIN_CHAT_ID" type="text" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-xs text-white" />
         </div>
       </div>
-      <div class="flex justify-end gap-2 pt-2">
+      <div class="flex justify-between items-center pt-2">
+        <button type="button" id="btnResetDefaultConfig" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Khôi phục mặc định</button>
         <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">Lưu Cấu Hình &amp; Tải Lại</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal Quản Lý Nhân Sự -->
+<!-- 2. Modal Quản Lý Nhân Sự -->
 <div id="staffModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
   <div class="glass w-full max-w-2xl rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto scroll-thin">
     <div class="flex items-center justify-between border-b border-slate-800 pb-3">
       <h3 class="text-base font-semibold text-white">Quản Lý Nhân Sự, Phân Quyền &amp; Liên Kết Telegram</h3>
-      <button id="btnCloseStaffModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+      <button data-close-modal="staffModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
     </div>
 
     <form id="addStaffForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-900/80 p-4 rounded-xl border border-slate-800">
@@ -490,15 +668,15 @@ const TelegramLockedGateway = (() => {
       <div>
         <label class="block text-xs text-slate-400 mb-1">Phân quyền</label>
         <select name="permission" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-sm text-white">
-          <option value="MEMBER">Thành viên</option>
-          <option value="ASSISTANT">Trợ lý</option>
-          <option value="APPROVER">Chủ trì</option>
-          <option value="FULL">Quản trị (Full)</option>
+          <option value="MEMBER">Thành viên (MEMBER)</option>
+          <option value="ASSISTANT">Trợ lý (ASSISTANT)</option>
+          <option value="APPROVER">Chủ trì / Duyệt (APPROVER)</option>
+          <option value="FULL">Quản trị toàn quyền (FULL)</option>
         </select>
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1">Telegram Chat ID</label>
-        <input name="telegram_chat_id" type="text" placeholder="VD: 522439752 (hoặc bấm Liên kết Telegram)" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-sm text-white" />
+        <input name="telegram_chat_id" type="text" placeholder="VD: 522439752" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-sm text-white" />
       </div>
       <div class="sm:col-span-2 flex justify-end pt-1">
         <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">+ Thêm Nhân Sự</button>
@@ -509,12 +687,12 @@ const TelegramLockedGateway = (() => {
   </div>
 </div>
 
-<!-- Modal Giao Việc Mới -->
+<!-- 3. Modal Giao Việc Mới -->
 <div id="taskModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
   <div class="glass w-full max-w-lg rounded-2xl p-5 space-y-4">
     <div class="flex items-center justify-between border-b border-slate-800 pb-3">
       <h3 class="text-base font-semibold text-white">Giao Công Việc Mới &amp; Gửi Telegram (3 Nút Xác Nhận)</h3>
-      <button id="btnCloseTaskModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+      <button data-close-modal="taskModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
     </div>
     <form id="createTaskForm" class="space-y-3">
       <div>
@@ -527,18 +705,131 @@ const TelegramLockedGateway = (() => {
       </div>
       <div>
         <label class="block text-xs text-slate-400 mb-1">Thời hạn hoàn thành</label>
-        <input name="due_time" type="text" placeholder="VD: 17:00 20/11/2026" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white" />
+        <input name="due_time" type="text" placeholder="VD: 17:00 25/11/2026" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white" />
       </div>
       <div class="flex justify-end gap-2 pt-2">
-        <button type="button" id="btnCancelTaskModal" class="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button type="button" data-close-modal="taskModal" class="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Hủy</button>
         <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">Giao Việc &amp; Gửi Telegram</button>
       </div>
     </form>
   </div>
 </div>
 
+<!-- 4. Modal Chốt Lịch Họp & Tự Động Giao Việc -->
+<div id="meetingModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+  <div class="glass w-full max-w-xl rounded-2xl p-5 space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-semibold text-white">Chốt Biên Bản / Lịch Họp &amp; Tự Động Chia Việc</h3>
+      <button data-close-modal="meetingModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+    </div>
+    <form id="meetingMinutesForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Tiêu đề cuộc họp / Kết luận chỉ đạo *</label>
+        <input name="meeting_title" required type="text" placeholder="VD: Họp giao ban tiến độ GPMB tuần 47" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Danh sách đầu việc chốt (Mỗi dòng: Tên nhân sự | Nội dung việc | Hạn chót)</label>
+        <textarea name="action_items" required rows="4" placeholder="VD:&#10;Nguyễn Văn Minh | Hoàn thiện hồ sơ khảo sát ranh giới | 17:00 22/11/2026&#10;Trần Thị Lan | Tổng hợp báo cáo trình duyệt | 10:00 23/11/2026" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white font-mono"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" data-close-modal="meetingModal" class="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold">Đăng Biên Bản &amp; Giao Việc Hàng Loạt</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 5. Modal Dashboard KPI & Xuất Báo Cáo Excel / In PDF -->
+<div id="dashboardModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+  <div class="glass w-full max-w-3xl rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto scroll-thin">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-semibold text-white">Dashboard Tiến Độ Dự Án &amp; Xuất Báo Cáo</h3>
+      <button data-close-modal="dashboardModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+    </div>
+
+    <div id="kpiCardsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+    <div id="staffKpiBreakdown" class="space-y-2"></div>
+
+    <div class="flex flex-wrap justify-end gap-2 pt-3 border-t border-slate-800">
+      <button id="btnExportExcelReport" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">Xuất Excel (.xlsx)</button>
+      <button id="btnPrintPdfReport" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">In / Xuất PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6. Modal Trung Tâm Phê Duyệt -->
+<div id="approvalModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+  <div class="glass w-full max-w-2xl rounded-2xl p-5 space-y-4 max-h-[88vh] overflow-y-auto scroll-thin">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-semibold text-white">Trung Tâm Trình Phê Duyệt (Dữ Liệu Đồng Bộ Trên team_messages)</h3>
+      <button data-close-modal="approvalModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+    </div>
+    <div id="approvalListEl" class="space-y-2.5"></div>
+  </div>
+</div>
+
+<!-- 7. Modal Tạo Bình Chọn (Poll) -->
+<div id="pollModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+  <div class="glass w-full max-w-md rounded-2xl p-5 space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-semibold text-white">Tạo Phiếu Bình Chọn Nhanh</h3>
+      <button data-close-modal="pollModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+    </div>
+    <form id="createPollForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Câu hỏi bình chọn *</label>
+        <input name="question" required type="text" placeholder="VD: Thống nhất khung giờ họp tuần này?" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Các phương án (mỗi dòng 1 lựa chọn) *</label>
+        <textarea name="options" required rows="3" placeholder="09:00 Thứ Hai&#10;14:00 Thứ Ba&#10;16:00 Thứ Tư" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white"></textarea>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" data-close-modal="pollModal" class="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">Đăng Bình Chọn</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 8. Modal Gắn Bản Đồ Dự Án -->
+<div id="mapModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+  <div class="glass w-full max-w-md rounded-2xl p-5 space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-semibold text-white">Nhúng Bản Đồ Vị Trí Dự Án</h3>
+      <button data-close-modal="mapModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+    </div>
+    <form id="saveMapForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Tọa độ hoặc Tên địa điểm (VD: Long Thới, Nhà Bè, TP.HCM)</label>
+        <input name="map_query" required type="text" placeholder="Nhập địa điểm hoặc tọa độ GPS..." class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" data-close-modal="mapModal" class="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Hủy</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">Gắn Vào Kênh</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 9. Modal Sao Lưu Dữ Liệu & Nhật Ký Hệ Thống (Audit Log) -->
+<div id="backupAuditModal" class="hidden fixed inset-0 z-40 bg-black/75 flex items-center justify-center p-4">
+  <div class="glass w-full max-w-2xl rounded-2xl p-5 space-y-4 max-h-[88vh] overflow-y-auto scroll-thin">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <h3 class="text-base font-semibold text-white">Sao Lưu Toàn Bộ Dữ Liệu &amp; Nhật Ký Thao Tác</h3>
+      <button data-close-modal="backupAuditModal" class="text-slate-400 hover:text-white text-sm">Đóng ✕</button>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button id="btnDownloadJsonBackup" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">Tải Bản Sao Lưu JSON</button>
+      <button id="btnClearLocalAudit" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">Xóa bớt log cũ</button>
+    </div>
+    <div class="text-xs font-semibold text-slate-300 pt-2">Nhật ký thao tác gần nhất:</div>
+    <div id="auditLogListEl" class="space-y-1.5 max-h-72 overflow-y-auto scroll-thin text-xs"></div>
+  </div>
+</div>
+
 <!-- ============================================================================
-     [APPLICATION CONTROLLER — KẾT NỐI SUPABASE & TELEGRAM GATEWAY]
+     [APPLICATION CONTROLLER — LỚP ĐIỀU PHỐI HỢP NHẤT AN TOÀN TUYỆT ĐỐI]
      ============================================================================ -->
 <script>
 (() => {
@@ -548,9 +839,11 @@ const TelegramLockedGateway = (() => {
     channels: [],
     tasks: [],
     messages: [],
+    auditLogs: [],
     activeChannelId: null,
     currentUser: null,
-    messageTable: TW_CONFIG.TABLES.MESSAGES
+    messageTable: TW_CONFIG.TABLES.MESSAGES,
+    isUserTyping: false
   };
 
   function showToast(msg, type = 'info') {
@@ -578,6 +871,39 @@ const TelegramLockedGateway = (() => {
     return window.supabase.createClient(TW_CONFIG.SUPABASE_URL, TW_CONFIG.SUPABASE_ANON_KEY);
   }
 
+  // Ghi Audit Log an toàn (lưu cục bộ, không gọi bảng audit_logs chưa tồn tại trên Supabase)
+  function recordAudit(action, detail) {
+    try {
+      const actor = (state.currentUser && state.currentUser.display_name) || 'Hệ thống';
+      const entry = {
+        time: new Date().toLocaleString('vi-VN'),
+        actor,
+        action,
+        detail
+      };
+      state.auditLogs.unshift(entry);
+      if (state.auditLogs.length > 100) state.auditLogs.length = 100;
+      localStorage.setItem(TW_CONFIG.AUDIT_LOCAL_KEY, JSON.stringify(state.auditLogs));
+    } catch (_) {}
+  }
+
+  function loadLocalAudits() {
+    try {
+      const raw = localStorage.getItem(TW_CONFIG.AUDIT_LOCAL_KEY);
+      state.auditLogs = raw ? JSON.parse(raw) || [] : [];
+    } catch (_) {
+      state.auditLogs = [];
+    }
+  }
+
+  function isAnyModalOpen() {
+    const ids = ['configModal', 'staffModal', 'taskModal', 'meetingModal', 'dashboardModal', 'approvalModal', 'pollModal', 'mapModal', 'backupAuditModal', 'loginOverlay'];
+    return ids.some(id => {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains('hidden');
+    });
+  }
+
   async function fetchMessagesAutoTable() {
     let res = await state.supabase.from('team_messages').select('*').order('created_at', { ascending: true });
     if (res.error) {
@@ -590,6 +916,29 @@ const TelegramLockedGateway = (() => {
       state.messageTable = 'team_messages';
     }
     return res;
+  }
+
+  function resolveSessionUser() {
+    const savedId = localStorage.getItem(TW_CONFIG.SESSION_KEY);
+    if (savedId) {
+      const found = state.staffList.find(u => u.id === savedId || u.username === savedId);
+      if (found) {
+        state.currentUser = found;
+        return true;
+      }
+    }
+    // Tự động nhận diện Admin mặc định nếu chưa khóa phiên đăng nhập
+    const defaultAdmin =
+      state.staffList.find(u => u.telegram_chat_id === String(TW_CONFIG.OWNER_ADMIN_CHAT_ID)) ||
+      state.staffList.find(u => u.is_admin) ||
+      state.staffList[0] ||
+      null;
+    if (defaultAdmin) {
+      state.currentUser = defaultAdmin;
+      localStorage.setItem(TW_CONFIG.SESSION_KEY, defaultAdmin.id);
+      return true;
+    }
+    return false;
   }
 
   async function loadAllData(silent = false) {
@@ -623,11 +972,7 @@ const TelegramLockedGateway = (() => {
         state.activeChannelId = state.channels[0].id;
       }
 
-      state.currentUser =
-        state.staffList.find(u => u.telegram_chat_id === String(TW_CONFIG.OWNER_ADMIN_CHAT_ID)) ||
-        state.staffList.find(u => u.is_admin) ||
-        state.staffList[0] ||
-        null;
+      resolveSessionUser();
 
       if (badge) {
         badge.textContent = 'Supabase & GAS OK';
@@ -641,9 +986,17 @@ const TelegramLockedGateway = (() => {
       if (!silent) showToast(formatErr(err, 'Không tải được dữ liệu'), 'error');
     }
 
-    renderAll();
+    // Không làm mất dữ liệu đang gõ khi tự đồng bộ ngầm 10s
+    if (!silent || (!state.isUserTyping && !isAnyModalOpen())) {
+      renderAll();
+    } else {
+      renderMessages();
+      renderTasks();
+      renderApprovalBadge();
+    }
   }
 
+  // ==================== XỬ LÝ NHÂN SỰ ====================
   async function addNewStaffMember(rawObj) {
     if (!rawObj.display_name || !rawObj.username) {
       showToast('Vui lòng nhập đầy đủ Họ và tên và Tên đăng nhập', 'error');
@@ -661,7 +1014,6 @@ const TelegramLockedGateway = (() => {
     const payload = TeamLockedSchema.buildUserInsertPayload(rawObj);
     let { data, error } = await state.supabase.from('team_users').insert(payload).select().single();
 
-    // Cơ chế tự phục hồi nếu PostgREST báo thiếu cột cụ thể trong thông báo lỗi
     if (error && error.message) {
       const missingColMatch = error.message.match(/['"]([^'"]+)['"] column/i);
       if (missingColMatch && missingColMatch[1] && Object.prototype.hasOwnProperty.call(payload, missingColMatch[1])) {
@@ -678,6 +1030,7 @@ const TelegramLockedGateway = (() => {
     }
 
     state.staffList.push(TeamLockedSchema.normalizeUser(data));
+    recordAudit('Thêm nhân sự', `${rawObj.display_name} (${rawObj.username})`);
     renderAll();
     showToast(`Đã thêm thành viên "${rawObj.display_name}" thành công`, 'success');
     return true;
@@ -687,13 +1040,15 @@ const TelegramLockedGateway = (() => {
     const idx = state.staffList.findIndex(u => u.id === userId);
     if (idx === -1) return;
 
-    const { error } = await state.supabase.from('team_users').update(patchObj).eq('id', userId);
+    const safePatch = TeamLockedSchema.filterByKnownCols('team_users', patchObj);
+    const { error } = await state.supabase.from('team_users').update(safePatch).eq('id', userId);
     if (error) {
       showToast(formatErr(error, 'Lỗi cập nhật nhân sự'), 'error');
       return;
     }
 
     state.staffList[idx] = TeamLockedSchema.normalizeUser({ ...state.staffList[idx], ...patchObj });
+    recordAudit('Cập nhật nhân sự', state.staffList[idx].display_name);
     renderAll();
     showToast('Đã cập nhật thông tin nhân sự', 'success');
   }
@@ -709,11 +1064,13 @@ const TelegramLockedGateway = (() => {
       return;
     }
     state.staffList = state.staffList.filter(u => u.id !== userId);
+    recordAudit('Xóa nhân sự', target.display_name);
     renderAll();
     showToast(`Đã xóa "${target.display_name}"`, 'success');
   }
 
-  async function createNewTask(rawObj) {
+  // ==================== XỬ LÝ CÔNG VIỆC & TELEGRAM ====================
+  async function createNewTask(rawObj, silentToast = false) {
     const assignerName = (state.currentUser && state.currentUser.display_name) || 'Thành Tài';
     const payload = TeamLockedSchema.buildTaskInsertPayload({
       channel_id: state.activeChannelId,
@@ -725,12 +1082,13 @@ const TelegramLockedGateway = (() => {
 
     const { data, error } = await state.supabase.from('team_tasks').insert(payload).select().single();
     if (error) {
-      showToast(formatErr(error, 'Lỗi lưu công việc'), 'error');
+      if (!silentToast) showToast(formatErr(error, 'Lỗi lưu công việc'), 'error');
       return false;
     }
 
     const created = TeamLockedSchema.normalizeTask(data);
     state.tasks.unshift(created);
+    recordAudit('Giao việc', `${created.assignee}: ${created.content}`);
     renderTasks();
 
     const activeCh = state.channels.find(c => c.id === state.activeChannelId);
@@ -740,10 +1098,12 @@ const TelegramLockedGateway = (() => {
       staffList: state.staffList
     });
 
-    if (tgRes && tgRes.ok !== false) {
-      showToast('Đã giao việc & gửi tin kèm 3 nút xác nhận lên Telegram', 'success');
-    } else {
-      showToast(`Đã lưu việc; Telegram báo: ${(tgRes && (tgRes.reason || tgRes.error)) || 'kiểm tra GAS'}`, 'info');
+    if (!silentToast) {
+      if (tgRes && tgRes.ok !== false) {
+        showToast('Đã giao việc & gửi tin kèm 3 nút xác nhận lên Telegram', 'success');
+      } else {
+        showToast(`Đã lưu việc; Telegram báo: ${(tgRes && (tgRes.reason || tgRes.error)) || 'kiểm tra GAS'}`, 'info');
+      }
     }
     return true;
   }
@@ -765,6 +1125,7 @@ const TelegramLockedGateway = (() => {
     }
 
     state.tasks[idx] = { ...cur, status: nextStatus };
+    recordAudit('Cập nhật tiến độ', `${cur.content} -> ${nextStatus}`);
     renderTasks();
 
     const activeCh = state.channels.find(c => c.id === state.activeChannelId);
@@ -774,12 +1135,29 @@ const TelegramLockedGateway = (() => {
       actorName: (state.currentUser && state.currentUser.display_name) || 'Thành Tài',
       staffList: state.staffList
     });
-    showToast(`Đã cập nhật trạng thái: ${nextStatus}`, 'success');
+    showToast(`Đã cập nhật trạng thái: ${nextStatus === 'DONE' ? 'ĐÃ XONG' : 'ĐANG LÀM'}`, 'success');
   }
 
-  async function sendChannelMessage(text) {
+  async function deleteTask(taskId) {
+    const target = state.tasks.find(t => t.id === taskId);
+    if (!target) return;
+    if (!confirm(`Xóa công việc "${target.content}"?`)) return;
+
+    const { error } = await state.supabase.from('team_tasks').delete().eq('id', taskId);
+    if (error) {
+      showToast(formatErr(error, 'Lỗi xóa công việc'), 'error');
+      return;
+    }
+    state.tasks = state.tasks.filter(t => t.id !== taskId);
+    recordAudit('Xóa công việc', target.content);
+    renderTasks();
+    showToast('Đã xóa công việc', 'success');
+  }
+
+  // ==================== XỬ LÝ TIN NHẮN, TRÌNH DUYỆT, POLL & GHIM ====================
+  async function sendChannelMessage(text, msgType = 'CHAT', extraFields = {}) {
     const clean = String(text || '').trim();
-    if (!clean) return;
+    if (!clean) return null;
     const senderName = (state.currentUser && state.currentUser.display_name) || 'Thành Tài';
     const roleTitle = (state.currentUser && state.currentUser.role_title) || 'Quản trị hệ thống';
 
@@ -788,25 +1166,112 @@ const TelegramLockedGateway = (() => {
       sender: senderName,
       role_title: roleTitle,
       content: clean,
-      msg_type: 'CHAT'
+      msg_type: msgType,
+      ...extraFields
     });
 
     const { data, error } = await state.supabase.from(state.messageTable).insert(payload).select().single();
     if (error) {
-      showToast(formatErr(error, 'Lỗi gửi tin nhắn'), 'error');
+      showToast(formatErr(error, 'Lỗi gửi nội dung'), 'error');
+      return null;
+    }
+
+    const norm = TeamLockedSchema.normalizeMessage(data);
+    state.messages.push(norm);
+    recordAudit(msgType === 'APPROVAL' ? 'Gửi trình duyệt' : 'Gửi tin nhắn', clean.slice(0, 60));
+    renderMessages();
+    renderApprovalBadge();
+
+    if (msgType === 'APPROVAL') {
+      const activeCh = state.channels.find(c => c.id === state.activeChannelId);
+      await TelegramLockedGateway.notifyApproval({
+        message: norm,
+        channelName: activeCh ? activeCh.name : 'Phòng Điều Hành Chung',
+        staffList: state.staffList
+      });
+      showToast('Đã gửi đề xuất trình phê duyệt lên hệ thống & Telegram', 'success');
+    }
+    return norm;
+  }
+
+  async function handleApprovalDecision(msgId, decision) {
+    const idx = state.messages.findIndex(m => m.id === msgId);
+    if (idx === -1) return;
+    const note = prompt(`Ghi chú phê duyệt (${decision === 'APPROVED' ? 'Đồng ý' : 'Từ chối'}):`, '') || '';
+    const approver = (state.currentUser && state.currentUser.display_name) || 'Lãnh đạo';
+    const patch = {
+      approval_status: decision,
+      approver_name: approver,
+      approval_note: note,
+      approved_at: new Date().toISOString()
+    };
+    const safePatch = TeamLockedSchema.filterByKnownCols('team_messages', patch);
+    const { error } = await state.supabase.from(state.messageTable).update(safePatch).eq('id', msgId);
+    if (error) {
+      showToast(formatErr(error, 'Lỗi cập nhật phê duyệt'), 'error');
       return;
     }
 
-    state.messages.push(TeamLockedSchema.normalizeMessage(data));
+    state.messages[idx] = { ...state.messages[idx], ...patch };
+    recordAudit('Phê duyệt đề xuất', `${decision} bởi ${approver}`);
     renderMessages();
+    renderApprovalCenter();
+    renderApprovalBadge();
+    showToast(`Đã ${decision === 'APPROVED' ? 'PHÊ DUYỆT' : 'TỪ CHỐI'} đề xuất`, 'success');
   }
 
+  async function votePollOption(msgId, optIndex) {
+    const idx = state.messages.findIndex(m => m.id === msgId);
+    if (idx === -1) return;
+    try {
+      const pollObj = JSON.parse(state.messages[idx].content);
+      const voter = (state.currentUser && state.currentUser.display_name) || 'Thành Tài';
+      pollObj.options.forEach((opt, i) => {
+        opt.votes = Array.isArray(opt.votes) ? opt.votes.filter(v => v !== voter) : [];
+        if (i === optIndex) opt.votes.push(voter);
+      });
+      const updatedContent = JSON.stringify(pollObj);
+      const { error } = await state.supabase
+        .from(state.messageTable)
+        .update({ content: updatedContent })
+        .eq('id', msgId);
+      if (error) {
+        showToast(formatErr(error, 'Lỗi ghi nhận bình chọn'), 'error');
+        return;
+      }
+      state.messages[idx].content = updatedContent;
+      renderMessages();
+      showToast('Đã ghi nhận phiếu bình chọn của bạn', 'success');
+    } catch (_) {}
+  }
+
+  async function updateChannelMeta(patchMeta) {
+    const chIdx = state.channels.findIndex(c => c.id === state.activeChannelId);
+    if (chIdx === -1) return;
+    const cur = state.channels[chIdx];
+    const nextMeta = { ...(cur.meta || {}), ...patchMeta };
+    const safePatch = TeamLockedSchema.filterByKnownCols('team_channels', {
+      meta: nextMeta,
+      ...patchMeta
+    });
+
+    const { error } = await state.supabase.from('team_channels').update(safePatch).eq('id', cur.id);
+    if (error) {
+      showToast(formatErr(error, 'Lỗi cập nhật thông tin kênh'), 'error');
+      return;
+    }
+    state.channels[chIdx] = TeamLockedSchema.normalizeChannel({ ...cur, meta: nextMeta, ...patchMeta });
+    renderChannels();
+  }
+
+  // ==================== RENDER GIAO DIỆN ====================
   function renderBanner() {
     const el = document.getElementById('activeUserBanner');
     if (!el) return;
     const uName = (state.currentUser && state.currentUser.display_name) || 'Thành Tài';
     const uRole = (state.currentUser && state.currentUser.role_title) || 'Quản trị hệ thống';
-    el.textContent = `${uName} (${uRole}) · Admin Telegram ID: ${TW_CONFIG.OWNER_ADMIN_CHAT_ID}`;
+    const uPerm = (state.currentUser && state.currentUser.permission) || 'FULL';
+    el.textContent = `${uName} (${uRole} · ${uPerm}) · Admin TG: ${TW_CONFIG.OWNER_ADMIN_CHAT_ID}`;
   }
 
   function renderChannels() {
@@ -815,9 +1280,11 @@ const TelegramLockedGateway = (() => {
     el.innerHTML = state.channels
       .map(ch => {
         const active = ch.id === state.activeChannelId;
-        return `<button data-ch-id="${TelegramLockedGateway.escapeHtml(ch.id)}" class="w-full text-left px-3 py-2 rounded-lg text-xs transition ${
+        return `<button data-ch-id="${TelegramLockedGateway.escapeHtml(ch.id)}" class="w-full text-left px-3 py-2 rounded-lg text-xs transition flex items-center justify-between ${
           active ? 'bg-sky-600/25 border border-sky-500/40 text-white font-semibold' : 'hover:bg-slate-800/70 text-slate-300 border border-transparent'
-        }">${TelegramLockedGateway.escapeHtml(ch.name)}</button>`;
+        }">
+          <span class="truncate"># ${TelegramLockedGateway.escapeHtml(ch.name)}</span>
+        </button>`;
       })
       .join('');
 
@@ -831,7 +1298,25 @@ const TelegramLockedGateway = (() => {
     const curCh = state.channels.find(c => c.id === state.activeChannelId) || state.channels[0];
     if (curCh) {
       document.getElementById('activeChannelTitle').textContent = curCh.name;
-      document.getElementById('activeChannelDesc').textContent = curCh.description || 'Tự động đồng bộ phản hồi Telegram 2 chiều';
+      document.getElementById('activeChannelDesc').textContent = curCh.description || 'Đồng bộ phản hồi Telegram 2 chiều (10s/lần)';
+
+      const pinBar = document.getElementById('pinnedDirectiveBar');
+      const pinTxt = document.getElementById('pinnedDirectiveText');
+      if (curCh.pinned_message) {
+        pinTxt.textContent = curCh.pinned_message;
+        pinBar.classList.remove('hidden');
+      } else {
+        pinBar.classList.add('hidden');
+      }
+
+      const mapBox = document.getElementById('channelMapBox');
+      const mapIframe = document.getElementById('channelMapIframe');
+      if (curCh.map_url) {
+        mapIframe.src = curCh.map_url;
+        mapBox.classList.remove('hidden');
+      } else {
+        mapBox.classList.add('hidden');
+      }
     }
   }
 
@@ -850,7 +1335,7 @@ const TelegramLockedGateway = (() => {
               <div class="font-medium text-slate-100 truncate">${TelegramLockedGateway.escapeHtml(u.display_name)}</div>
               <div class="text-[11px] text-slate-400 truncate">${TelegramLockedGateway.escapeHtml(u.role_title)}</div>
             </div>
-            <span class="text-[10px] px-1.5 py-0.5 rounded ${hasTg ? 'bg-emerald-950 text-emerald-300' : 'bg-amber-950 text-amber-300'}">${hasTg ? 'TG OK' : 'Chưa TG'}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded shrink-0 ${hasTg ? 'bg-emerald-950 text-emerald-300' : 'bg-amber-950 text-amber-300'}">${hasTg ? 'TG OK' : 'Chưa TG'}</span>
           </div>`;
         })
         .join('');
@@ -863,12 +1348,13 @@ const TelegramLockedGateway = (() => {
           const deepLink = `https://t.me/${encodeURIComponent(botName)}?start=link_${encodeURIComponent(u.id)}`;
           return `<div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div>
-              <div class="font-semibold text-white">${TelegramLockedGateway.escapeHtml(u.display_name)} <span class="text-slate-400 font-normal">(User: ${TelegramLockedGateway.escapeHtml(u.username)})</span></div>
+              <div class="font-semibold text-white">${TelegramLockedGateway.escapeHtml(u.display_name)} <span class="text-slate-400 font-normal">(User: ${TelegramLockedGateway.escapeHtml(u.username)} · PIN: ${TelegramLockedGateway.escapeHtml(u.pin_code || 'Trống')})</span></div>
               <div class="text-slate-400 mt-0.5">Chức vụ: ${TelegramLockedGateway.escapeHtml(u.role_title)} · Quyền: ${TelegramLockedGateway.escapeHtml(u.permission)} · Chat ID: <span class="text-sky-300">${TelegramLockedGateway.escapeHtml(u.telegram_chat_id || 'Chưa liên kết')}</span></div>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex flex-wrap items-center gap-1.5">
               <a href="${deepLink}" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-sky-900/70 hover:bg-sky-800 text-sky-200 text-[11px]">Link Bot /start</a>
-              <button data-edit-tg="${TelegramLockedGateway.escapeHtml(u.id)}" data-cur-tg="${TelegramLockedGateway.escapeHtml(u.telegram_chat_id)}" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px]">Nhập Chat ID</button>
+              <button data-edit-tg="${TelegramLockedGateway.escapeHtml(u.id)}" data-cur-tg="${TelegramLockedGateway.escapeHtml(u.telegram_chat_id)}" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px]">Chat ID</button>
+              <button data-edit-pin="${TelegramLockedGateway.escapeHtml(u.id)}" data-cur-pin="${TelegramLockedGateway.escapeHtml(u.pin_code)}" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px]">Đổi PIN</button>
               <button data-del-user="${TelegramLockedGateway.escapeHtml(u.id)}" class="px-2.5 py-1 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 text-[11px]">Xóa</button>
             </div>
           </div>`;
@@ -884,18 +1370,36 @@ const TelegramLockedGateway = (() => {
         });
       });
 
+      modalEl.querySelectorAll('[data-edit-pin]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const uid = btn.getAttribute('data-edit-pin');
+          const cur = btn.getAttribute('data-cur-pin') || '';
+          const val = prompt('Nhập mã PIN mới cho thành viên:', cur);
+          if (val !== null) updateUserField(uid, { pin_code: val.trim() });
+        });
+      });
+
       modalEl.querySelectorAll('[data-del-user]').forEach(btn => {
         btn.addEventListener('click', () => deleteUser(btn.getAttribute('data-del-user')));
       });
     }
   }
 
-  function renderAssigneeSelect() {
+  function renderAssigneeSelects() {
     const sel = document.getElementById('taskAssigneeSelect');
-    if (!sel) return;
-    sel.innerHTML = state.staffList
-      .map(u => `<option value="${TelegramLockedGateway.escapeHtml(u.display_name)}">${TelegramLockedGateway.escapeHtml(u.display_name)} (${TelegramLockedGateway.escapeHtml(u.role_title)}${u.telegram_chat_id ? ' · TG OK' : ' · Chưa có Chat ID'})</option>`)
-      .join('');
+    const filterSel = document.getElementById('taskFilterAssignee');
+    if (sel) {
+      sel.innerHTML = state.staffList
+        .map(u => `<option value="${TelegramLockedGateway.escapeHtml(u.display_name)}">${TelegramLockedGateway.escapeHtml(u.display_name)} (${TelegramLockedGateway.escapeHtml(u.role_title)}${u.telegram_chat_id ? ' · TG OK' : ' · Chưa có Chat ID'})</option>`)
+        .join('');
+    }
+    if (filterSel) {
+      const prev = filterSel.value || 'ALL';
+      filterSel.innerHTML = `<option value="ALL">Mọi người</option>` + state.staffList
+        .map(u => `<option value="${TelegramLockedGateway.escapeHtml(u.display_name)}">${TelegramLockedGateway.escapeHtml(u.display_name)}</option>`)
+        .join('');
+      filterSel.value = prev;
+    }
   }
 
   function renderMessages() {
@@ -903,18 +1407,84 @@ const TelegramLockedGateway = (() => {
     if (!el) return;
     const filtered = state.messages.filter(m => !state.activeChannelId || !m.channel_id || m.channel_id === state.activeChannelId);
     if (!filtered.length) {
-      el.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Chưa có tin nhắn hoặc phản hồi nào trong kênh này.</div>';
+      el.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Chưa có tin nhắn, biên bản họp hoặc đề xuất trình duyệt nào trong kênh này.</div>';
       return;
     }
     el.innerHTML = filtered
-      .map(m => `<div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="font-semibold text-sky-300">${TelegramLockedGateway.escapeHtml(m.sender)}</span>
-          <span class="text-[11px] text-slate-500">${TelegramLockedGateway.escapeHtml(m.role_title)}</span>
-        </div>
-        <div class="text-slate-200 whitespace-pre-wrap">${TelegramLockedGateway.escapeHtml(m.content)}</div>
-      </div>`)
+      .map(m => {
+        // Hiển thị dạng Poll nếu msg_type === 'POLL'
+        if (m.msg_type === 'POLL') {
+          try {
+            const poll = JSON.parse(m.content);
+            const totalVotes = poll.options.reduce((sum, o) => sum + (Array.isArray(o.votes) ? o.votes.length : 0), 0);
+            const optsHtml = poll.options
+              .map((o, idx) => {
+                const cnt = Array.isArray(o.votes) ? o.votes.length : 0;
+                const pct = totalVotes > 0 ? Math.round((cnt / totalVotes) * 100) : 0;
+                return `<button data-vote-msg="${TelegramLockedGateway.escapeHtml(m.id)}" data-vote-idx="${idx}" class="w-full text-left p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-700/80 flex items-center justify-between text-[11px]">
+                  <span>${TelegramLockedGateway.escapeHtml(o.label)}</span>
+                  <span class="text-sky-300 font-semibold">${cnt} phiếu (${pct}%)</span>
+                </button>`;
+              })
+              .join('');
+            return `<div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-700/40 text-xs space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-indigo-300">📊 BÌNH CHỌN · ${TelegramLockedGateway.escapeHtml(m.sender)}</span>
+                <span class="text-[11px] text-slate-400">${totalVotes} lượt</span>
+              </div>
+              <div class="font-semibold text-white">${TelegramLockedGateway.escapeHtml(poll.question)}</div>
+              <div class="space-y-1.5">${optsHtml}</div>
+            </div>`;
+          } catch (_) {}
+        }
+
+        // Hiển thị dạng Trình Phê Duyệt nếu msg_type === 'APPROVAL'
+        if (m.msg_type === 'APPROVAL') {
+          const st = m.approval_status || 'PENDING';
+          const badgeCls =
+            st === 'APPROVED'
+              ? 'bg-emerald-950 text-emerald-300 border-emerald-600/50'
+              : st === 'REJECTED'
+              ? 'bg-rose-950 text-rose-300 border-rose-600/50'
+              : 'bg-amber-950 text-amber-300 border-amber-600/50';
+          const stLabel = st === 'APPROVED' ? 'ĐÃ PHÊ DUYỆT' : st === 'REJECTED' ? 'TỪ CHỐI' : 'CHỜ PHÊ DUYỆT';
+          return `<div class="p-3 rounded-xl bg-teal-950/35 border border-teal-700/50 text-xs space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-semibold text-teal-300">📑 TRÌNH DUYỆT · ${TelegramLockedGateway.escapeHtml(m.sender)}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] border ${badgeCls}">${stLabel}</span>
+            </div>
+            <div class="text-slate-100 whitespace-pre-wrap">${TelegramLockedGateway.escapeHtml(m.content)}</div>
+            ${m.approver_name ? `<div class="text-[11px] text-slate-400">Người duyệt: <span class="text-slate-200">${TelegramLockedGateway.escapeHtml(m.approver_name)}</span>${m.approval_note ? ` · Ghi chú: ${TelegramLockedGateway.escapeHtml(m.approval_note)}` : ''}</div>` : ''}
+            ${st === 'PENDING' ? `<div class="flex justify-end gap-1.5 pt-1">
+              <button data-approve-msg="${TelegramLockedGateway.escapeHtml(m.id)}" data-decision="APPROVED" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px]">Phê duyệt</button>
+              <button data-approve-msg="${TelegramLockedGateway.escapeHtml(m.id)}" data-decision="REJECTED" class="px-2.5 py-1 rounded bg-rose-700 hover:bg-rose-600 text-white text-[11px]">Từ chối</button>
+            </div>` : ''}
+          </div>`;
+        }
+
+        // Tin nhắn trao đổi chuẩn
+        return `<div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sky-300">${TelegramLockedGateway.escapeHtml(m.sender)}</span>
+            <span class="text-[11px] text-slate-500">${TelegramLockedGateway.escapeHtml(m.role_title)}</span>
+          </div>
+          <div class="text-slate-200 whitespace-pre-wrap">${TelegramLockedGateway.escapeHtml(m.content)}</div>
+        </div>`;
+      })
       .join('');
+
+    el.querySelectorAll('[data-vote-msg]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        votePollOption(btn.getAttribute('data-vote-msg'), Number(btn.getAttribute('data-vote-idx')));
+      });
+    });
+
+    el.querySelectorAll('[data-approve-msg]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        handleApprovalDecision(btn.getAttribute('data-approve-msg'), btn.getAttribute('data-decision'));
+      });
+    });
+
     el.scrollTop = el.scrollHeight;
   }
 
@@ -922,14 +1492,25 @@ const TelegramLockedGateway = (() => {
     const el = document.getElementById('taskListEl');
     const badge = document.getElementById('taskCountBadge');
     if (!el) return;
-    if (badge) badge.textContent = `${state.tasks.length} việc`;
 
-    if (!state.tasks.length) {
-      el.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Chưa có công việc nào.</div>';
+    const statusFilter = document.getElementById('taskFilterStatus')?.value || 'ALL';
+    const assigneeFilter = document.getElementById('taskFilterAssignee')?.value || 'ALL';
+
+    const filtered = state.tasks.filter(t => {
+      if (statusFilter === 'DONE' && t.status !== 'DONE') return false;
+      if (statusFilter === 'PENDING' && t.status === 'DONE') return false;
+      if (assigneeFilter !== 'ALL' && t.assignee !== assigneeFilter) return false;
+      return true;
+    });
+
+    if (badge) badge.textContent = `${filtered.length}/${state.tasks.length} việc`;
+
+    if (!filtered.length) {
+      el.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Không có công việc phù hợp bộ lọc.</div>';
       return;
     }
 
-    el.innerHTML = state.tasks
+    el.innerHTML = filtered
       .map(t => {
         const isDone = t.status === 'DONE';
         return `<div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 text-xs">
@@ -940,8 +1521,9 @@ const TelegramLockedGateway = (() => {
           <div class="text-slate-400">Thực hiện: <span class="text-slate-200">${TelegramLockedGateway.escapeHtml(t.assignee)}</span> · Giao bởi: <span class="text-slate-200">${TelegramLockedGateway.escapeHtml(t.assigner)}</span></div>
           ${t.due_time ? `<div class="text-slate-400">Hạn chót: <span class="text-sky-300">${TelegramLockedGateway.escapeHtml(t.due_time)}</span></div>` : ''}
           ${t.reply_note ? `<div class="p-2 rounded-lg bg-slate-950/90 border border-slate-800 text-emerald-300 text-[11px]">💬 ${TelegramLockedGateway.escapeHtml(t.reply_note)}</div>` : ''}
-          <div class="pt-1 flex justify-end">
+          <div class="pt-1 flex justify-end gap-1.5">
             <button data-toggle-task="${TelegramLockedGateway.escapeHtml(t.id)}" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px]">${isDone ? 'Mở lại việc' : 'Xong việc'}</button>
+            <button data-del-task="${TelegramLockedGateway.escapeHtml(t.id)}" class="px-2 py-1 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-300 text-[11px]">Xóa</button>
           </div>
         </div>`;
       })
@@ -950,32 +1532,190 @@ const TelegramLockedGateway = (() => {
     el.querySelectorAll('[data-toggle-task]').forEach(btn => {
       btn.addEventListener('click', () => toggleTaskStatus(btn.getAttribute('data-toggle-task')));
     });
+
+    el.querySelectorAll('[data-del-task]').forEach(btn => {
+      btn.addEventListener('click', () => deleteTask(btn.getAttribute('data-del-task')));
+    });
+  }
+
+  function renderApprovalBadge() {
+    const badge = document.getElementById('pendingApprovalBadge');
+    if (!badge) return;
+    const pendingCount = state.messages.filter(m => m.msg_type === 'APPROVAL' && (m.approval_status || 'PENDING') === 'PENDING').length;
+    badge.textContent = String(pendingCount);
+  }
+
+  function renderApprovalCenter() {
+    const el = document.getElementById('approvalListEl');
+    if (!el) return;
+    const approvals = state.messages.filter(m => m.msg_type === 'APPROVAL').slice().reverse();
+    if (!approvals.length) {
+      el.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Chưa có đề xuất trình phê duyệt nào.</div>';
+      return;
+    }
+    el.innerHTML = approvals
+      .map(m => {
+        const st = m.approval_status || 'PENDING';
+        return `<div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-teal-300">${TelegramLockedGateway.escapeHtml(m.sender)}</span>
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-200 text-[11px]">${st}</span>
+          </div>
+          <div class="text-slate-100 whitespace-pre-wrap">${TelegramLockedGateway.escapeHtml(m.content)}</div>
+          ${st === 'PENDING' ? `<div class="flex justify-end gap-2">
+            <button data-center-approve="${TelegramLockedGateway.escapeHtml(m.id)}" data-decision="APPROVED" class="px-3 py-1 rounded bg-emerald-600 text-white text-[11px]">Phê duyệt</button>
+            <button data-center-approve="${TelegramLockedGateway.escapeHtml(m.id)}" data-decision="REJECTED" class="px-3 py-1 rounded bg-rose-700 text-white text-[11px]">Từ chối</button>
+          </div>` : `<div class="text-[11px] text-slate-400">Duyệt bởi ${TelegramLockedGateway.escapeHtml(m.approver_name)} ${m.approval_note ? `— ${TelegramLockedGateway.escapeHtml(m.approval_note)}` : ''}</div>`}
+        </div>`;
+      })
+      .join('');
+
+    el.querySelectorAll('[data-center-approve]').forEach(btn => {
+      btn.addEventListener('click', () => handleApprovalDecision(btn.getAttribute('data-center-approve'), btn.getAttribute('data-decision')));
+    });
+  }
+
+  function renderDashboard() {
+    const kpiGrid = document.getElementById('kpiCardsGrid');
+    const breakdown = document.getElementById('staffKpiBreakdown');
+    if (!kpiGrid || !breakdown) return;
+
+    const total = state.tasks.length;
+    const done = state.tasks.filter(t => t.status === 'DONE').length;
+    const pending = total - done;
+    const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    kpiGrid.innerHTML = `
+      <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[11px] text-slate-400">Tổng đầu việc</div><div class="text-xl font-bold text-white mt-1">${total}</div></div>
+      <div class="p-3 rounded-xl bg-emerald-950/50 border border-emerald-800/50"><div class="text-[11px] text-emerald-300">Đã hoàn thành</div><div class="text-xl font-bold text-emerald-300 mt-1">${done}</div></div>
+      <div class="p-3 rounded-xl bg-amber-950/50 border border-amber-800/50"><div class="text-[11px] text-amber-300">Đang thực hiện</div><div class="text-xl font-bold text-amber-300 mt-1">${pending}</div></div>
+      <div class="p-3 rounded-xl bg-sky-950/50 border border-sky-800/50"><div class="text-[11px] text-sky-300">Tỷ lệ hoàn thành</div><div class="text-xl font-bold text-sky-300 mt-1">${rate}%</div></div>
+    `;
+
+    breakdown.innerHTML = state.staffList
+      .map(u => {
+        const uTasks = state.tasks.filter(t => t.assignee === u.display_name);
+        const uDone = uTasks.filter(t => t.status === 'DONE').length;
+        const uPct = uTasks.length > 0 ? Math.round((uDone / uTasks.length) * 100) : 0;
+        return `<div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs flex items-center justify-between">
+          <div><span class="font-semibold text-white">${TelegramLockedGateway.escapeHtml(u.display_name)}</span> <span class="text-slate-400">(${TelegramLockedGateway.escapeHtml(u.role_title)})</span></div>
+          <div class="text-slate-300">Hoàn thành: <span class="text-emerald-300 font-semibold">${uDone}/${uTasks.length}</span> (${uPct}%)</div>
+        </div>`;
+      })
+      .join('');
+  }
+
+  function renderAuditLogs() {
+    const el = document.getElementById('auditLogListEl');
+    if (!el) return;
+    if (!state.auditLogs.length) {
+      el.innerHTML = '<div class="text-slate-500 py-4 text-center">Chưa có nhật ký thao tác nào.</div>';
+      return;
+    }
+    el.innerHTML = state.auditLogs
+      .map(l => `<div class="p-2 rounded bg-slate-900 border border-slate-800 flex justify-between gap-2">
+        <span><strong class="text-sky-300">${TelegramLockedGateway.escapeHtml(l.actor)}</strong>: ${TelegramLockedGateway.escapeHtml(l.action)} — ${TelegramLockedGateway.escapeHtml(l.detail)}</span>
+        <span class="text-slate-500 shrink-0">${TelegramLockedGateway.escapeHtml(l.time)}</span>
+      </div>`)
+      .join('');
   }
 
   function renderAll() {
     renderBanner();
     renderChannels();
     renderStaff();
-    renderAssigneeSelect();
+    renderAssigneeSelects();
     renderMessages();
     renderTasks();
+    renderApprovalBadge();
   }
 
+  // ==================== GẮN SỰ KIỆN MENU & MODAL ====================
   function bindEvents() {
-    const staffModal = document.getElementById('staffModal');
-    const taskModal = document.getElementById('taskModal');
-    const configModal = document.getElementById('configModal');
-
-    document.getElementById('btnOpenStaffModal')?.addEventListener('click', () => staffModal.classList.remove('hidden'));
-    document.getElementById('btnCloseStaffModal')?.addEventListener('click', () => staffModal.classList.add('hidden'));
-
-    document.getElementById('btnOpenTaskModal')?.addEventListener('click', () => {
-      renderAssigneeSelect();
-      taskModal.classList.remove('hidden');
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-close-modal');
+        document.getElementById(targetId)?.classList.add('hidden');
+      });
     });
-    document.getElementById('btnCloseTaskModal')?.addEventListener('click', () => taskModal.classList.add('hidden'));
-    document.getElementById('btnCancelTaskModal')?.addEventListener('click', () => taskModal.classList.add('hidden'));
 
+    // Mở các Modal từ Topbar
+    document.getElementById('btnOpenStaffModal')?.addEventListener('click', () => document.getElementById('staffModal')?.classList.remove('hidden'));
+    document.getElementById('btnOpenTaskModal')?.addEventListener('click', () => {
+      renderAssigneeSelects();
+      document.getElementById('taskModal')?.classList.remove('hidden');
+    });
+    document.getElementById('btnOpenMeetingModal')?.addEventListener('click', () => document.getElementById('meetingModal')?.classList.remove('hidden'));
+    document.getElementById('btnOpenDashboardModal')?.addEventListener('click', () => {
+      renderDashboard();
+      document.getElementById('dashboardModal')?.classList.remove('hidden');
+    });
+    document.getElementById('btnOpenApprovalCenter')?.addEventListener('click', () => {
+      renderApprovalCenter();
+      document.getElementById('approvalModal')?.classList.remove('hidden');
+    });
+    document.getElementById('btnOpenPollModal')?.addEventListener('click', () => document.getElementById('pollModal')?.classList.remove('hidden'));
+    document.getElementById('btnOpenMapModal')?.addEventListener('click', () => document.getElementById('mapModal')?.classList.remove('hidden'));
+    document.getElementById('btnOpenBackupAuditModal')?.addEventListener('click', () => {
+      renderAuditLogs();
+      document.getElementById('backupAuditModal')?.classList.remove('hidden');
+    });
+
+    // Đổi tài khoản / Đăng nhập PIN
+    document.getElementById('btnSwitchAccount')?.addEventListener('click', () => {
+      const sel = document.getElementById('loginUserSelect');
+      if (sel) {
+        sel.innerHTML = state.staffList
+          .map(u => `<option value="${TelegramLockedGateway.escapeHtml(u.id)}">${TelegramLockedGateway.escapeHtml(u.display_name)} (${TelegramLockedGateway.escapeHtml(u.username)})</option>`)
+          .join('');
+      }
+      document.getElementById('loginErrorMsg')?.classList.add('hidden');
+      document.getElementById('loginOverlay')?.classList.remove('hidden');
+    });
+
+    document.getElementById('loginForm')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const uid = document.getElementById('loginUserSelect')?.value;
+      const pin = String(document.getElementById('loginPinInput')?.value || '').trim();
+      const userObj = state.staffList.find(u => u.id === uid);
+      const errBox = document.getElementById('loginErrorMsg');
+
+      if (!userObj) return;
+      if (userObj.pin_code && userObj.pin_code !== pin) {
+        if (errBox) {
+          errBox.textContent = 'Mã PIN không chính xác. Vui lòng thử lại hoặc bấm Quên PIN.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      state.currentUser = userObj;
+      localStorage.setItem(TW_CONFIG.SESSION_KEY, userObj.id);
+      document.getElementById('loginOverlay')?.classList.add('hidden');
+      recordAudit('Đăng nhập', userObj.display_name);
+      renderBanner();
+      showToast(`Xin chào ${userObj.display_name}`, 'success');
+    });
+
+    document.getElementById('btnForgotPinTg')?.addEventListener('click', async () => {
+      const uid = document.getElementById('loginUserSelect')?.value;
+      const userObj = state.staffList.find(u => u.id === uid);
+      if (!userObj) return;
+      const targetChat = userObj.telegram_chat_id || TW_CONFIG.OWNER_ADMIN_CHAT_ID;
+      await TelegramLockedGateway.sendDirectTest(
+        targetChat,
+        `🔐 <b>KHÔI PHỤC MÃ PIN TEAMWORK CLOUD</b>
+Tài khoản: <b>${TelegramLockedGateway.escapeHtml(userObj.display_name)}</b> (${TelegramLockedGateway.escapeHtml(userObj.username)})
+Mã PIN hiện tại: <code>${TelegramLockedGateway.escapeHtml(userObj.pin_code || 'Chưa đặt PIN')}</code>`
+      );
+      showToast('Đã gửi mã PIN về Telegram liên kết!', 'success');
+    });
+
+    document.getElementById('btnQuickAdminBypass')?.addEventListener('click', () => {
+      document.getElementById('loginOverlay')?.classList.add('hidden');
+    });
+
+    // Cấu hình Di động
     document.getElementById('btnOpenConfigModal')?.addEventListener('click', () => {
       const form = document.getElementById('portableConfigForm');
       form.SUPABASE_URL.value = TW_CONFIG.SUPABASE_URL;
@@ -983,9 +1723,8 @@ const TelegramLockedGateway = (() => {
       form.GAS_WEBHOOK_URL.value = TW_CONFIG.GAS_WEBHOOK_URL;
       form.TELEGRAM_BOT_USERNAME.value = TW_CONFIG.TELEGRAM_BOT_USERNAME;
       form.OWNER_ADMIN_CHAT_ID.value = TW_CONFIG.OWNER_ADMIN_CHAT_ID;
-      configModal.classList.remove('hidden');
+      document.getElementById('configModal')?.classList.remove('hidden');
     });
-    document.getElementById('btnCloseConfigModal')?.addEventListener('click', () => configModal.classList.add('hidden'));
 
     document.getElementById('portableConfigForm')?.addEventListener('submit', e => {
       e.preventDefault();
@@ -1001,12 +1740,19 @@ const TelegramLockedGateway = (() => {
       location.reload();
     });
 
+    document.getElementById('btnResetDefaultConfig')?.addEventListener('click', () => {
+      localStorage.removeItem(TW_DEFAULT_CONFIG.STORAGE_KEY);
+      location.reload();
+    });
+
+    // Làm mới & Test Telegram
     document.getElementById('btnReloadAll')?.addEventListener('click', () => loadAllData(false));
 
     document.getElementById('btnTestTelegram')?.addEventListener('click', async () => {
       const res = await TelegramLockedGateway.sendDirectTest(
         TW_CONFIG.OWNER_ADMIN_CHAT_ID,
-        `🔔 <b>TEST TEAMWORK CLOUD</b>\nKết nối 2 chiều Web App ↔ GAS ↔ Supabase hoạt động ổn định lúc ${TelegramLockedGateway.escapeHtml(new Date().toLocaleString('vi-VN'))}.`
+        `🔔 <b>TEST TEAMWORK CLOUD</b>
+Kết nối 2 chiều Web App ↔ GAS ↔ Supabase hoạt động ổn định lúc ${TelegramLockedGateway.escapeHtml(new Date().toLocaleString('vi-VN'))}.`
       );
       if (res && res.ok !== false) {
         showToast('Đã gửi tin test thành công tới Telegram Admin', 'success');
@@ -1015,14 +1761,16 @@ const TelegramLockedGateway = (() => {
       }
     });
 
+    // Tạo nhóm / dự án mới
     document.getElementById('btnQuickChannel')?.addEventListener('click', async () => {
       const name = prompt('Nhập tên Nhóm / Dự án mới:');
       if (!name || !name.trim()) return;
-      const { data, error } = await state.supabase
-        .from('team_channels')
-        .insert({ id: TeamLockedSchema.genUuid(), name: name.trim(), description: 'Kênh dự án', type: 'GROUP' })
-        .select()
-        .single();
+      const payload = TeamLockedSchema.buildChannelInsertPayload({
+        name: name.trim(),
+        description: 'Kênh dự án',
+        type: 'GROUP'
+      });
+      const { data, error } = await state.supabase.from('team_channels').insert(payload).select().single();
       if (error) {
         showToast(formatErr(error, 'Lỗi tạo nhóm'), 'error');
         return;
@@ -1030,10 +1778,64 @@ const TelegramLockedGateway = (() => {
       const norm = TeamLockedSchema.normalizeChannel(data);
       state.channels.push(norm);
       state.activeChannelId = norm.id;
+      recordAudit('Tạo nhóm dự án', norm.name);
       renderAll();
       showToast('Đã tạo nhóm mới', 'success');
     });
 
+    // Ghim chỉ đạo
+    document.getElementById('btnPinDirective')?.addEventListener('click', async () => {
+      const curCh = state.channels.find(c => c.id === state.activeChannelId);
+      const val = prompt('Nhập nội dung chỉ đạo cần ghim đầu kênh:', (curCh && curCh.pinned_message) || '');
+      if (val === null) return;
+      await updateChannelMeta({ pinned_message: val.trim() });
+      recordAudit('Ghim chỉ đạo', val.trim());
+      showToast('Đã cập nhật chỉ đạo ghim', 'success');
+    });
+
+    document.getElementById('btnClearPinDirective')?.addEventListener('click', async () => {
+      await updateChannelMeta({ pinned_message: '' });
+      showToast('Đã bỏ ghim chỉ đạo', 'info');
+    });
+
+    // Nhúng bản đồ Maps
+    document.getElementById('saveMapForm')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const q = String(new FormData(e.target).get('map_query') || '').trim();
+      if (!q) return;
+      const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+      await updateChannelMeta({ map_url: embedUrl });
+      document.getElementById('mapModal')?.classList.add('hidden');
+      e.target.reset();
+      showToast('Đã gắn bản đồ vào kênh', 'success');
+    });
+
+    document.getElementById('btnCloseChannelMap')?.addEventListener('click', () => {
+      document.getElementById('channelMapBox')?.classList.add('hidden');
+    });
+
+    // Tạo Bình chọn (Poll)
+    document.getElementById('createPollForm')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const question = String(fd.get('question') || '').trim();
+      const opts = String(fd.get('options') || '')
+        .split('
+')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(label => ({ label, votes: [] }));
+      if (!question || opts.length < 2) {
+        showToast('Cần nhập câu hỏi và ít nhất 2 phương án lựa chọn', 'error');
+        return;
+      }
+      await sendChannelMessage(JSON.stringify({ question, options: opts }), 'POLL');
+      document.getElementById('pollModal')?.classList.add('hidden');
+      e.target.reset();
+      showToast('Đã tạo phiếu bình chọn', 'success');
+    });
+
+    // Thêm nhân sự
     document.getElementById('addStaffForm')?.addEventListener('submit', async e => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -1041,30 +1843,124 @@ const TelegramLockedGateway = (() => {
       if (ok) e.target.reset();
     });
 
+    // Giao việc đơn
     document.getElementById('createTaskForm')?.addEventListener('submit', async e => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const ok = await createNewTask(Object.fromEntries(fd.entries()));
       if (ok) {
         e.target.reset();
-        taskModal.classList.add('hidden');
+        document.getElementById('taskModal')?.classList.add('hidden');
       }
     });
 
+    // Chốt lịch họp & Giao việc hàng loạt
+    document.getElementById('meetingMinutesForm')?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const title = String(fd.get('meeting_title') || '').trim();
+      const lines = String(fd.get('action_items') || '')
+        .split('
+')
+        .map(l => l.trim())
+        .filter(Boolean);
+
+      await sendChannelMessage(`📋 BIÊN BẢN CHỐT CUỘC HỌP: ${title}
+` + lines.map((l, i) => `${i + 1}. ${l}`).join('
+'), 'CHAT');
+
+      let createdCount = 0;
+      for (const line of lines) {
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length >= 2) {
+          const ok = await createNewTask(
+            { assignee: parts[0], content: parts[1], due_time: parts[2] || '' },
+            true
+          );
+          if (ok) createdCount++;
+        }
+      }
+
+      document.getElementById('meetingModal')?.classList.add('hidden');
+      e.target.reset();
+      showToast(`Đã đăng biên bản & tự động giao ${createdCount} đầu việc lên Telegram`, 'success');
+    });
+
+    // Gửi tin nhắn / Trình phê duyệt
+    const msgInp = document.getElementById('messageInput');
+    msgInp?.addEventListener('focus', () => { state.isUserTyping = true; });
+    msgInp?.addEventListener('blur', () => { state.isUserTyping = false; });
+
     document.getElementById('messageForm')?.addEventListener('submit', async e => {
       e.preventDefault();
-      const inp = document.getElementById('messageInput');
-      if (!inp || !inp.value.trim()) return;
-      const val = inp.value;
-      inp.value = '';
-      await sendChannelMessage(val);
+      if (!msgInp || !msgInp.value.trim()) return;
+      const val = msgInp.value;
+      const mode = document.querySelector('input[name="composeMode"]:checked')?.value || 'CHAT';
+      msgInp.value = '';
+      await sendChannelMessage(val, mode);
+    });
+
+    // Bộ lọc danh sách công việc
+    document.getElementById('taskFilterStatus')?.addEventListener('change', renderTasks);
+    document.getElementById('taskFilterAssignee')?.addEventListener('change', renderTasks);
+
+    // Xuất Excel & In PDF
+    document.getElementById('btnExportExcelReport')?.addEventListener('click', () => {
+      if (typeof XLSX === 'undefined') {
+        showToast('Thư viện xuất Excel chưa sẵn sàng', 'error');
+        return;
+      }
+      const rows = state.tasks.map((t, i) => ({
+        STT: i + 1,
+        'Nội dung công việc': t.content,
+        'Người thực hiện': t.assignee,
+        'Người giao': t.assigner,
+        'Hạn chót': t.due_time,
+        'Trạng thái': t.status === 'DONE' ? 'Đã hoàn thành' : 'Đang thực hiện',
+        'Phản hồi tiến độ': t.reply_note
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoCongViec');
+      XLSX.writeFile(wb, `TeamWork_BaoCao_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      recordAudit('Xuất báo cáo Excel', `${rows.length} dòng`);
+    });
+
+    document.getElementById('btnPrintPdfReport')?.addEventListener('click', () => {
+      window.print();
+    });
+
+    // Sao lưu JSON & Xóa log cục bộ
+    document.getElementById('btnDownloadJsonBackup')?.addEventListener('click', () => {
+      const backupObj = {
+        exported_at: new Date().toISOString(),
+        users: state.staffList,
+        channels: state.channels,
+        tasks: state.tasks,
+        messages: state.messages,
+        audit_logs: state.auditLogs
+      };
+      const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TeamWork_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      recordAudit('Sao lưu JSON', 'Tải file dữ liệu toàn hệ thống');
+    });
+
+    document.getElementById('btnClearLocalAudit')?.addEventListener('click', () => {
+      state.auditLogs = [];
+      localStorage.removeItem(TW_CONFIG.AUDIT_LOCAL_KEY);
+      renderAuditLogs();
     });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    loadLocalAudits();
     bindEvents();
     loadAllData(false);
-    // Tự động đồng bộ phản hồi từ Telegram về Web App mỗi 10 giây
     setInterval(() => loadAllData(true), 10000);
   });
 })();
