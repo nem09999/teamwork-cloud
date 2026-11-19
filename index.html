@@ -256,23 +256,24 @@
         <button type="button" onclick="clearAttachedMapDraft()" class="text-slate-400 hover:text-rose-400 px-2 shrink-0">Bỏ vị trí ✕</button>
       </div>
 
-      <!-- Ô NHẬP TIN NHẮN, MENU KIM KẸP 4 CHỨC NĂNG, EMOJI & TẠO BÌNH CHỌN -->
+     <!-- Ô NHẬP TIN NHẮN, MENU KIM KẸP 4 CHỨC NĂNG, EMOJI & TẠO BÌNH CHỌN -->
       <div class="relative p-2 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-1.5 sm:gap-2 shrink-0">
         <!-- Bảng 4 chức năng của nút Kim kẹp -->
         <div id="attachMenuPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-2 z-50 w-64 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
           <div class="grid grid-cols-2 gap-2 text-xs">
+            <!-- Nút 1: Đính kèm chung (mọi tệp / hình ảnh, giữ nguyên luồng handleQuickChatFileAttach) -->
             <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
-              <span class="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">🖼️</span>
-              <span class="font-semibold text-slate-200">Add hình</span>
-              <input type="file" accept="image/*" class="hidden" onchange="handleAttachImage(event)" />
+              <span class="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">📎</span>
+              <span class="font-semibold text-slate-200 text-center">Đính kèm chung</span>
+              <input type="file" multiple class="hidden" onchange="handleQuickChatFileAttach(event)" />
             </label>
 
+            <!-- Nút 2: Chụp / chọn ảnh nhanh (ưu tiên camera/ảnh trên điện thoại, giữ nguyên luồng handleAttachImage) -->
             <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
-              <span class="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">📄</span>
-              <span class="font-semibold text-slate-200">Add file</span>
-              <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
+              <span class="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">📷</span>
+              <span class="font-semibold text-slate-200 text-center">Ảnh nhanh</span>
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleAttachImage(event)" />
             </label>
-
             <button type="button" onclick="handleShareCurrentLocation()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
               <span class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">📍</span>
               <span class="font-semibold text-slate-200">Định vị vị trí</span>
@@ -3876,6 +3877,9 @@
     // [LOCKED MODULE 18 & 19]: 4 CHỨC NĂNG KIM KẸP (ẢNH, FILE, ĐỊNH VỊ GPS, NHẮC HẸN)
     // =========================================================================
     async function handleAttachImage(event) {
+  const input = event && event.target;
+  const files = input && input.files ? Array.from(input.files) : [];
+  if (!files.length) return;
       closeAllDropdowns();
       const file = event.target.files && event.target.files[0];
       if (!file || !currentUser) return;
@@ -3902,6 +3906,9 @@
     }
 
     async function handleQuickChatFileAttach(event) {
+  const input = event && event.target;
+  const files = input && input.files ? Array.from(input.files) : [];
+  if (!files.length) return;
       closeAllDropdowns();
       const file = event.target.files && event.target.files[0];
       if (!file || !currentUser) return;
@@ -4456,5 +4463,5 @@ function twBuildTaskTargetChatIds_(allUsers, opts) {
   return Array.from(chatSet);
 }
   </script>
-</body>
+  </body>
 </html>
