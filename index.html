@@ -233,37 +233,67 @@
         <button type="button" onclick="document.getElementById('pollQuickSuggestBar').classList.add('hidden')" class="text-slate-400 hover:text-white px-2">✕</button>
       </div>
 
-      <!-- Ô NHẬP TIN NHẮN, EMOJI & TẠO BÌNH CHỌN -->
-      <div class="relative p-2 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <div id="emojiPickerPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-3 z-50 w-72 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
-          <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
-            <span>Chọn biểu tượng cảm xúc</span>
-            <button type="button" onclick="toggleEmojiPicker(event, false)" class="text-slate-400 hover:text-white">✕</button>
-          </div>
-          <div id="emojiGridContainer" class="grid grid-cols-8 gap-1 text-lg max-h-48 overflow-y-auto"></div>
-        </div>
+      <!-- Ô NHẬP TIN NHẮN, MENU KIM KẸP 4 CHỨC NĂNG, EMOJI & TẠO BÌNH CHỌN -->
+   <div class="relative p-2 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-1.5 sm:gap-2 shrink-0">
+     <!-- Bảng 4 chức năng của nút Kim kẹp -->
+     <div id="attachMenuPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-2 z-50 w-64 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
+       <div class="grid grid-cols-2 gap-2 text-xs">
+         <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+           <span class="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">🖼️</span>
+           <span class="font-semibold text-slate-200">Hình ảnh</span>
+           <input type="file" accept="image/*" class="hidden" onchange="handleAttachImage(event)" />
+         </label>
 
-        <label title="Đính kèm tệp tin (<3MB)" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
-          📎
-          <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
-        </label>
+         <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+           <span class="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">📄</span>
+           <span class="font-semibold text-slate-200">Tài liệu / File</span>
+           <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
+         </label>
 
-        <button type="button" onclick="toggleEmojiPicker(event)" title="Chèn biểu tượng cảm xúc" class="bg-slate-800 hover:bg-slate-700 text-amber-300 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
-          😊
-        </button>
+         <button type="button" onclick="handleShareCurrentLocation()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+           <span class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">📍</span>
+           <span class="font-semibold text-slate-200">Định vị vị trí</span>
+         </button>
 
-        <button type="button" onclick="openPollCreateModal()" title="Tạo bình chọn / lấy ý kiến" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
-          📊
-        </button>
+         <button type="button" onclick="openReminderCreateModal()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+           <span class="w-9 h-9 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">⏰</span>
+           <span class="font-semibold text-slate-200">Nhắc hẹn</span>
+         </button>
+       </div>
+     </div>
 
-        <input id="chatInput" type="text" placeholder="Nhập trao đổi hoặc gõ 'Bình chọn'..."
-          oninput="handleChatInputKeyword(this.value)"
-          onkeydown="if(event.key==='Enter') sendChatMessage()"
-          class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500" />
-        <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm shrink-0 transition">
-          Gửi
-        </button>
-      </div>
+     <!-- Bảng chọn Emoji -->
+     <div id="emojiPickerPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-3 z-50 w-72 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
+       <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
+         <span>Chọn biểu tượng cảm xúc</span>
+         <button type="button" onclick="toggleEmojiPicker(event, false)" class="text-slate-400 hover:text-white">✕</button>
+       </div>
+       <div id="emojiGridContainer" class="grid grid-cols-8 gap-1 text-lg max-h-48 overflow-y-auto"></div>
+     </div>
+
+     <!-- Nút Kim kẹp 4 chức năng -->
+     <button type="button" onclick="toggleAttachMenu(event)" title="Đính kèm ảnh, file, vị trí, nhắc hẹn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
+       📎
+     </button>
+
+     <!-- Nút Emoji -->
+     <button type="button" onclick="toggleEmojiPicker(event)" title="Chèn biểu tượng cảm xúc" class="bg-slate-800 hover:bg-slate-700 text-amber-300 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
+       😊
+     </button>
+
+     <!-- Nút Bình chọn (Giữ nguyên 100%) -->
+     <button type="button" onclick="openPollCreateModal()" title="Tạo bình chọn / lấy ý kiến" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
+       📊
+     </button>
+
+     <input id="chatInput" type="text" placeholder="Nhập trao đổi, địa chỉ Maps hoặc gõ 'Bình chọn'..."
+       oninput="handleChatInputKeyword(this.value)"
+       onkeydown="if(event.key==='Enter') sendChatMessage()"
+       class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500" />
+     <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm shrink-0 transition">
+       Gửi
+     </button>
+   </div>
     </main>
 
     <!-- CỘT PHẢI: CHECKLIST CÔNG VIỆC & TÀI NGUYÊN KÊNH (DESKTOP >= 1280px) -->
@@ -843,7 +873,51 @@
       </div>
     </div>
   </div>
+<div class="p-4 space-y-4">
+    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+      <span class="text-xl shrink-0">⏰</span>
+      <input id="reminderTitleInput" type="text" placeholder="Nhập tiêu đề nhắc hẹn..." class="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none" />
+    </div>
 
+    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+      <span class="text-base text-slate-400 shrink-0">🕒</span>
+      <div class="flex-1">
+        <label class="block text-[10px] text-slate-400 mb-1">Thời gian nhắc hẹn</label>
+        <input id="reminderDateTimeInput" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+      <span class="text-base text-slate-400 shrink-0">🔁</span>
+      <div class="flex-1">
+        <label class="block text-[10px] text-slate-400 mb-1">Chọn kiểu lặp lại</label>
+        <select id="reminderRepeatSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white">
+          <option value="NONE">Không lặp lại (1 lần)</option>
+          <option value="DAILY">Hàng ngày</option>
+          <option value="WEEKLY">Hàng tuần</option>
+          <option value="MONTHLY">Hàng tháng</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <span class="text-base text-slate-400 mt-0.5 shrink-0">🔒</span>
+      <div class="flex-1 space-y-2.5">
+        <div class="font-semibold text-slate-300">Nhắc cho</div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2.5 cursor-pointer">
+            <input type="radio" name="reminderTargetRadio" value="SELF" class="w-4 h-4 text-blue-500" />
+            <span class="text-white font-medium">Chỉ mình tôi</span>
+          </label>
+          <label class="flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2.5 cursor-pointer">
+            <input type="radio" name="reminderTargetRadio" value="ALL" checked class="w-4 h-4 text-blue-500" />
+            <span id="reminderTargetAllLabel" class="text-white font-medium">Cả hai</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
   <script>
     // =========================================================================
     // [LOCKED MODULE 01]: CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT
@@ -1259,51 +1333,93 @@
       inp.setSelectionRange(start + emojiChar.length, start + emojiChar.length);
     }
 
-    function closeAllDropdowns() {
-      const hMenu = document.getElementById('headerMoreMenu');
-      const cMenu = document.getElementById('msgContextMenu');
-      const ePop = document.getElementById('emojiPickerPopover');
-      if (hMenu) hMenu.classList.add('hidden');
-      if (cMenu) cMenu.classList.add('hidden');
-      if (ePop) ePop.classList.add('hidden');
-    }
+   function closeAllDropdowns() {
+   const hMenu = document.getElementById('headerMoreMenu');
+   const cMenu = document.getElementById('msgContextMenu');
+   const ePop = document.getElementById('emojiPickerPopover');
+   const aPop = document.getElementById('attachMenuPopover');
+   if (hMenu) hMenu.classList.add('hidden');
+   if (cMenu) cMenu.classList.add('hidden');
+   if (ePop) ePop.classList.add('hidden');
+   if (aPop) aPop.classList.add('hidden');
+ }
 
-    document.addEventListener('click', closeAllDropdowns);
+ function toggleAttachMenu(event) {
+   if (event) event.stopPropagation();
+   const pop = document.getElementById('attachMenuPopover');
+   if (!pop) return;
+   const isHidden = pop.classList.contains('hidden');
+   closeAllDropdowns();
+   if (isHidden) pop.classList.remove('hidden');
+ }
 
-    // =========================================================================
-    // [LOCKED MODULE 06]: NHẬN DIỆN TỌA ĐỘ / LINK GOOGLE MAPS NHÚNG TRỰC TIẾP
-    // =========================================================================
-    function extractLocationForMap(text) {
-      const str = String(text || '');
-      const coordMatch = str.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
-      if (coordMatch) {
-        return { query: `${coordMatch[1]},${coordMatch[2]}`, label: `Tọa độ ${coordMatch[1]}, ${coordMatch[2]}` };
-      }
-      const gmapMatch = str.match(/https?:\/\/(?:www\.)?(?:google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)[^\s]*/i);
-      if (gmapMatch) {
-        const url = gmapMatch[0];
-        const atMatch = url.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
-        if (atMatch) return { query: `${atMatch[1]},${atMatch[2]}`, label: `Vị trí bản đồ (${atMatch[1]}, ${atMatch[2]})` };
-        return { query: 'Ho Chi Minh City', label: 'Vị trí Google Maps đính kèm', rawUrl: url };
-      }
-      return null;
-    }
+ document.addEventListener('click', closeAllDropdowns);
 
-    function renderGoogleMapEmbedHtml(locInfo) {
-      const q = encodeURIComponent(locInfo.query);
-      const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-      const externalUrl = locInfo.rawUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
-      return `
-        <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
-          <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
-            <span class="text-emerald-400 font-semibold truncate">📍 Vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
-            <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">Mở Maps ↗</a>
-          </div>
-          <iframe src="${embedUrl}" class="w-full h-40 sm:h-44 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-      `;
-    }
+ // =========================================================================
+ // [LOCKED MODULE 06]: NHẬN DIỆN GOOGLE MAPS 3 LỚP (TỌA ĐỘ / XÃ-PHƯỜNG / ĐỊA DANH + TỈNH-TP)
+ // =========================================================================
+ const VN_PROVINCES_REGEX = '(?:tp\\.?\\s*hcm|tp\\.?\\s*hồ chí minh|thành phố hồ chí minh|hồ chí minh|sài gòn|hà nội|tp\\.?\\s*hà nội|thành phố hà nội|đà nẵng|hải phòng|cần thơ|bình dương|đồng nai|bà rịa\\s*-?\\s*vũng tàu|vũng tàu|long an|tiền giang|bến tre|vĩnh long|trà vinh|đồng tháp|an giang|kiên giang|hậu giang|sóc trăng|bạc liêu|cà mau|tây ninh|bình phước|lâm đồng|đà lạt|đắk lắk|đắk nông|gia lai|kon tum|khánh hòa|nha trang|ninh thuận|bình thuận|phan thiết|phú yên|bình định|quy nhơn|quảng ngãi|quảng nam|hội an|thừa thiên huế|huế|quảng trị|quảng bình|hà tĩnh|nghệ an|vinh|thanh hóa|ninh bình|nam định|thái bình|hà nam|hưng yên|hải dương|bắc ninh|bắc giang|vĩnh phúc|phú thọ|thái nguyên|quảng ninh|hạ long|lạng sơn|cao bằng|bắc kạn|tuyên quang|hà giang|yên bái|lào cai|sa pa|sapa|lai châu|điện biên|sơn la|hòa bình)';
 
+ function extractLocationForMap(text) {
+   const raw = String(text || '').trim();
+   if (!raw || raw.length > 450) return null;
+
+   // 1. Tọa độ GPS chính xác (VD: 10.7769, 106.7009)
+   const coordMatch = raw.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
+   if (coordMatch) {
+     return {
+       query: `${coordMatch[1]},${coordMatch[2]}`,
+       label: `Tọa độ ${coordMatch[1]}, ${coordMatch[2]}`
+     };
+   }
+
+   // 2. Link Google Maps
+   const gmapMatch = raw.match(/https?:\/\/(?:www\.)?(?:google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)[^\s]*/i);
+   if (gmapMatch) {
+     const url = gmapMatch[0];
+     const atMatch = url.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+     if (atMatch) return { query: `${atMatch[1]},${atMatch[2]}`, label: `Vị trí bản đồ (${atMatch[1]}, ${atMatch[2]})`, rawUrl: url };
+     const qMatch = url.match(/[?&](?:q|query)=([^&]+)/);
+     if (qMatch) {
+       const decoded = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+       return { query: decoded, label: decoded, rawUrl: url };
+     }
+     return { query: 'Ho Chi Minh City', label: 'Vị trí Google Maps đính kèm', rawUrl: url };
+   }
+
+   // 3. Địa chỉ đến Xã / Phường / Thị trấn + Tỉnh / Thành phố
+   const wardProvRegex = new RegExp(`((?:xã|phường|thị trấn|p\\.|x\\.)\\s*[^,\\n]{2,40}(?:,\\s*[^,\\n]{2,40}){0,2},\\s*${VN_PROVINCES_REGEX})`, 'i');
+   const wardMatch = raw.match(wardProvRegex);
+   if (wardMatch) {
+     const addr = wardMatch[1].trim();
+     return { query: addr, label: addr };
+   }
+
+   // 4. Địa danh / Khu vực + Tỉnh / Thành phố
+   const landmarkProvRegex = new RegExp(`((?:kcn|khu công nghiệp|khu đô thị|kđt|cảng|sân bay|cao tốc|nút giao|trạm dừng nghỉ|dự án|tòa nhà|chung cư|cầu|bến xe|chợ|ubnd|bệnh viện|trường|khu vực|đường)\\s*[^,\\n]{2,55},\\s*${VN_PROVINCES_REGEX})`, 'i');
+   const landmarkMatch = raw.match(landmarkProvRegex);
+   if (landmarkMatch) {
+     const place = landmarkMatch[1].trim();
+     return { query: place, label: place };
+   }
+
+   return null;
+ }
+
+ function renderGoogleMapEmbedHtml(locInfo) {
+   const q = encodeURIComponent(locInfo.query);
+   const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+   const externalUrl = locInfo.rawUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
+   return `
+     <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+       <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
+         <span class="text-emerald-400 font-semibold truncate">📍 Vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
+         <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">Mở Maps ↗</a>
+       </div>
+       <iframe src="${embedUrl}" class="w-full h-44 sm:h-48 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+     </div>
+   `;
+ }
     // =========================================================================
     // [LOCKED MODULE 07]: ĐỒNG BỘ SUPABASE & KHÔI PHỤC PHIÊN ĐĂNG NHẬP
     // =========================================================================
@@ -2582,6 +2698,26 @@
             </div>
           `;
         }
+        // HIỂN THỊ THẺ NHẮC HẸN (REMINDER)
+     if (m.msg_type === 'REMINDER') {
+       let rem = {};
+       try { rem = JSON.parse(m.content); } catch (e) {}
+       if (rem.target === 'SELF' && String(rem.creatorId) !== String(currentUser?.id)) return '';
+       return `
+         <div id="msg_card_${m.id}" ${ctxAttr} class="flex items-start max-w-2xl">
+           ${multiCheckHtml}
+           <div class="flex-1 bg-slate-900 border border-rose-500/40 rounded-2xl p-3.5 shadow-md space-y-1.5">
+             <div class="flex items-center justify-between gap-2">
+               <span class="text-[10px] font-bold text-rose-400 uppercase">⏰ NHẮC HẸN • ${escapeHtmlSafe(m.sender_name)}</span>
+               <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
+             </div>
+             <div class="text-sm font-bold text-white">🔔 ${escapeHtmlSafe(rem.title || '')}</div>
+             <div class="text-xs text-amber-300 font-semibold">🕒 Thời gian: ${formatDateTimeVN(rem.remindAt)}</div>
+             <div class="text-[11px] text-slate-400">🔁 ${escapeHtmlSafe(rem.repeatLabel || 'Không lặp lại')} • 🔒 ${escapeHtmlSafe(rem.targetLabel || 'Cả nhóm')}</div>
+           </div>
+         </div>
+       `;
+     }
 
         // 3. TIN NHẮN THƯỜNG & TỆP ĐÍNH KÈM
         const isRecalled = String(m.content || '').includes('Tin nhắn đã được thu hồi');
@@ -2597,13 +2733,19 @@
                 </div>
               </div>
               <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line break-words">${formatMessageTextHtml(m.content)}</div>
-              ${m.file_url ? `
-                <div class="mt-2 pt-2 border-t border-slate-800">
-                  <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(m.file_name || 'tai_lieu')}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
-                    <span>📎</span><span class="truncate">${escapeHtmlSafe(m.file_name || 'Tệp đính kèm')}</span>
-                  </a>
-                </div>
-              ` : ''}
+             ${m.file_url ? (m.msg_type === 'IMAGE' ? `
+             <div class="mt-2">
+               <a href="${escapeHtmlSafe(m.file_url)}" target="_blank">
+                 <img src="${escapeHtmlSafe(m.file_url)}" alt="${escapeHtmlSafe(m.file_name || 'Hình ảnh')}" class="max-h-64 rounded-xl border border-slate-700 object-contain" />
+               </a>
+             </div>
+           ` : `
+             <div class="mt-2 pt-2 border-t border-slate-800">
+               <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(m.file_name || 'tai_lieu')}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
+                 <span>📎</span><span class="truncate">${escapeHtmlSafe(m.file_name || 'Tệp đính kèm')}</span>
+               </a>
+             </div>
+           `) : ''}
               ${transHtml}
               ${mapHtml}
             </div>
@@ -3579,33 +3721,155 @@
       showAppNotice('Đã khôi phục dữ liệu thành công!', '♻️ Hoàn tất');
     }
 
-    // =========================================================================
-    // [LOCKED MODULE 18 & 19]: GỬI TIN NHẮN, ĐÍNH KÈM FILE, VỊ TRÍ GPS & NHẮC HẸN
-    // =========================================================================
-    async function handleQuickChatFileAttach(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file || !currentUser) return;
-      if (file.size > 3 * 1024 * 1024) {
-        event.target.value = '';
-        return showAppNotice('Tệp đính kèm vượt quá giới hạn 3MB!', '⚠️ Tệp quá lớn');
-      }
-      const dataUrl = await readFileAsBase64(file);
-      const { data } = await sb.from('team_messages').insert([{
-        channel_id: getCurrentConversationChannelKey(),
-        sender_name: getUserFullName(currentUser),
-        sender_role: currentUser.role_title || 'Thành viên',
-        msg_type: 'FILE',
-        content: `📎 Đã gửi tệp đính kèm: ${file.name}`,
-        file_name: file.name,
-        file_url: dataUrl
-      }]).select();
+ // =========================================================================
+ // [LOCKED MODULE 18 & 19]: 4 CHỨC NĂNG KIM KẸP (ẢNH, FILE, ĐỊNH VỊ GPS, NHẮC HẸN)
+ // =========================================================================
+ // 1. Gửi hình ảnh
+ async function handleAttachImage(event) {
+   closeAllDropdowns();
+   const file = event.target.files && event.target.files[0];
+   if (!file || !currentUser) return;
+   if (file.size > 3 * 1024 * 1024) {
+     event.target.value = '';
+     return showAppNotice('Hình ảnh vượt quá dung lượng 3MB!', '⚠️ Ảnh quá lớn');
+   }
+   const dataUrl = await readFileAsBase64(file);
+   const { data } = await sb.from('team_messages').insert([{
+     channel_id: getCurrentConversationChannelKey(),
+     sender_name: getUserFullName(currentUser),
+     sender_role: currentUser.role_title || 'Thành viên',
+     msg_type: 'IMAGE',
+     content: `🖼️ Hình ảnh: ${file.name}`,
+     file_name: file.name,
+     file_url: dataUrl
+   }]).select();
 
-      event.target.value = '';
-      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-      renderMessages();
-      renderChannelFiles();
-    }
+   event.target.value = '';
+   if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+   renderMessages();
+   renderChannelFiles();
+ }
 
+ // 2. Gửi tài liệu / file
+ async function handleQuickChatFileAttach(event) {
+   closeAllDropdowns();
+   const file = event.target.files && event.target.files[0];
+   if (!file || !currentUser) return;
+   if (file.size > 3 * 1024 * 1024) {
+     event.target.value = '';
+     return showAppNotice('Tệp đính kèm vượt quá giới hạn 3MB!', '⚠️ Tệp quá lớn');
+   }
+   const dataUrl = await readFileAsBase64(file);
+   const { data } = await sb.from('team_messages').insert([{
+     channel_id: getCurrentConversationChannelKey(),
+     sender_name: getUserFullName(currentUser),
+     sender_role: currentUser.role_title || 'Thành viên',
+     msg_type: 'FILE',
+     content: `📎 Đã gửi tệp đính kèm: ${file.name}`,
+     file_name: file.name,
+     file_url: dataUrl
+   }]).select();
+
+   event.target.value = '';
+   if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+   renderMessages();
+   renderChannelFiles();
+ }
+
+ // 3. Định vị vị trí GPS hiện tại & nhúng Google Maps
+ function handleShareCurrentLocation() {
+   closeAllDropdowns();
+   if (!navigator.geolocation) {
+     return showAppNotice('Trình duyệt trên thiết bị này không hỗ trợ định vị GPS.', '⚠️ Không hỗ trợ GPS');
+   }
+   showAppNotice('Đang lấy tọa độ GPS chính xác của thiết bị...', '📍 Đang định vị');
+   navigator.geolocation.getCurrentPosition(
+     async pos => {
+       closeModal('appDialogModal');
+       const lat = pos.coords.latitude.toFixed(6);
+       const lng = pos.coords.longitude.toFixed(6);
+       const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+       const content = `📍 Vị trí hiện tại của ${getUserFullName(currentUser)}: ${lat}, ${lng}\n${mapsLink}`;
+
+       const { data } = await sb.from('team_messages').insert([{
+         channel_id: getCurrentConversationChannelKey(),
+         sender_name: getUserFullName(currentUser),
+         sender_role: currentUser.role_title || 'Thành viên',
+         msg_type: 'CHAT',
+         content
+       }]).select();
+
+       if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+       renderMessages();
+     },
+     err => {
+       closeModal('appDialogModal');
+       showAppNotice('Không thể lấy vị trí. Anh vui lòng bật quyền Truy cập vị trí (Location) cho trình duyệt và thử lại.', '⚠️ Lỗi định vị GPS');
+     },
+     { enableHighAccuracy: true, timeout: 10000 }
+   );
+ }
+
+ // 4. Mở & lưu Nhắc hẹn (Tạo nhắc hẹn mới)
+ function openReminderCreateModal() {
+   closeAllDropdowns();
+   document.getElementById('reminderTitleInput').value = '';
+   const nextHour = new Date(Date.now() + 60 * 60 * 1000);
+   const localIso = new Date(nextHour.getTime() - nextHour.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+   document.getElementById('reminderDateTimeInput').value = localIso;
+   document.getElementById('reminderRepeatSelect').value = 'NONE';
+   document.getElementById('reminderTargetAllLabel').textContent = activeDmPeer ? 'Cả hai' : 'Tất cả thành viên nhóm';
+   openModal('reminderCreateModal');
+ }
+
+ async function submitNewReminder() {
+   const title = document.getElementById('reminderTitleInput').value.trim();
+   const dtVal = document.getElementById('reminderDateTimeInput').value;
+   const repeatVal = document.getElementById('reminderRepeatSelect').value;
+   const targetVal = document.querySelector('input[name="reminderTargetRadio"]:checked')?.value || 'ALL';
+
+   if (!title) return showAppNotice('Vui lòng nhập tiêu đề nhắc hẹn!', '⚠️ Thiếu tiêu đề');
+   if (!dtVal) return showAppNotice('Vui lòng chọn thời gian nhắc hẹn!', '⚠️ Thiếu thời gian');
+
+   const repeatLabels = {
+     NONE: 'Không lặp lại',
+     DAILY: 'Hàng ngày',
+     WEEKLY: 'Hàng tuần',
+     MONTHLY: 'Hàng tháng'
+   };
+   const targetLabel = targetVal === 'SELF' ? 'Chỉ mình tôi' : (activeDmPeer ? 'Cả hai' : 'Cả nhóm');
+
+   const reminderPayload = {
+     title,
+     remindAt: new Date(dtVal).toISOString(),
+     repeat: repeatVal,
+     repeatLabel: repeatLabels[repeatVal] || 'Không lặp lại',
+     target: targetVal,
+     targetLabel,
+     creatorId: String(currentUser.id),
+     creatorName: getUserFullName(currentUser)
+   };
+
+   const { data } = await sb.from('team_messages').insert([{
+     channel_id: getCurrentConversationChannelKey(),
+     sender_name: getUserFullName(currentUser),
+     sender_role: currentUser.role_title || 'Thành viên',
+     msg_type: 'REMINDER',
+     content: JSON.stringify(reminderPayload)
+   }]).select();
+
+   if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+   closeModal('reminderCreateModal');
+   renderMessages();
+
+   const delayMs = new Date(dtVal).getTime() - Date.now();
+   if (delayMs > 0 && delayMs <= 24 * 60 * 60 * 1000) {
+     setTimeout(() => {
+       showAppNotice(`⏰ ĐẾN GIỜ NHẮC HẸN:\n"${title}"\n(${formatDateTimeVN(dtVal)})`, '⏰ Nhắc hẹn TeamWork Cloud');
+     }, delayMs);
+   }
+ }
+    
     async function sendChatMessage() {
       const inp = document.getElementById('chatInput');
       let rawText = inp.value.trim();
