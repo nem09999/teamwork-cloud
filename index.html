@@ -3909,30 +3909,34 @@
   const input = event && event.target;
   const files = input && input.files ? Array.from(input.files) : [];
   if (!files.length) return;
-      closeAllDropdowns();
-      const file = event.target.files && event.target.files[0];
-      if (!file || !currentUser) return;
-      if (file.size > 3 * 1024 * 1024) {
-        event.target.value = '';
-        return showAppNotice('Tệp đính kèm vượt quá giới hạn 3MB!', 'Tệp quá lớn');
-      }
-      const cleanName = sanitizeCleanText(file.name);
-      const dataUrl = await readFileAsBase64(file);
-      const { data } = await sb.from('team_messages').insert([{
-        channel_id: getCurrentConversationChannelKey(),
-        sender_name: getUserFullName(currentUser),
-        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
-        msg_type: 'FILE',
-        content: `Đã gửi tệp đính kèm: ${cleanName}`,
-        file_name: cleanName,
-        file_url: dataUrl
-      }]).select();
+  closeAllDropdowns();
+  if (!currentUser) return;
 
-      event.target.value = '';
-      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-      renderMessages();
-      renderChannelFiles();
+  for (const file of files) {
+    if (!file) continue;
+    if (file.size > 3 * 1024 * 1024) {
+      showAppNotice(`Tệp "${file.name}" vượt quá giới hạn 3MB!`, 'Tệp quá lớn');
+      continue;
     }
+    const cleanName = sanitizeCleanText(file.name);
+    const dataUrl = await readFileAsBase64(file);
+    const { data } = await sb.from('team_messages').insert([{
+      channel_id: getCurrentConversationChannelKey(),
+      sender_name: getUserFullName(currentUser),
+      sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
+      msg_type: 'FILE',
+      content: `Đã gửi tệp đính kèm: ${cleanName}`,
+      file_name: cleanName,
+      file_url: dataUrl
+    }]).select();
+
+    if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+  }
+
+  event.target.value = '';
+  renderMessages();
+  renderChannelFiles();
+}
 
     function handleShareCurrentLocation() {
       closeAllDropdowns();
