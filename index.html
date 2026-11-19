@@ -44,6 +44,7 @@
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Tên đăng nhập (User) hoặc Họ và tên</label>
           <input id="loginUsernameInput" type="text" placeholder="Nhập tên đăng nhập (user) được cấp..."
+            onkeydown="if(event.key==='Enter') handleLogin()"
             class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
         </div>
 
@@ -67,7 +68,7 @@
 
         <div id="loginError" class="hidden bg-rose-950/70 border border-rose-500/40 text-rose-300 text-xs p-3 rounded-xl leading-relaxed"></div>
 
-        <button id="btnLoginSubmit" onclick="handleLogin()"
+        <button id="btnLoginSubmit" type="button" onclick="handleLogin()"
           class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-sm shadow-lg transition">
           Đăng Nhập Hệ Thống
         </button>
@@ -100,7 +101,7 @@
       <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 shrink-0">☰</button>
       <div class="min-w-0">
         <div class="flex items-center gap-1.5">
-          <h2 id="activeChannelTitle" class="text-xs sm:text-base font-bold text-white truncate"> Đang tải...</h2>
+          <h2 id="activeChannelTitle" class="text-xs sm:text-base font-bold text-white truncate">Đang tải...</h2>
           <span id="dmBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">🔒 1-1</span>
           <span id="channelMemberBadge" class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shrink-0">👥 0</span>
           <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Cấu hình Nhóm / Dự án" class="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 shrink-0">⚙️</button>
@@ -191,7 +192,7 @@
       <!-- THANH GHIM CHỈ ĐẠO ĐẦU KÊNH -->
       <div id="pinnedDirectivesBar" class="hidden bg-amber-950/60 border-b border-amber-500/40 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0">
         <div onclick="scrollToPinnedMessage()" class="min-w-0 cursor-pointer flex-1">
-          <div class="text-[10px] font-bold text-amber-400 uppercase">📌 CHỈ ĐẠO GHIM ĐẦU KÊNH • <span id="pinnedByLabel" class="font-normal text-amber-200/80"></span></div>
+          <div class="text-[10px] font-bold text-amber-400 uppercase">CHỈ ĐẠO GHIM ĐẦU KÊNH - <span id="pinnedByLabel" class="font-normal text-amber-200/80"></span></div>
           <div id="pinnedContentText" class="text-xs text-amber-100 truncate"></div>
         </div>
         <button id="btnUnpinDirective" onclick="unpinCurrentDirective()" class="text-[11px] text-amber-300 hover:text-white px-2 py-1 rounded bg-amber-900/50 shrink-0">Gỡ ghim</button>
@@ -199,10 +200,10 @@
 
       <!-- THANH CÔNG CỤ CHỌN NHIỀU TIN ĐỂ XÓA -->
       <div id="multiDeleteActionBar" class="hidden bg-rose-950/90 border-b border-rose-500/50 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0 text-xs">
-        <div class="font-bold text-rose-200">☑️ Đã chọn <span id="multiDeleteCount" class="text-white underline">0</span> tin nhắn</div>
+        <div class="font-bold text-rose-200">Đã chọn <span id="multiDeleteCount" class="text-white underline">0</span> tin nhắn</div>
         <div class="flex items-center gap-2">
           <button type="button" onclick="cancelMultiDeleteMode()" class="px-3 py-1 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 font-semibold">Hủy</button>
-          <button type="button" onclick="confirmBulkDeleteMessages()" class="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold">🗑️ Xóa các tin đã chọn</button>
+          <button type="button" onclick="confirmBulkDeleteMessages()" class="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold">Xóa các tin đã chọn</button>
         </div>
       </div>
 
@@ -233,67 +234,89 @@
         <button type="button" onclick="document.getElementById('pollQuickSuggestBar').classList.add('hidden')" class="text-slate-400 hover:text-white px-2">✕</button>
       </div>
 
+      <!-- THANH GỢI Ý NHÚNG BẢN ĐỒ MAPS ("THÊM VỊ TRÍ VÀO") -->
+      <div id="mapQuickSuggestBar" class="hidden bg-slate-900 border-t border-blue-500/40 px-3.5 py-2 flex items-center justify-between gap-2">
+        <button type="button" onclick="confirmAddDetectedMapToChat()" class="flex items-center gap-2.5 text-left flex-1 min-w-0 hover:bg-slate-800/80 p-1.5 rounded-xl transition">
+          <span class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-base font-bold shrink-0">📍</span>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-blue-300">Thêm vị trí vào</div>
+            <div id="mapSuggestLabelText" class="text-[11px] text-slate-300 truncate"></div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold shrink-0">+ Thêm</span>
+        </button>
+        <button type="button" onclick="dismissMapSuggestBar()" class="text-slate-400 hover:text-white px-2 shrink-0">✕</button>
+      </div>
+
+      <!-- NHÃN XÁC NHẬN ĐÃ GẮN VỊ TRÍ BẢN ĐỒ SẼ GỬI KÈM TIN NHẮN -->
+      <div id="attachedMapDraftBanner" class="hidden bg-emerald-950/50 border-t border-emerald-500/40 px-3.5 py-1.5 flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2 min-w-0 text-emerald-300 font-semibold">
+          <span>📍 Đã gắn bản đồ Google Maps:</span>
+          <span id="attachedMapDraftLabel" class="text-white truncate"></span>
+        </div>
+        <button type="button" onclick="clearAttachedMapDraft()" class="text-slate-400 hover:text-rose-400 px-2 shrink-0">Bỏ vị trí ✕</button>
+      </div>
+
       <!-- Ô NHẬP TIN NHẮN, MENU KIM KẸP 4 CHỨC NĂNG, EMOJI & TẠO BÌNH CHỌN -->
-   <div class="relative p-2 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-1.5 sm:gap-2 shrink-0">
-     <!-- Bảng 4 chức năng của nút Kim kẹp -->
-     <div id="attachMenuPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-2 z-50 w-64 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
-       <div class="grid grid-cols-2 gap-2 text-xs">
-         <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
-           <span class="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">🖼️</span>
-           <span class="font-semibold text-slate-200">Hình ảnh</span>
-           <input type="file" accept="image/*" class="hidden" onchange="handleAttachImage(event)" />
-         </label>
+      <div class="relative p-2 sm:p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <!-- Bảng 4 chức năng của nút Kim kẹp -->
+        <div id="attachMenuPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-2 z-50 w-64 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+              <span class="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">🖼️</span>
+              <span class="font-semibold text-slate-200">Add hình</span>
+              <input type="file" accept="image/*" class="hidden" onchange="handleAttachImage(event)" />
+            </label>
 
-         <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
-           <span class="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">📄</span>
-           <span class="font-semibold text-slate-200">Tài liệu / File</span>
-           <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
-         </label>
+            <label class="cursor-pointer flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+              <span class="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">📄</span>
+              <span class="font-semibold text-slate-200">Add file</span>
+              <input type="file" class="hidden" onchange="handleQuickChatFileAttach(event)" />
+            </label>
 
-         <button type="button" onclick="handleShareCurrentLocation()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
-           <span class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">📍</span>
-           <span class="font-semibold text-slate-200">Định vị vị trí</span>
-         </button>
+            <button type="button" onclick="handleShareCurrentLocation()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+              <span class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">📍</span>
+              <span class="font-semibold text-slate-200">Định vị vị trí</span>
+            </button>
 
-         <button type="button" onclick="openReminderCreateModal()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
-           <span class="w-9 h-9 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">⏰</span>
-           <span class="font-semibold text-slate-200">Nhắc hẹn</span>
-         </button>
-       </div>
-     </div>
+            <button type="button" onclick="openReminderCreateModal()" class="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition">
+              <span class="w-9 h-9 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">⏰</span>
+              <span class="font-semibold text-slate-200">Nhắc hẹn</span>
+            </button>
+          </div>
+        </div>
 
-     <!-- Bảng chọn Emoji -->
-     <div id="emojiPickerPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-3 z-50 w-72 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
-       <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
-         <span>Chọn biểu tượng cảm xúc</span>
-         <button type="button" onclick="toggleEmojiPicker(event, false)" class="text-slate-400 hover:text-white">✕</button>
-       </div>
-       <div id="emojiGridContainer" class="grid grid-cols-8 gap-1 text-lg max-h-48 overflow-y-auto"></div>
-     </div>
+        <!-- Bảng chọn Emoji -->
+        <div id="emojiPickerPopover" onclick="event.stopPropagation()" class="hidden absolute bottom-16 left-3 z-50 w-72 bg-slate-900 border border-slate-700 rounded-2xl p-3 shadow-2xl">
+          <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800 text-[11px] font-bold text-slate-400">
+            <span>Chọn biểu tượng cảm xúc</span>
+            <button type="button" onclick="toggleEmojiPicker(event, false)" class="text-slate-400 hover:text-white">✕</button>
+          </div>
+          <div id="emojiGridContainer" class="grid grid-cols-8 gap-1 text-lg max-h-48 overflow-y-auto"></div>
+        </div>
 
-     <!-- Nút Kim kẹp 4 chức năng -->
-     <button type="button" onclick="toggleAttachMenu(event)" title="Đính kèm ảnh, file, vị trí, nhắc hẹn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
-       📎
-     </button>
+        <!-- Nút Kim kẹp 4 chức năng -->
+        <button type="button" onclick="toggleAttachMenu(event)" title="Đính kèm: Add hình, Add file, Định vị vị trí, Nhắc hẹn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
+          📎
+        </button>
 
-     <!-- Nút Emoji -->
-     <button type="button" onclick="toggleEmojiPicker(event)" title="Chèn biểu tượng cảm xúc" class="bg-slate-800 hover:bg-slate-700 text-amber-300 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
-       😊
-     </button>
+        <!-- Nút Emoji -->
+        <button type="button" onclick="toggleEmojiPicker(event)" title="Chèn biểu tượng cảm xúc" class="bg-slate-800 hover:bg-slate-700 text-amber-300 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
+          😊
+        </button>
 
-     <!-- Nút Bình chọn (Giữ nguyên 100%) -->
-     <button type="button" onclick="openPollCreateModal()" title="Tạo bình chọn / lấy ý kiến" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
-       📊
-     </button>
+        <!-- Nút Bình chọn -->
+        <button type="button" onclick="openPollCreateModal()" title="Tạo bình chọn / lấy ý kiến" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 p-2 sm:p-2.5 rounded-xl text-sm shrink-0">
+          📊
+        </button>
 
-     <input id="chatInput" type="text" placeholder="Nhập trao đổi, địa chỉ Maps hoặc gõ 'Bình chọn'..."
-       oninput="handleChatInputKeyword(this.value)"
-       onkeydown="if(event.key==='Enter') sendChatMessage()"
-       class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500" />
-     <button id="btnSendChat" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm shrink-0 transition">
-       Gửi
-     </button>
-   </div>
+        <input id="chatInput" type="text" placeholder="Nhập trao đổi, địa chỉ Maps hoặc gõ 'Bình chọn'..."
+          oninput="handleChatInputKeyword(this.value)"
+          onkeydown="if(event.key==='Enter') sendChatMessage()"
+          class="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500" />
+        <button id="btnSendChat" type="button" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm shrink-0 transition">
+          Gửi
+        </button>
+      </div>
     </main>
 
     <!-- CỘT PHẢI: CHECKLIST CÔNG VIỆC & TÀI NGUYÊN KÊNH (DESKTOP >= 1280px) -->
@@ -393,7 +416,7 @@
               <div class="text-[10px] text-slate-400">Thành viên chưa tham gia bình chọn không thể xem kết quả đang có</div>
             </div>
             <input id="pollToggleHideResults" type="checkbox" class="sr-only peer" />
-            <div class="w-10 h-5 bg-slate-700 peer-checked:bg-blue-600 rounded-full relative transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition peer-checked:after:translate-x-5"></div>
+            <div class="w-10 h-5 bg-slate-700 peer-checked:bg-blue-600 rounded-full relative transition after:content-[''] after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition peer-checked:after:translate-x-5"></div>
           </label>
 
           <label class="flex items-center justify-between cursor-pointer bg-slate-800/60 px-3 py-2.5 rounded-xl">
@@ -402,7 +425,7 @@
               <div class="text-[10px] text-slate-400">Cho phép mỗi thành viên tích chọn nhiều hơn 1 phương án</div>
             </div>
             <input id="pollToggleMultiple" type="checkbox" checked class="sr-only peer" />
-            <div class="w-10 h-5 bg-slate-700 peer-checked:bg-blue-600 rounded-full relative transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition peer-checked:after:translate-x-5"></div>
+            <div class="w-10 h-5 bg-slate-700 peer-checked:bg-blue-600 rounded-full relative transition after:content-[''] after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition peer-checked:after:translate-x-5"></div>
           </label>
 
           <label class="flex items-center justify-between cursor-pointer bg-slate-800/60 px-3 py-2.5 rounded-xl">
@@ -411,7 +434,7 @@
               <div class="text-[10px] text-slate-400">Thành viên tham gia có thể tự bổ sung thêm phương án mới</div>
             </div>
             <input id="pollToggleAllowAdd" type="checkbox" checked class="sr-only peer" />
-            <div class="w-10 h-5 bg-slate-700 peer-checked:bg-blue-600 rounded-full relative transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition peer-checked:after:translate-x-5"></div>
+            <div class="w-10 h-5 bg-slate-700 peer-checked:bg-blue-600 rounded-full relative transition after:content-[''] after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition peer-checked:after:translate-x-5"></div>
           </label>
         </div>
       </div>
@@ -422,7 +445,6 @@
       </div>
     </div>
   </div>
-
   <!-- [LOCKED UI 07: MODAL XEM CHI TIẾT KẾT QUẢ BÌNH CHỌN] -->
   <div id="pollResultsModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-3 max-h-[85vh] flex flex-col text-xs">
@@ -713,7 +735,7 @@
     <div class="bg-white text-slate-900 rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="px-5 py-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div>
-          <h3 class="text-sm sm:text-base font-bold">📊 DASHBOARD TỔNG HỢP TIẾN ĐỘ DỰ ÁN CHUNG & CÁ NHÂN</h3>
+          <h3 class="text-sm sm:text-base font-bold">DASHBOARD TỔNG HỢP TIẾN ĐỘ DỰ ÁN CHUNG & CÁ NHÂN</h3>
           <p id="progressModalSubtitle" class="text-xs text-slate-400"></p>
         </div>
         <div class="flex items-center gap-2">
@@ -866,14 +888,17 @@
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl text-xs">
       <h4 id="appDialogTitle" class="text-sm font-bold text-white">Thông báo</h4>
       <p id="appDialogMessage" class="text-slate-200 leading-relaxed whitespace-pre-line"></p>
-      <input id="appDialogPromptInput" type="text" class="hidden w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-white" />
+      <div id="appDialogInputWrap" class="hidden">
+        <input id="appDialogInput" type="text" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-white" />
+      </div>
       <div class="flex justify-end gap-2 pt-1">
         <button id="appDialogCancelBtn" class="hidden px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">Hủy</button>
         <button id="appDialogOkBtn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold">Đồng ý</button>
       </div>
     </div>
   </div>
-<!-- MODAL TẠO NHẮC HẸN MỚI -->
+
+  <!-- MODAL TẠO NHẮC HẸN MỚI -->
   <div id="reminderCreateModal" style="display:none;" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl text-xs">
       <div class="px-4 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -964,6 +989,9 @@
     let isMultiDeleteMode = false;
     let selectedDeleteMsgIds = new Set();
 
+    let pendingDetectedMapInfo = null;
+    let attachedMapDraftInfo = null;
+
     // =========================================================================
     // [LOCKED MODULE 03]: PHÂN QUYỀN 4 CẤP & CHUẨN HÓA HỌ TÊN / USERNAME SUPABASE
     // =========================================================================
@@ -997,15 +1025,15 @@
     function getUserFullName(user) {
       if (!user) return 'Thành viên';
       const dName = String(user.display_name || '').trim();
-      if (dName && dName.toLowerCase() !== 'admin') return dName;
+      if (dName && dName.toLowerCase() !== 'admin') return sanitizeCleanText(dName);
       const alias = dbUserAliasesMap[String(user.id)];
       if (alias && alias.fullName && alias.fullName.trim() && alias.fullName.trim().toLowerCase() !== 'admin') {
-        return alias.fullName.trim();
+        return sanitizeCleanText(alias.fullName.trim());
       }
       if (String(user.telegram_chat_id || '').trim() === DEFAULT_APPROVER_CHAT_ID || dName.toLowerCase() === 'admin') {
         return 'Tào Thành Tài';
       }
-      return (dName || user.username || 'Thành viên').trim();
+      return sanitizeCleanText((dName || user.username || 'Thành viên').trim());
     }
 
     function getUserLoginAccount(user) {
@@ -1085,8 +1113,22 @@
     }
 
     // =========================================================================
-    // [LOCKED MODULE 04]: TIỆN ÍCH ĐỊNH DẠNG, MÃ PIN CHỮ+SỐ & HỘP THOẠI
+    // [LOCKED MODULE 04]: TIỆN ÍCH ĐỊNH DẠNG, MÃ PIN CHỮ+SỐ & CHẶN KÝ TỰ ĐẶC BIỆT
     // =========================================================================
+    function sanitizeCleanText(str) {
+      return String(str || '')
+        .replace(/(^|\s)#+(?=\S)/g, '$1')
+        .replace(/#/g, '')
+        .replace(/[★☆●◆◇■□▲△▼▽►◄※•·▪▫]/g, '')
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+    }
+
+    function stripDecorSymbols(str) {
+      return sanitizeCleanText(str);
+    }
+
     function escapeHtmlSafe(str) {
       return String(str || '')
         .replace(/&/g, '&amp;')
@@ -1139,20 +1181,12 @@
       return res.split('').sort(() => 0.5 - Math.random()).join('');
     }
 
-    function stripDecorSymbols(str) {
-      return String(str || '')
-        .replace(/[#★☆●◆◇■□▲△▼▽►◄※•·▪▫]/g, '')
-        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
-    }
-
     function showAppNotice(message, title = 'Thông báo hệ thống') {
       return new Promise(resolve => {
         const modal = document.getElementById('appDialogModal');
-        if (!modal) { alert(stripDecorSymbols(message)); return resolve(true); }
-        document.getElementById('appDialogTitle').textContent = stripDecorSymbols(title) || 'Thông báo hệ thống';
-        document.getElementById('appDialogMessage').textContent = stripDecorSymbols(message);
+        if (!modal) { alert(sanitizeCleanText(message)); return resolve(true); }
+        document.getElementById('appDialogTitle').textContent = sanitizeCleanText(title) || 'Thông báo hệ thống';
+        document.getElementById('appDialogMessage').textContent = sanitizeCleanText(message);
         const inpWrap = document.getElementById('appDialogInputWrap');
         if (inpWrap) inpWrap.classList.add('hidden');
         const btnCancel = document.getElementById('appDialogCancelBtn');
@@ -1167,9 +1201,9 @@
     function showAppConfirm(message, title = 'Xác nhận thao tác') {
       return new Promise(resolve => {
         const modal = document.getElementById('appDialogModal');
-        if (!modal) return resolve(confirm(stripDecorSymbols(message)));
-        document.getElementById('appDialogTitle').textContent = stripDecorSymbols(title) || 'Xác nhận thao tác';
-        document.getElementById('appDialogMessage').textContent = stripDecorSymbols(message);
+        if (!modal) return resolve(confirm(sanitizeCleanText(message)));
+        document.getElementById('appDialogTitle').textContent = sanitizeCleanText(title) || 'Xác nhận thao tác';
+        document.getElementById('appDialogMessage').textContent = sanitizeCleanText(message);
         const inpWrap = document.getElementById('appDialogInputWrap');
         if (inpWrap) inpWrap.classList.add('hidden');
         const btnCancel = document.getElementById('appDialogCancelBtn');
@@ -1188,9 +1222,9 @@
     function showAppPrompt(message, defaultValue = '', title = 'Nhập thông tin') {
       return new Promise(resolve => {
         const modal = document.getElementById('appDialogModal');
-        if (!modal) return resolve(prompt(stripDecorSymbols(message), defaultValue));
-        document.getElementById('appDialogTitle').textContent = stripDecorSymbols(title) || 'Nhập thông tin';
-        document.getElementById('appDialogMessage').textContent = stripDecorSymbols(message);
+        if (!modal) return resolve(prompt(sanitizeCleanText(message), defaultValue));
+        document.getElementById('appDialogTitle').textContent = sanitizeCleanText(title) || 'Nhập thông tin';
+        document.getElementById('appDialogMessage').textContent = sanitizeCleanText(message);
         const inpWrap = document.getElementById('appDialogInputWrap');
         const inp = document.getElementById('appDialogInput');
         if (inpWrap && inp) {
@@ -1213,6 +1247,7 @@
         openModal('appDialogModal');
       });
     }
+
     // =========================================================================
     // [LOCKED MODULE 05]: AUDIT LOG, REFRESH & ĐIỀU HƯỚNG UI
     // =========================================================================
@@ -1230,9 +1265,9 @@
       const actor = actorOverride || (currentUser ? getUserFullName(currentUser) : 'Hệ thống');
       dbAuditLogs.unshift({
         time: new Date().toISOString(),
-        actor,
-        action: actionName,
-        detail: detailText
+        actor: sanitizeCleanText(actor),
+        action: sanitizeCleanText(actionName),
+        detail: sanitizeCleanText(detailText)
       });
       if (dbAuditLogs.length > 120) dbAuditLogs = dbAuditLogs.slice(0, 120);
       await persistSystemConfigRow('__AUDIT_LOGS__', dbAuditLogs);
@@ -1247,9 +1282,9 @@
         box.innerHTML = dbAuditLogs.map(log => `
           <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-2.5 flex items-start justify-between gap-2">
             <div>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">${escapeHtmlSafe(log.action)}</span>
-              <span class="font-bold text-white ml-1.5">${escapeHtmlSafe(log.actor)}</span>
-              <div class="text-slate-300 mt-1">${escapeHtmlSafe(log.detail)}</div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">${escapeHtmlSafe(sanitizeCleanText(log.action))}</span>
+              <span class="font-bold text-white ml-1.5">${escapeHtmlSafe(sanitizeCleanText(log.actor))}</span>
+              <div class="text-slate-300 mt-1">${escapeHtmlSafe(sanitizeCleanText(log.detail))}</div>
             </div>
             <span class="text-[10px] text-slate-400 shrink-0">${formatDateTimeVN(log.time)}</span>
           </div>
@@ -1360,111 +1395,156 @@
       inp.value = inp.value.slice(0, start) + emojiChar + inp.value.slice(end);
       inp.focus();
       inp.setSelectionRange(start + emojiChar.length, start + emojiChar.length);
+      handleChatInputKeyword(inp.value);
     }
 
-   function closeAllDropdowns() {
-   const hMenu = document.getElementById('headerMoreMenu');
-   const cMenu = document.getElementById('msgContextMenu');
-   const ePop = document.getElementById('emojiPickerPopover');
-   const aPop = document.getElementById('attachMenuPopover');
-   if (hMenu) hMenu.classList.add('hidden');
-   if (cMenu) cMenu.classList.add('hidden');
-   if (ePop) ePop.classList.add('hidden');
-   if (aPop) aPop.classList.add('hidden');
- }
+    function closeAllDropdowns() {
+      const hMenu = document.getElementById('headerMoreMenu');
+      const cMenu = document.getElementById('msgContextMenu');
+      const ePop = document.getElementById('emojiPickerPopover');
+      const aPop = document.getElementById('attachMenuPopover');
+      if (hMenu) hMenu.classList.add('hidden');
+      if (cMenu) cMenu.classList.add('hidden');
+      if (ePop) ePop.classList.add('hidden');
+      if (aPop) aPop.classList.add('hidden');
+    }
 
- function toggleAttachMenu(event) {
-   if (event) event.stopPropagation();
-   const pop = document.getElementById('attachMenuPopover');
-   if (!pop) return;
-   const isHidden = pop.classList.contains('hidden');
-   closeAllDropdowns();
-   if (isHidden) pop.classList.remove('hidden');
- }
+    function toggleAttachMenu(event) {
+      if (event) event.stopPropagation();
+      const pop = document.getElementById('attachMenuPopover');
+      if (!pop) return;
+      const isHidden = pop.classList.contains('hidden');
+      closeAllDropdowns();
+      if (isHidden) pop.classList.remove('hidden');
+    }
 
- document.addEventListener('click', closeAllDropdowns);
+    document.addEventListener('click', closeAllDropdowns);
 
- // =========================================================================
- // [LOCKED MODULE 06]: NHẬN DIỆN GOOGLE MAPS 4 LỚP (TỌA ĐỘ / XÃ-PHƯỜNG / ĐỊA DANH / TỈNH-TP)
- // =========================================================================
- const VN_PROVINCES_REGEX = '(?:tp\\.?\\s*hcm|tp\\.?\\s*hồ chí minh|thành phố hồ chí minh|hồ chí minh|sài gòn|hà nội|tp\\.?\\s*hà nội|thành phố hà nội|đà nẵng|tp\\.?\\s*đà nẵng|thành phố đà nẵng|hải phòng|cần thơ|bình dương|đồng nai|bà rịa\\s*-?\\s*vũng tàu|vũng tàu|long an|tiền giang|bến tre|vĩnh long|trà vinh|đồng tháp|an giang|kiên giang|hậu giang|sóc trăng|bạc liêu|cà mau|tây ninh|bình phước|lâm đồng|đà lạt|bảo lộc|đắk lắk|buôn ma thuột|đắk nông|gia lai|pleiku|kon tum|khánh hòa|nha trang|cam ranh|ninh thuận|phan rang|bình thuận|phan thiết|phú yên|tuy hòa|bình định|quy nhơn|quảng ngãi|quảng nam|hội an|tam kỳ|thừa thiên huế|huế|quảng trị|quảng bình|đồng hới|hà tĩnh|nghệ an|vinh|thanh hóa|ninh bình|nam định|thái bình|hà nam|hưng yên|hải dương|bắc ninh|bắc giang|vĩnh phúc|phú thọ|việt trì|thái nguyên|quảng ninh|hạ long|móng cái|lạng sơn|cao bằng|bắc kạn|tuyên quang|hà giang|yên bái|lào cai|sa pa|sapa|lai châu|điện biên|sơn la|hòa bình)';
+    // =========================================================================
+    // [LOCKED MODULE 06]: NHẬN DIỆN GOOGLE MAPS 4 LỚP & NHÃN "THÊM VỊ TRÍ VÀO"
+    // =========================================================================
+    const VN_PROVINCES_REGEX = '(?:tp\\.?\\s*hcm|tp\\.?\\s*hồ chí minh|thành phố hồ chí minh|hồ chí minh|sài gòn|hà nội|tp\\.?\\s*hà nội|thành phố hà nội|đà nẵng|tp\\.?\\s*đà nẵng|thành phố đà nẵng|hải phòng|cần thơ|bình dương|đồng nai|bà rịa\\s*-?\\s*vũng tàu|vũng tàu|long an|tiền giang|bến tre|vĩnh long|trà vinh|đồng tháp|an giang|kiên giang|hậu giang|sóc trăng|bạc liêu|cà mau|tây ninh|bình phước|lâm đồng|đà lạt|bảo lộc|đắk lắk|buôn ma thuột|đắk nông|gia lai|pleiku|kon tum|khánh hòa|nha trang|cam ranh|ninh thuận|phan rang|bình thuận|phan thiết|phú yên|tuy hòa|bình định|quy nhơn|quảng ngãi|quảng nam|hội an|tam kỳ|thừa thiên huế|huế|quảng trị|quảng bình|đồng hới|hà tĩnh|nghệ an|vinh|thanh hóa|ninh bình|nam định|thái bình|hà nam|hưng yên|hải dương|bắc ninh|bắc giang|vĩnh phúc|phú thọ|việt trì|thái nguyên|quảng ninh|hạ long|móng cái|lạng sơn|cao bằng|bắc kạn|tuyên quang|hà giang|yên bái|lào cai|sa pa|sapa|lai châu|điện biên|sơn la|hòa bình)';
 
- function extractLocationForMap(text) {
-   const raw = String(text || '').trim();
-   if (!raw || raw.length > 450) return null;
+    function extractLocationForMap(text) {
+      const raw = String(text || '').trim();
+      if (!raw || raw.length > 450) return null;
 
-   // 1. Tọa độ GPS chính xác (VD: 10.7769, 106.7009)
-   const coordMatch = raw.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
-   if (coordMatch) {
-     return {
-       query: `${coordMatch[1]},${coordMatch[2]}`,
-       label: `Tọa độ ${coordMatch[1]}, ${coordMatch[2]}`
-     };
-   }
+      // 1. Tọa độ GPS chính xác (VD: 10.7769, 106.7009)
+      const coordMatch = raw.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
+      if (coordMatch) {
+        return {
+          query: `${coordMatch[1]},${coordMatch[2]}`,
+          label: `Tọa độ ${coordMatch[1]}, ${coordMatch[2]}`
+        };
+      }
 
-   // 2. Đường dẫn Google Maps
-   const gmapMatch = raw.match(/https?:\/\/(?:www\.)?(?:google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)[^\s]*/i);
-   if (gmapMatch) {
-     const url = gmapMatch[0];
-     const atMatch = url.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
-     if (atMatch) return { query: `${atMatch[1]},${atMatch[2]}`, label: `Vị trí bản đồ (${atMatch[1]}, ${atMatch[2]})`, rawUrl: url };
-     const qMatch = url.match(/[?&](?:q|query)=([^&]+)/);
-     if (qMatch) {
-       const decoded = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
-       return { query: decoded, label: decoded, rawUrl: url };
-     }
-     return { query: 'Ho Chi Minh City', label: 'Vị trí Google Maps đính kèm', rawUrl: url };
-   }
+      // 2. Đường dẫn Google Maps
+      const gmapMatch = raw.match(/https?:\/\/(?:www\.)?(?:google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)[^\s]*/i);
+      if (gmapMatch) {
+        const url = gmapMatch[0];
+        const atMatch = url.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+        if (atMatch) return { query: `${atMatch[1]},${atMatch[2]}`, label: `Vị trí bản đồ (${atMatch[1]}, ${atMatch[2]})`, rawUrl: url };
+        const qMatch = url.match(/[?&](?:q|query)=([^&]+)/);
+        if (qMatch) {
+          const decoded = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+          return { query: decoded, label: decoded, rawUrl: url };
+        }
+        return { query: 'Ho Chi Minh City', label: 'Vị trí Google Maps đính kèm', rawUrl: url };
+      }
 
-   // 3. Địa chỉ đến Xã / Phường / Thị trấn + Tỉnh / Thành phố
-   const wardProvRegex = new RegExp(`((?:xã|phường|thị trấn|p\\.|x\\.)\\s*[^,\\n]{2,45}(?:,\\s*[^,\\n]{2,45}){0,2},\\s*(?:tỉnh|thành phố|tp\\.?)?\\s*${VN_PROVINCES_REGEX})`, 'i');
-   const wardMatch = raw.match(wardProvRegex);
-   if (wardMatch) {
-     const addr = wardMatch[1].trim();
-     return { query: addr, label: addr };
-   }
+      // 3. Địa chỉ đến Xã / Phường / Thị trấn + Tỉnh / Thành phố
+      const wardProvRegex = new RegExp(`((?:xã|phường|thị trấn|p\\.|x\\.)\\s*[^,\\n]{2,45}(?:,\\s*[^,\\n]{2,45}){0,2},\\s*(?:tỉnh|thành phố|tp\\.?)?\\s*${VN_PROVINCES_REGEX})`, 'i');
+      const wardMatch = raw.match(wardProvRegex);
+      if (wardMatch) {
+        const addr = wardMatch[1].trim();
+        return { query: addr, label: addr };
+      }
 
-   // 4. Địa danh / Khu vực / Huyện / Thành phố thuộc tỉnh + Tỉnh / Thành phố
-   const landmarkProvRegex = new RegExp(`((?:kcn|khu công nghiệp|khu đô thị|kđt|cảng|sân bay|cao tốc|nút giao|trạm dừng nghỉ|dự án|tòa nhà|chung cư|cầu|bến xe|chợ|ubnd|bệnh viện|trường|khu vực|đường|huyện|quận|thành phố|tp\\.|thị xã)\\s*[^,\\n]{2,55},\\s*(?:tỉnh|thành phố|tp\\.?)?\\s*${VN_PROVINCES_REGEX})`, 'i');
-   const landmarkMatch = raw.match(landmarkProvRegex);
-   if (landmarkMatch) {
-     const place = landmarkMatch[1].trim();
-     return { query: place, label: place };
-   }
+      // 4. Địa danh / Khu vực / Huyện / Thành phố thuộc tỉnh + Tỉnh / Thành phố
+      const landmarkProvRegex = new RegExp(`((?:kcn|khu công nghiệp|khu đô thị|kđt|cảng|sân bay|cao tốc|nút giao|trạm dừng nghỉ|dự án|tòa nhà|chung cư|cầu|bến xe|chợ|ubnd|bệnh viện|trường|khu vực|đường|huyện|quận|thành phố|tp\\.|thị xã)\\s*[^,\\n]{2,55},\\s*(?:tỉnh|thành phố|tp\\.?)?\\s*${VN_PROVINCES_REGEX})`, 'i');
+      const landmarkMatch = raw.match(landmarkProvRegex);
+      if (landmarkMatch) {
+        const place = landmarkMatch[1].trim();
+        return { query: place, label: place };
+      }
 
-   // 5. Gõ trực tiếp Tỉnh / Thành phố (VD: "tỉnh lâm đồng", "TP.HCM", "Đà Lạt, Lâm Đồng")
-   const directProvRegex = new RegExp(`^(?:(?:vị trí|địa chỉ|khu vực|tại|ở)\\s*:?\\s*)?(?:([^,\\n]{2,35},\\s*)?(?:tỉnh|thành phố|tp\\.?)?\\s*(${VN_PROVINCES_REGEX}))$`, 'i');
-   const directMatch = raw.match(directProvRegex);
-   if (directMatch) {
-     const cleanPlace = raw.replace(/^(?:vị trí|địa chỉ|khu vực|tại|ở)\s*:?\s*/i, '').trim();
-     return { query: cleanPlace, label: cleanPlace };
-   }
+      // 5. Gõ trực tiếp Tỉnh / Thành phố (VD: "tỉnh lâm đồng", "TP.HCM", "Đà Lạt, Lâm Đồng")
+      const directProvRegex = new RegExp(`^(?:(?:vị trí|địa chỉ|khu vực|tại|ở)\\s*:?\\s*)?(?:([^,\\n]{2,35},\\s*)?(?:tỉnh|thành phố|tp\\.?)?\\s*(${VN_PROVINCES_REGEX}))$`, 'i');
+      const directMatch = raw.match(directProvRegex);
+      if (directMatch) {
+        const cleanPlace = raw.replace(/^(?:vị trí|địa chỉ|khu vực|tại|ở)\s*:?\s*/i, '').trim();
+        return { query: cleanPlace, label: cleanPlace };
+      }
 
-   return null;
- }
+      return null;
+    }
 
- function renderGoogleMapEmbedHtml(locInfo) {
-   const q = encodeURIComponent(locInfo.query);
-   const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
-   const externalUrl = locInfo.rawUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
-   return `
-     <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
-       <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
-         <span class="text-emerald-400 font-semibold truncate">Vị trí bản đồ: ${escapeHtmlSafe(locInfo.label)}</span>
-         <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">Mở Google Maps</a>
-       </div>
-       <iframe src="${embedUrl}" class="w-full h-44 sm:h-48 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-     </div>
-   `;
- }
+    function updateMapSuggestBarFromInput(val) {
+      const bar = document.getElementById('mapQuickSuggestBar');
+      const lbl = document.getElementById('mapSuggestLabelText');
+      if (!bar || !lbl) return;
+
+      const detected = extractLocationForMap(val);
+      if (detected) {
+        pendingDetectedMapInfo = detected;
+        lbl.textContent = detected.label;
+        bar.classList.remove('hidden');
+      } else {
+        pendingDetectedMapInfo = null;
+        bar.classList.add('hidden');
+      }
+    }
+
+    function dismissMapSuggestBar() {
+      pendingDetectedMapInfo = null;
+      const bar = document.getElementById('mapQuickSuggestBar');
+      if (bar) bar.classList.add('hidden');
+    }
+
+    function confirmAddDetectedMapToChat() {
+      if (!pendingDetectedMapInfo) return;
+      attachedMapDraftInfo = { ...pendingDetectedMapInfo };
+      const draftBanner = document.getElementById('attachedMapDraftBanner');
+      const draftLabel = document.getElementById('attachedMapDraftLabel');
+      if (draftBanner && draftLabel) {
+        draftLabel.textContent = attachedMapDraftInfo.label;
+        draftBanner.classList.remove('hidden');
+      }
+      dismissMapSuggestBar();
+    }
+
+    function clearAttachedMapDraft() {
+      attachedMapDraftInfo = null;
+      const draftBanner = document.getElementById('attachedMapDraftBanner');
+      if (draftBanner) draftBanner.classList.add('hidden');
+    }
+
+    function renderGoogleMapEmbedHtml(locInfo) {
+      const q = encodeURIComponent(locInfo.query);
+      const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+      const externalUrl = locInfo.rawUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
+      return `
+        <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+          <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
+            <span class="text-emerald-400 font-semibold truncate">Vị trí bản đồ: ${escapeHtmlSafe(locInfo.label)}</span>
+            <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">Mở Google Maps</a>
+          </div>
+          <iframe src="${embedUrl}" class="w-full h-44 sm:h-48 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      `;
+    }
+
     // =========================================================================
     // [LOCKED MODULE 07]: ĐỒNG BỘ SUPABASE & KHÔI PHỤC PHIÊN ĐĂNG NHẬP
     // =========================================================================
     function isAnyModalCurrentlyOpen() {
-      const modalIds = ['staffModal', 'projectGroupModal', 'assignModal', 'approvalModal', 'meetingModal', 'multiFileModal', 'backupModal', 'forwardModal', 'auditLogModal', 'progressModal', 'pollCreateModal', 'pollResultsModal'];
+      const modalIds = ['staffModal', 'projectGroupModal', 'assignModal', 'approvalModal', 'meetingModal', 'multiFileModal', 'backupModal', 'forwardModal', 'auditLogModal', 'progressModal', 'pollCreateModal', 'pollResultsModal', 'reminderCreateModal'];
       return modalIds.some(id => {
         const el = document.getElementById(id);
-        return el && !el.classList.contains('hidden');
+        if (!el) return false;
+        const hiddenByClass = el.classList.contains('hidden');
+        const hiddenByStyle = el.style && el.style.display === 'none';
+        return !hiddenByClass && !hiddenByStyle;
       });
     }
 
@@ -1530,7 +1610,7 @@
         } else if (currentUser) {
           if (isAccountLocked(currentUser.id)) {
             handleLogout();
-            showAppNotice('Tài khoản của bạn vừa bị khóa bảo mật.', '🔒 Tài khoản đã khóa');
+            showAppNotice('Tài khoản của bạn vừa bị khóa bảo mật.', 'Tài khoản đã khóa');
             return;
           }
           const refreshed = dbUsers.find(u => String(u.id) === String(currentUser.id));
@@ -1673,7 +1753,7 @@
 
       errEl.classList.add('hidden');
       if (!rawUsername || !pass) {
-        errEl.innerHTML = '⚠️ Vui lòng nhập đầy đủ <b>Tên đăng nhập (User)</b> và <b>Mật khẩu / Mã PIN</b>!';
+        errEl.innerHTML = 'Vui lòng nhập đầy đủ <b>Tên đăng nhập (User)</b> và <b>Mật khẩu / Mã PIN</b>!';
         errEl.classList.remove('hidden');
         return;
       }
@@ -1685,14 +1765,14 @@
         if (!dbUsers || dbUsers.length === 0) await syncAllFromSupabase(false);
         const user = findUserByLoginName(rawUsername);
         if (!user) {
-          errEl.innerHTML = `❌ Không tìm thấy tài khoản <b>"${escapeHtmlSafe(rawUsername)}"</b> trong hệ thống.`;
+          errEl.innerHTML = `Không tìm thấy tài khoản <b>"${escapeHtmlSafe(rawUsername)}"</b> trong hệ thống.`;
           errEl.classList.remove('hidden');
           return;
         }
 
         const displayFull = getUserFullName(user);
         if (isAccountLocked(user.id)) {
-          errEl.innerHTML = `🔒 Tài khoản <b>${escapeHtmlSafe(displayFull)}</b> đã bị khóa do nhập sai ${MAX_FAILED_ATTEMPTS} lần.`;
+          errEl.innerHTML = `Tài khoản <b>${escapeHtmlSafe(displayFull)}</b> đã bị khóa do nhập sai ${MAX_FAILED_ATTEMPTS} lần.`;
           errEl.classList.remove('hidden');
           return;
         }
@@ -1708,11 +1788,11 @@
             await callGasWebhook({
               action: 'SECURITY_ALERT',
               chatId: DEFAULT_APPROVER_CHAT_ID,
-              message: `🚨 <b>CẢNH BÁO KHÓA TÀI KHOẢN</b>\n• Tài khoản: <b>${displayFull}</b> đã bị khóa do sai mật khẩu ${MAX_FAILED_ATTEMPTS} lần.`
+              message: `CẢNH BÁO KHÓA TÀI KHOẢN\n• Tài khoản: <b>${displayFull}</b> đã bị khóa do sai mật khẩu ${MAX_FAILED_ATTEMPTS} lần.`
             });
-            errEl.innerHTML = `🔒 Tài khoản <b>${escapeHtmlSafe(displayFull)}</b> đã bị khóa tự động!`;
+            errEl.innerHTML = `Tài khoản <b>${escapeHtmlSafe(displayFull)}</b> đã bị khóa tự động!`;
           } else {
-            errEl.innerHTML = `❌ Sai Mật khẩu / Mã PIN (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).`;
+            errEl.innerHTML = `Sai Mật khẩu / Mã PIN (Lần sai <b>${newFails}/${MAX_FAILED_ATTEMPTS}</b>).`;
           }
           errEl.classList.remove('hidden');
           return;
@@ -1750,7 +1830,7 @@
 
       fbEl.classList.remove('hidden', 'text-rose-400', 'text-emerald-400');
       if (!rawUsername || !inputTgId) {
-        fbEl.textContent = '⚠️ Vui lòng nhập đầy đủ Tên đăng nhập và Telegram Chat ID!';
+        fbEl.textContent = 'Vui lòng nhập đầy đủ Tên đăng nhập và Telegram Chat ID!';
         fbEl.classList.add('text-rose-400');
         return;
       }
@@ -1758,7 +1838,7 @@
       if (!dbUsers || dbUsers.length === 0) await syncAllFromSupabase(true);
       const user = findUserByLoginName(rawUsername);
       if (!user || !user.telegram_chat_id || String(user.telegram_chat_id).trim() !== inputTgId) {
-        fbEl.textContent = '❌ Tài khoản hoặc Telegram Chat ID không khớp!';
+        fbEl.textContent = 'Tài khoản hoặc Telegram Chat ID không khớp!';
         fbEl.classList.add('text-rose-400');
         return;
       }
@@ -1771,11 +1851,11 @@
       await callGasWebhook({
         action: 'RESET_PIN',
         chatId: String(user.telegram_chat_id),
-        message: `🔐 <b>CẤP LẠI MÃ PIN MỚI</b>\n👤 Họ và tên: <b>${getUserFullName(user)}</b>\n🆔 Tên đăng nhập: <code>${getUserLoginAccount(user)}</code>\n🔑 Mã PIN mới: <code>${newPin}</code>`
+        message: `CẤP LẠI MÃ PIN MỚI\nHọ và tên: <b>${getUserFullName(user)}</b>\nTên đăng nhập: <code>${getUserLoginAccount(user)}</code>\nMã PIN mới: <code>${newPin}</code>`
       });
 
       btn.disabled = false;
-      fbEl.innerHTML = `✅ Đã gửi mã PIN mới tới Telegram ID <b>${escapeHtmlSafe(inputTgId)}</b>.`;
+      fbEl.innerHTML = `Đã gửi mã PIN mới tới Telegram ID <b>${escapeHtmlSafe(inputTgId)}</b>.`;
       fbEl.classList.add('text-emerald-400');
     }
 
@@ -1809,21 +1889,21 @@
       const canRes = canManageGroupResources(currentUser);
 
       if (!isEdit && !isFull) {
-        return showAppNotice('Chỉ Quản trị hệ thống mới được khởi tạo Nhóm/Dự án mới!', '🔒 Giới hạn quyền');
+        return showAppNotice('Chỉ Quản trị hệ thống mới được khởi tạo Nhóm/Dự án mới!', 'Giới hạn quyền');
       }
 
       const chan = isEdit ? dbChannels.find(c => String(c.id) === String(editChannelId)) : null;
       const meta = (isEdit && dbGroupMetaMap[String(editChannelId)]) ? dbGroupMetaMap[String(editChannelId)] : { members: [], resources: [] };
 
       document.getElementById('projectGroupModalTitle').textContent = isEdit
-        ? `⚙️ Thông tin Nhóm / Dự án: ${chan ? chan.name : ''}`
-        : '🏗️ Khởi tạo Nhóm/Dự án mới';
+        ? `Thông tin Nhóm / Dự án: ${chan ? sanitizeCleanText(chan.name) : ''}`
+        : 'Khởi tạo Nhóm/Dự án mới';
 
       document.getElementById('pgEditId').value = isEdit ? String(editChannelId) : '';
       const nameInp = document.getElementById('pgNameInput');
       const descInp = document.getElementById('pgDescInput');
-      nameInp.value = chan ? chan.name : '';
-      descInp.value = chan ? (chan.description || '') : '';
+      nameInp.value = chan ? sanitizeCleanText(chan.name) : '';
+      descInp.value = chan ? sanitizeCleanText(chan.description || '') : '';
       nameInp.disabled = !isFull;
       descInp.disabled = !isFull;
 
@@ -1864,14 +1944,14 @@
       if (!canManageGroupResources(currentUser)) return;
       Array.from(event.target.files || []).forEach(file => {
         if (file.size > 3 * 1024 * 1024) {
-          showAppNotice(`Tệp "${file.name}" vượt quá 3MB.`, '⚠️ Dung lượng tệp lớn');
+          showAppNotice(`Tệp "${sanitizeCleanText(file.name)}" vượt quá 3MB.`, 'Dung lượng tệp lớn');
           return;
         }
         const reader = new FileReader();
         reader.onload = e => {
           tempPgResources.push({
             id: 'res_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-            name: file.name,
+            name: sanitizeCleanText(file.name),
             url: e.target.result,
             sizeText: `${Math.round(file.size / 1024)} KB`,
             addedBy: currentUser ? getUserFullName(currentUser) : 'Quản lý',
@@ -1889,8 +1969,8 @@
       const nameInp = document.getElementById('pgLinkNameInput');
       const urlInp = document.getElementById('pgLinkUrlInput');
       const url = urlInp.value.trim();
-      const name = nameInp.value.trim() || 'Tài nguyên liên kết';
-      if (!url) return showAppNotice('Vui lòng nhập đường dẫn (URL)!', '⚠️ Thiếu đường dẫn');
+      const name = sanitizeCleanText(nameInp.value.trim()) || 'Tài nguyên liên kết';
+      if (!url) return showAppNotice('Vui lòng nhập đường dẫn (URL)!', 'Thiếu đường dẫn');
       tempPgResources.push({
         id: 'res_' + Date.now(),
         name,
@@ -1920,10 +2000,10 @@
       box.innerHTML = tempPgResources.map(r => `
         <div class="flex items-center justify-between gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
           <div class="min-w-0">
-            <a href="${escapeHtmlSafe(r.url)}" download="${escapeHtmlSafe(r.name)}" target="_blank" class="text-blue-300 font-semibold hover:underline truncate block">📄 ${escapeHtmlSafe(r.name)}</a>
-            <div class="text-[10px] text-slate-400">${escapeHtmlSafe(r.sizeText || '')}</div>
+            <a href="${escapeHtmlSafe(r.url)}" download="${escapeHtmlSafe(sanitizeCleanText(r.name))}" target="_blank" class="text-blue-300 font-semibold hover:underline truncate block">${escapeHtmlSafe(sanitizeCleanText(r.name))}</a>
+            <div class="text-[10px] text-slate-400">${escapeHtmlSafe(sanitizeCleanText(r.sizeText || ''))}</div>
           </div>
-          ${canRes ? `<button type="button" onclick="removePgResource('${r.id}')" class="text-rose-400 px-2 py-1 rounded bg-rose-950/40 shrink-0">🗑️</button>` : ''}
+          ${canRes ? `<button type="button" onclick="removePgResource('${r.id}')" class="text-rose-400 px-2 py-1 rounded bg-rose-950/40 shrink-0">Xóa</button>` : ''}
         </div>
       `).join('');
     }
@@ -1931,11 +2011,11 @@
     async function saveProjectGroup() {
       const editId = document.getElementById('pgEditId').value.trim();
       const isFull = isSystemFullAdmin(currentUser);
-      const name = document.getElementById('pgNameInput').value.trim();
-      const desc = document.getElementById('pgDescInput').value.trim() || 'Kênh điều hành dự án';
+      const name = sanitizeCleanText(document.getElementById('pgNameInput').value.trim());
+      const desc = sanitizeCleanText(document.getElementById('pgDescInput').value.trim()) || 'Kênh điều hành dự án';
       const selectedMembers = Array.from(document.querySelectorAll('input[name="pgMemberCheck"]:checked')).map(cb => cb.value);
 
-      if (!name || selectedMembers.length === 0) return showAppNotice('Vui lòng nhập tên dự án và chọn ít nhất 1 thành viên!', '⚠️ Thiếu thông tin');
+      if (!name || selectedMembers.length === 0) return showAppNotice('Vui lòng nhập tên dự án và chọn ít nhất 1 thành viên!', 'Thiếu thông tin');
 
       let targetChannelId = editId;
       if (editId) {
@@ -1960,7 +2040,7 @@
       const editId = document.getElementById('pgEditId').value.trim();
       const chan = dbChannels.find(c => String(c.id) === String(editId));
       if (!chan) return;
-      if (!(await showAppConfirm(`Xóa vĩnh viễn Nhóm/Dự án "${chan.name}"?`, '🗑️ Xóa Nhóm'))) return;
+      if (!(await showAppConfirm(`Xóa vĩnh viễn Nhóm/Dự án "${sanitizeCleanText(chan.name)}"?`, 'Xóa Nhóm'))) return;
 
       await sb.from('team_channels').delete().eq('id', editId);
       dbChannels = dbChannels.filter(c => String(c.id) !== String(editId));
@@ -1978,8 +2058,8 @@
       const bar = document.getElementById('pinnedDirectivesBar');
       const pinObj = dbPinnedMap[getCurrentConversationChannelKey()];
       if (!pinObj || !pinObj.content) { bar.classList.add('hidden'); return; }
-      document.getElementById('pinnedByLabel').textContent = `${pinObj.pinnedBy || 'Lãnh đạo'} • ${formatDateTimeVN(pinObj.pinnedAt)}`;
-      document.getElementById('pinnedContentText').textContent = pinObj.content;
+      document.getElementById('pinnedByLabel').textContent = `${sanitizeCleanText(pinObj.pinnedBy || 'Lãnh đạo')} • ${formatDateTimeVN(pinObj.pinnedAt)}`;
+      document.getElementById('pinnedContentText').textContent = sanitizeCleanText(pinObj.content);
       document.getElementById('btnUnpinDirective').style.display = canPinDirectives(currentUser) ? 'inline-block' : 'none';
       bar.classList.remove('hidden');
     }
@@ -1989,7 +2069,9 @@
       closeAllDropdowns();
       if (!msg || !canPinDirectives(currentUser)) return;
       const convKey = getCurrentConversationChannelKey();
-      const cleanText = msg.msg_type === 'POLL' ? '[Bình chọn] ' + (parsePollContent(msg.content)?.question || '') : String(msg.content || '').replace(/<[^>]*>/g, ' ').trim();
+      const cleanText = msg.msg_type === 'POLL'
+        ? 'Bình chọn: ' + sanitizeCleanText(parsePollContent(msg.content)?.question || '')
+        : sanitizeCleanText(String(msg.content || '').replace(/<[^>]*>/g, ' '));
       dbPinnedMap[convKey] = { msgId: String(msg.id), content: cleanText, pinnedBy: getUserFullName(currentUser), pinnedAt: new Date().toISOString() };
       await persistSystemConfigRow('__PINNED_DIRECTIVES__', dbPinnedMap);
       renderPinnedDirectiveBar();
@@ -2033,11 +2115,12 @@
         const active = !activeDmPeer && String(c.id) === String(activeChannelId);
         const meta = dbGroupMetaMap[String(c.id)];
         const memCount = (meta && Array.isArray(meta.members)) ? meta.members.length : dbUsers.length;
+        const cleanChanName = sanitizeCleanText(c.name);
         return `
           <div class="group relative flex items-center rounded-xl transition ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800/80'}">
             <button onclick="selectChannel('${c.id}')" class="flex-1 text-left px-3 py-2.5 min-w-0 pr-9">
-              <div class="text-xs font-semibold truncate"> ${escapeHtmlSafe(c.name)}</div>
-              <div class="text-[10px] ${active ? 'text-blue-100' : 'text-slate-500'} truncate">👥 ${memCount} thành viên</div>
+              <div class="text-xs font-semibold truncate">${escapeHtmlSafe(cleanChanName)}</div>
+              <div class="text-[10px] ${active ? 'text-blue-100' : 'text-slate-500'} truncate">${memCount} thành viên</div>
             </button>
             <button onclick="event.stopPropagation(); openProjectGroupModal('${c.id}')" class="absolute right-1.5 w-7 h-7 rounded-lg flex items-center justify-center text-xs ${active ? 'text-blue-100 hover:bg-blue-500' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}">⚙️</button>
           </div>
@@ -2048,8 +2131,8 @@
         const isActiveDm = activeDmPeer && String(activeDmPeer.id) === String(u.id);
         return `
           <button onclick="selectDirectMessage('${u.id}')" class="w-full px-2.5 py-2 rounded-lg text-left text-xs flex items-center justify-between transition ${isActiveDm ? 'bg-amber-600/30 text-amber-200 border border-amber-500/40' : 'hover:bg-slate-800 text-slate-300'}">
-            <div class="font-medium truncate">👤 ${escapeHtmlSafe(getUserFullName(u))}</div>
-            <span class="text-[11px] shrink-0 text-amber-400">🔒</span>
+            <div class="font-medium truncate">${escapeHtmlSafe(getUserFullName(u))}</div>
+            <span class="text-[10px] shrink-0 text-amber-400">1-1</span>
           </button>
         `;
       }).join('');
@@ -2059,7 +2142,7 @@
       const editBtn = document.getElementById('btnEditCurrentGroup');
 
       if (activeDmPeer) {
-        document.getElementById('activeChannelTitle').textContent = `👤 ${getUserFullName(activeDmPeer)}`;
+        document.getElementById('activeChannelTitle').textContent = getUserFullName(activeDmPeer);
         document.getElementById('activeChannelDesc').textContent = 'Kênh trao đổi & gửi file kín 1-1';
         dmBadge.classList.remove('hidden');
         memBadge.classList.add('hidden');
@@ -2071,10 +2154,10 @@
         if (activeChan) {
           const meta = dbGroupMetaMap[String(activeChan.id)];
           const memCount = (meta && Array.isArray(meta.members)) ? meta.members.length : dbUsers.length;
-          memBadge.textContent = `👥 ${memCount} thành viên`;
+          memBadge.textContent = `${memCount} thành viên`;
           memBadge.classList.remove('hidden');
-          document.getElementById('activeChannelTitle').textContent = ` ${activeChan.name}`;
-          document.getElementById('activeChannelDesc').textContent = activeChan.description || '';
+          document.getElementById('activeChannelTitle').textContent = sanitizeCleanText(activeChan.name);
+          document.getElementById('activeChannelDesc').textContent = sanitizeCleanText(activeChan.description || '');
         }
       }
     }
@@ -2154,10 +2237,10 @@
 
     async function confirmBulkDeleteMessages() {
       if (selectedDeleteMsgIds.size === 0) {
-        return showAppNotice('Anh vui lòng tích chọn ít nhất 1 tin nhắn để xóa!', '⚠️ Chưa chọn tin nhắn');
+        return showAppNotice('Anh vui lòng tích chọn ít nhất 1 tin nhắn để xóa!', 'Chưa chọn tin nhắn');
       }
       const ids = Array.from(selectedDeleteMsgIds);
-      const ok = await showAppConfirm(`Xóa vĩnh viễn ${ids.length} tin nhắn đã chọn?`, '🗑️ Xóa nhiều tin nhắn');
+      const ok = await showAppConfirm(`Xóa vĩnh viễn ${ids.length} tin nhắn đã chọn?`, 'Xóa nhiều tin nhắn');
       if (!ok) return;
 
       await sb.from('team_messages').delete().in('id', ids);
@@ -2170,9 +2253,11 @@
     function handleChatInputKeyword(val) {
       const norm = removeVietnameseTones(val);
       const bar = document.getElementById('pollQuickSuggestBar');
-      if (!bar) return;
-      if (norm.includes('binh chon')) bar.classList.remove('hidden');
-      else bar.classList.add('hidden');
+      if (bar) {
+        if (norm.includes('binh chon')) bar.classList.remove('hidden');
+        else bar.classList.add('hidden');
+      }
+      updateMapSuggestBarFromInput(val);
     }
 
     function openPollCreateModal() {
@@ -2200,20 +2285,20 @@
       const row = document.createElement('div');
       row.className = 'flex items-center gap-2';
       row.innerHTML = `
-        <input type="text" value="${escapeHtmlSafe(defaultText)}" placeholder="Phương án ${idx}" class="poll-option-field flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+        <input type="text" value="${escapeHtmlSafe(sanitizeCleanText(defaultText))}" placeholder="Phương án ${idx}" class="poll-option-field flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
         ${idx > 2 ? `<button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-rose-400 px-2 py-1">✕</button>` : ''}
       `;
       box.appendChild(row);
     }
 
     async function submitNewPoll() {
-      const question = document.getElementById('pollQuestionInput').value.trim();
+      const question = sanitizeCleanText(document.getElementById('pollQuestionInput').value.trim());
       const optionFields = Array.from(document.querySelectorAll('.poll-option-field'));
-      const optionsText = optionFields.map(inp => inp.value.trim()).filter(Boolean);
+      const optionsText = optionFields.map(inp => sanitizeCleanText(inp.value.trim())).filter(Boolean);
       const expiresVal = document.getElementById('pollExpiresAtInput').value;
 
-      if (!question) return showAppNotice('Vui lòng nhập nội dung câu hỏi bình chọn!', '⚠️ Thiếu câu hỏi');
-      if (optionsText.length < 2) return showAppNotice('Vui lòng nhập ít nhất 2 phương án bình chọn!', '⚠️ Thiếu phương án');
+      if (!question) return showAppNotice('Vui lòng nhập nội dung câu hỏi bình chọn!', 'Thiếu câu hỏi');
+      if (optionsText.length < 2) return showAppNotice('Vui lòng nhập ít nhất 2 phương án bình chọn!', 'Thiếu phương án');
 
       const pollData = {
         question,
@@ -2234,7 +2319,7 @@
       const { data } = await sb.from('team_messages').insert([{
         channel_id: getCurrentConversationChannelKey(),
         sender_name: getUserFullName(currentUser),
-        sender_role: currentUser.role_title || 'Thành viên',
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
         msg_type: 'POLL',
         content: JSON.stringify(pollData)
       }]).select();
@@ -2256,7 +2341,7 @@
       if (!poll) return;
 
       if (poll.expiresAt && new Date(poll.expiresAt).getTime() < Date.now()) {
-        return showAppNotice('Cuộc bình chọn này đã hết thời hạn tham gia!', '⏰ Đã hết hạn');
+        return showAppNotice('Cuộc bình chọn này đã hết thời hạn tham gia!', 'Đã hết hạn');
       }
 
       const uid = String(currentUser.id);
@@ -2288,12 +2373,13 @@
       const poll = parsePollContent(msg.content);
       if (!poll || !poll.allowAddOption) return;
 
-      const newText = await showAppPrompt('Nhập nội dung phương án mới muốn bổ sung:', '', '➕ Thêm phương án bình chọn');
-      if (!newText || !newText.trim()) return;
+      const newTextRaw = await showAppPrompt('Nhập nội dung phương án mới muốn bổ sung:', '', 'Thêm phương án bình chọn');
+      const newText = sanitizeCleanText(newTextRaw);
+      if (!newText) return;
 
       poll.options.push({
         id: 'opt_' + Date.now(),
-        text: newText.trim(),
+        text: newText,
         voters: [String(currentUser.id)]
       });
 
@@ -2314,10 +2400,10 @@
       const hasUserVoted = poll.options.some(o => (o.voters || []).map(String).includes(myUid));
 
       if (poll.hideResultsBeforeVote && !hasUserVoted && !isCreator) {
-        return showAppNotice('Người tạo đã bật chế độ ẩn kết quả. Bạn cần chọn ít nhất 1 phương án để xem chi tiết!', '🔒 Kết quả đang ẩn');
+        return showAppNotice('Người tạo đã bật chế độ ẩn kết quả. Bạn cần chọn ít nhất 1 phương án để xem chi tiết!', 'Kết quả đang ẩn');
       }
 
-      document.getElementById('pollResultsModalTitle').textContent = `📊 ${poll.question}`;
+      document.getElementById('pollResultsModalTitle').textContent = sanitizeCleanText(poll.question);
 
       const meta = !activeDmPeer ? dbGroupMetaMap[String(activeChannelId)] : null;
       let channelMembers = [];
@@ -2350,11 +2436,11 @@
       const contentBox = document.getElementById('pollResultsTabContent');
       if (unvotedActive) {
         if (unvotedMembers.length === 0) {
-          contentBox.innerHTML = `<div class="text-center text-emerald-400 py-6 font-semibold">🎉 100% thành viên đã tham gia bình chọn!</div>`;
+          contentBox.innerHTML = `<div class="text-center text-emerald-400 py-6 font-semibold">100% thành viên đã tham gia bình chọn!</div>`;
         } else {
           contentBox.innerHTML = unvotedMembers.map(u => `
             <div class="bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2 flex items-center justify-between">
-              <span class="font-semibold text-white">👤 ${escapeHtmlSafe(getUserFullName(u))}</span>
+              <span class="font-semibold text-white">${escapeHtmlSafe(getUserFullName(u))}</span>
               <span class="text-[10px] text-amber-400">Chưa bỏ phiếu</span>
             </div>
           `).join('');
@@ -2365,15 +2451,15 @@
         if (voterIds.length === 0) {
           contentBox.innerHTML = `<div class="text-center text-slate-500 py-6">Chưa có ai chọn phương án này.</div>`;
         } else if (poll.isAnonymous && !isCreator) {
-          contentBox.innerHTML = `<div class="text-center text-slate-300 py-6 bg-slate-800/50 rounded-xl">🔒 Cuộc bình chọn ở chế độ <b>Ẩn danh</b> (Có <b>${voterIds.length}</b> lượt chọn phương án này).</div>`;
+          contentBox.innerHTML = `<div class="text-center text-slate-300 py-6 bg-slate-800/50 rounded-xl">Cuộc bình chọn ở chế độ <b>Ẩn danh</b> (Có <b>${voterIds.length}</b> lượt chọn phương án này).</div>`;
         } else {
           contentBox.innerHTML = voterIds.map(vid => {
             const u = dbUsers.find(x => String(x.id) === vid);
             const name = u ? getUserFullName(u) : 'Thành viên';
             return `
               <div class="bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2 flex items-center justify-between">
-                <span class="font-semibold text-white">👤 ${escapeHtmlSafe(name)}</span>
-                <span class="text-[10px] text-emerald-400">✓ Đã chọn</span>
+                <span class="font-semibold text-white">${escapeHtmlSafe(name)}</span>
+                <span class="text-[10px] text-emerald-400">Đã chọn</span>
               </div>
             `;
           }).join('');
@@ -2423,8 +2509,8 @@
 
       const banner = document.getElementById('chatActionBanner');
       document.getElementById('chatActionIcon').textContent = '↩️';
-      document.getElementById('chatActionTitle').textContent = `Đang trả lời ${msg.sender_name}`;
-      document.getElementById('chatActionPreview').textContent = msg.msg_type === 'POLL' ? (parsePollContent(msg.content)?.question || 'Bình chọn') : String(msg.content || '').replace(/<[^>]*>/g, ' ').slice(0, 90);
+      document.getElementById('chatActionTitle').textContent = `Đang trả lời ${sanitizeCleanText(msg.sender_name)}`;
+      document.getElementById('chatActionPreview').textContent = msg.msg_type === 'POLL' ? (parsePollContent(msg.content)?.question || 'Bình chọn') : sanitizeCleanText(String(msg.content || '').replace(/<[^>]*>/g, ' ')).slice(0, 90);
       document.getElementById('btnSendChat').textContent = 'Gửi';
       banner.classList.remove('hidden');
       document.getElementById('chatInput').focus();
@@ -2441,13 +2527,14 @@
       const banner = document.getElementById('chatActionBanner');
       document.getElementById('chatActionIcon').textContent = '✏️';
       document.getElementById('chatActionTitle').textContent = 'Đang chỉnh sửa nội dung tin nhắn';
-      document.getElementById('chatActionPreview').textContent = String(msg.content || '').replace(/<[^>]*>/g, ' ').slice(0, 90);
+      document.getElementById('chatActionPreview').textContent = sanitizeCleanText(String(msg.content || '').replace(/<[^>]*>/g, ' ')).slice(0, 90);
       document.getElementById('btnSendChat').textContent = 'Lưu sửa';
       banner.classList.remove('hidden');
 
       const inp = document.getElementById('chatInput');
       inp.value = String(msg.content || '').replace(/\s*\(đã chỉnh sửa\)$/, '');
       inp.focus();
+      handleChatInputKeyword(inp.value);
     }
 
     function cancelChatActionBanner() {
@@ -2461,9 +2548,9 @@
       const msg = dbMessages.find(m => String(m.id) === String(selectedContextMsgId));
       closeAllDropdowns();
       if (!msg || msg.msg_type === 'APPROVAL' || msg.msg_type === 'POLL' || msg.msg_type === 'TASK_ASSIGN') return;
-      if (!(await showAppConfirm('Thu hồi tin nhắn này với tất cả thành viên?', '🚫 Thu hồi tin nhắn'))) return;
+      if (!(await showAppConfirm('Thu hồi tin nhắn này với tất cả thành viên?', 'Thu hồi tin nhắn'))) return;
 
-      const recalledText = '🚫 Tin nhắn đã được thu hồi';
+      const recalledText = 'Tin nhắn đã được thu hồi';
       await sb.from('team_messages').update({ content: recalledText, file_url: null, file_name: null }).eq('id', msg.id);
       msg.content = recalledText;
       msg.file_url = null;
@@ -2477,7 +2564,7 @@
       closeAllDropdowns();
       if (!msg) return;
       if (msg.msg_type === 'APPROVAL') { await deleteApprovalItem(msg.id); return; }
-      if (!(await showAppConfirm('Xóa vĩnh viễn tin nhắn này khỏi lịch sử?', '🗑️ Xóa tin nhắn'))) return;
+      if (!(await showAppConfirm('Xóa vĩnh viễn tin nhắn này khỏi lịch sử?', 'Xóa tin nhắn'))) return;
 
       await sb.from('team_messages').delete().eq('id', msg.id);
       dbMessages = dbMessages.filter(m => String(m.id) !== String(msg.id));
@@ -2491,12 +2578,12 @@
       if (!msg) return;
       forwardingMsgObj = msg;
 
-      document.getElementById('forwardPreviewBox').textContent = `[Từ ${msg.sender_name}]: ${String(msg.content || '').replace(/<[^>]*>/g, ' ')}`;
+      document.getElementById('forwardPreviewBox').textContent = `[Từ ${sanitizeCleanText(msg.sender_name)}]: ${sanitizeCleanText(String(msg.content || '').replace(/<[^>]*>/g, ' '))}`;
       const visibleChans = getVisibleChannelsForCurrentUser();
-      const chanOpts = visibleChans.map(c => `<option value="CHAN:${c.id}"># Nhóm/Dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
+      const chanOpts = visibleChans.map(c => `<option value="CHAN:${c.id}">Nhóm/Dự án: ${escapeHtmlSafe(sanitizeCleanText(c.name))}</option>`).join('');
       const userOpts = dbUsers
         .filter(u => !currentUser || String(u.id) !== String(currentUser.id))
-        .map(u => `<option value="USER:${u.id}">👤 Riêng 1-1: ${escapeHtmlSafe(getUserFullName(u))}</option>`)
+        .map(u => `<option value="USER:${u.id}">Riêng 1-1: ${escapeHtmlSafe(getUserFullName(u))}</option>`)
         .join('');
 
       document.getElementById('forwardTargetSelect').innerHTML = chanOpts + userOpts;
@@ -2513,14 +2600,14 @@
         targetChannelKey = `DM_${pair[0]}_${pair[1]}`;
       }
 
-      const fwdContent = `↪️ [Chuyển tiếp từ ${forwardingMsgObj.sender_name}]:\n${String(forwardingMsgObj.content || '').replace(/<[^>]*>/g, ' ')}`;
+      const fwdContent = `[Chuyển tiếp từ ${sanitizeCleanText(forwardingMsgObj.sender_name)}]:\n${sanitizeCleanText(String(forwardingMsgObj.content || '').replace(/<[^>]*>/g, ' '))}`;
       const { data } = await sb.from('team_messages').insert([{
         channel_id: targetChannelKey,
         sender_name: getUserFullName(currentUser),
-        sender_role: currentUser.role_title || 'Thành viên',
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
         msg_type: forwardingMsgObj.file_url ? 'FILE' : 'CHAT',
         content: fwdContent,
-        file_name: forwardingMsgObj.file_name || null,
+        file_name: forwardingMsgObj.file_name ? sanitizeCleanText(forwardingMsgObj.file_name) : null,
         file_url: forwardingMsgObj.file_url || null
       }]).select();
 
@@ -2529,26 +2616,48 @@
       closeModal('forwardModal');
       renderMessages();
       renderChannelFiles();
-      showAppNotice('Đã chuyển tiếp tin nhắn thành công!', '➡️ Chuyển tiếp hoàn tất');
+      showAppNotice('Đã chuyển tiếp tin nhắn thành công!', 'Chuyển tiếp hoàn tất');
     }
 
     async function ctxActionTranslate() {
       const msg = dbMessages.find(m => String(m.id) === String(selectedContextMsgId));
       closeAllDropdowns();
       if (!msg) return;
-      const rawText = String(msg.content || '').replace(/<[^>]*>/g, ' ').trim();
+      const rawText = sanitizeCleanText(String(msg.content || '').replace(/<[^>]*>/g, ' '));
       if (!rawText) return;
 
-      translatedCache[String(msg.id)] = '⏳ Đang dịch sang Tiếng Việt...';
+      translatedCache[String(msg.id)] = 'Đang dịch sang Tiếng Việt...';
       renderMessages();
       try {
         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(rawText)}`);
         const json = await res.json();
-        translatedCache[String(msg.id)] = (json && json[0]) ? json[0].map(item => item[0]).join('') : rawText;
+        translatedCache[String(msg.id)] = (json && json[0]) ? sanitizeCleanText(json[0].map(item => item[0]).join('')) : rawText;
       } catch (e) {
-        translatedCache[String(msg.id)] = '⚠️ Không thể kết nối tự động.';
+        translatedCache[String(msg.id)] = 'Không thể kết nối tự động.';
       }
       renderMessages();
+    }
+
+    function parseAttachedMapFromContent(rawContent) {
+      const text = String(rawContent || '');
+      const marker = '[[MAP_QUERY:';
+      const idx = text.indexOf(marker);
+      if (idx === -1) return { cleanText: text, mapLoc: null };
+      const endIdx = text.indexOf(']]', idx);
+      if (endIdx === -1) return { cleanText: text, mapLoc: null };
+
+      const encodedMeta = text.slice(idx + marker.length, endIdx);
+      const before = text.slice(0, idx).trim();
+      const after = text.slice(endIdx + 2).trim();
+      const cleanText = [before, after].filter(Boolean).join('\n');
+
+      try {
+        const decodedObj = JSON.parse(decodeURIComponent(encodedMeta));
+        if (decodedObj && decodedObj.query) {
+          return { cleanText, mapLoc: decodedObj };
+        }
+      } catch (e) {}
+      return { cleanText, mapLoc: null };
     }
 
     function renderMessages() {
@@ -2579,7 +2688,7 @@
           </label>
         ` : '';
 
-        // 0. HỘP THOẠI XÁC NHẬN GIAO VIỆC TRÊN ỨNG DỤNG (ẨN NÚT NGAY SAU KHI BẤM)
+        // 0. HỘP THOẠI XÁC NHẬN GIAO VIỆC TRÊN ỨNG DỤNG
         if (isTaskAssign) {
           let info = {};
           try { info = JSON.parse(m.content); } catch (e) {}
@@ -2588,11 +2697,11 @@
           const isHandled = Boolean(m.approval_status && m.approval_status !== 'PENDING') || isTaskDone;
           const canAct = isSystemFullAdmin(currentUser) || canAssignOrManageTasks(currentUser) || (info.assigneeName === myFullName) || (String(info.assigneeId) === String(currentUser?.id));
 
-          let statusBadge = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">⏳ CHỜ XÁC NHẬN NHẬN VIỆC</span>`;
+          let statusBadge = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">CHỜ XÁC NHẬN NHẬN VIỆC</span>`;
           if (isTaskDone) {
-            statusBadge = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🎉 ĐÃ HOÀN THÀNH CÔNG VIỆC</span>`;
+            statusBadge = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ĐÃ HOÀN THÀNH CÔNG VIỆC</span>`;
           } else if (m.approval_status === 'ACKED') {
-            statusBadge = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30">✅ ĐÃ XÁC NHẬN NHẬN VIỆC</span>`;
+            statusBadge = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30">ĐÃ XÁC NHẬN NHẬN VIỆC</span>`;
           }
 
           return `
@@ -2600,23 +2709,23 @@
               ${multiCheckHtml}
               <div class="flex-1 bg-slate-900 border border-blue-500/40 rounded-2xl p-3.5 sm:p-4 shadow-md space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-[11px] font-bold text-blue-300 uppercase">📌 GIAO CÔNG VIỆC MỚI</span>
+                  <span class="text-[11px] font-bold text-blue-300 uppercase">GIAO CÔNG VIỆC MỚI</span>
                   <div class="flex items-center gap-1.5">
                     <span class="text-[10px] text-slate-500">${m.created_at ? formatDateTimeVN(m.created_at) : timeStr}</span>
                     <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                   </div>
                 </div>
-                <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">• Nội dung: <b>${escapeHtmlSafe(info.taskTitle || '')}</b>
-• Người thực hiện: <b class="text-amber-300">${escapeHtmlSafe(info.assigneeName || '')}</b>
-• Người giao: ${escapeHtmlSafe(info.assignedBy || m.sender_name)}
-• Thời hạn: ${escapeHtmlSafe(info.dueDate || 'Theo kế hoạch')}</div>
+                <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">• Nội dung: <b>${escapeHtmlSafe(sanitizeCleanText(info.taskTitle || ''))}</b>
+• Người thực hiện: <b class="text-amber-300">${escapeHtmlSafe(sanitizeCleanText(info.assigneeName || ''))}</b>
+• Người giao: ${escapeHtmlSafe(sanitizeCleanText(info.assignedBy || m.sender_name))}
+• Thời hạn: ${escapeHtmlSafe(sanitizeCleanText(info.dueDate || 'Theo kế hoạch'))}</div>
                 <div class="pt-1.5 flex items-center justify-between flex-wrap gap-2 border-t border-slate-800/80">
                   <div>${statusBadge}</div>
                   ${(!isHandled && canAct) ? `
                     <div id="task_dialog_btns_${m.id}" class="flex items-center gap-1.5 flex-wrap">
-                      <button type="button" onclick="handleTaskCardAction('${m.id}', '${info.taskId || ''}', 'ACK')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">✅ Xác nhận nhận việc</button>
-                      <button type="button" onclick="handleTaskCardAction('${m.id}', '${info.taskId || ''}', 'DONE')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">🎉 Báo cáo ĐÃ XONG</button>
-                      <button type="button" onclick="handleTaskCardAction('${m.id}', '${info.taskId || ''}', 'REPLY')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">💬 Hồi đáp tiến độ</button>
+                      <button type="button" onclick="handleTaskCardAction('${m.id}', '${info.taskId || ''}', 'ACK')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">Xác nhận nhận việc</button>
+                      <button type="button" onclick="handleTaskCardAction('${m.id}', '${info.taskId || ''}', 'DONE')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">Báo cáo ĐÃ XONG</button>
+                      <button type="button" onclick="handleTaskCardAction('${m.id}', '${info.taskId || ''}', 'REPLY')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">Hồi đáp tiến độ</button>
                     </div>
                   ` : ''}
                 </div>
@@ -2650,9 +2759,9 @@
                 <div class="relative flex items-center justify-between gap-2 text-xs">
                   <div class="flex items-center gap-2 min-w-0">
                     <span class="w-4 h-4 rounded-full border ${isSelected ? 'border-blue-400 bg-blue-500 text-white' : 'border-slate-500'} flex items-center justify-center text-[10px] shrink-0">${isSelected ? '✓' : ''}</span>
-                    <span class="font-semibold text-white truncate">${escapeHtmlSafe(opt.text)}</span>
+                    <span class="font-semibold text-white truncate">${escapeHtmlSafe(sanitizeCleanText(opt.text))}</span>
                   </div>
-                  <span class="text-[11px] font-bold text-slate-300 shrink-0">${canSeeResults ? `${voteCount} phiếu (${pct}%)` : '🔒'}</span>
+                  <span class="text-[11px] font-bold text-slate-300 shrink-0">${canSeeResults ? `${voteCount} phiếu (${pct}%)` : 'Ẩn'}</span>
                 </div>
               </button>
             `;
@@ -2663,17 +2772,17 @@
               ${multiCheckHtml}
               <div class="flex-1 bg-slate-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 shadow-md space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-[10px] font-bold text-emerald-400 uppercase">📊 BÌNH CHỌN • ${escapeHtmlSafe(m.sender_name)}</span>
+                  <span class="text-[10px] font-bold text-emerald-400 uppercase">BÌNH CHỌN • ${escapeHtmlSafe(sanitizeCleanText(m.sender_name))}</span>
                   <div class="flex items-center gap-1.5">
                     <span class="text-[10px] text-slate-500">${timeStr}</span>
                     <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                   </div>
                 </div>
-                <div class="text-sm font-bold text-white leading-snug">${escapeHtmlSafe(poll.question)}</div>
+                <div class="text-sm font-bold text-white leading-snug">${escapeHtmlSafe(sanitizeCleanText(poll.question))}</div>
                 <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                  <span>${poll.expiresAt ? (isExpired ? '⏰ Đã kết thúc' : `⏰ Hết hạn: ${formatDateTimeVN(poll.expiresAt)}`) : '♾️ Không giới hạn thời hạn'}</span>
-                  ${poll.isAnonymous ? '<span>• 🕵️ Ẩn danh</span>' : ''}
-                  ${poll.hideResultsBeforeVote ? '<span>• 🙈 Ẩn kết quả trước khi chọn</span>' : ''}
+                  <span>${poll.expiresAt ? (isExpired ? 'Đã kết thúc' : `Hết hạn: ${formatDateTimeVN(poll.expiresAt)}`) : 'Không giới hạn thời hạn'}</span>
+                  ${poll.isAnonymous ? '<span>• Ẩn danh</span>' : ''}
+                  ${poll.hideResultsBeforeVote ? '<span>• Ẩn kết quả trước khi chọn</span>' : ''}
                 </div>
                 <button type="button" onclick="openPollResultsModal('${m.id}', 0)" class="text-xs font-semibold text-blue-400 hover:underline flex items-center gap-1">
                   <span>${totalVotersCount} người đã bình chọn</span> <span>⌄</span>
@@ -2689,76 +2798,75 @@
           `;
         }
 
-        const locInfo = (!isApproval && !isAlert) ? extractLocationForMap(m.content) : null;
-        const mapHtml = locInfo ? renderGoogleMapEmbedHtml(locInfo) : '';
         const transText = translatedCache[String(m.id)];
         const transHtml = transText ? `
           <div class="mt-2 pt-2 border-t border-slate-700/80 bg-emerald-950/30 rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-200">
-            <div class="text-[10px] text-emerald-400 font-semibold mb-0.5">🌐 Bản dịch Tiếng Việt:</div>
-            <div>${escapeHtmlSafe(transText)}</div>
+            <div class="text-[10px] text-emerald-400 font-semibold mb-0.5">Bản dịch Tiếng Việt:</div>
+            <div>${escapeHtmlSafe(sanitizeCleanText(transText))}</div>
           </div>
         ` : '';
 
         // 2. HIỂN THỊ PHIẾU TRÌNH PHÊ DUYỆT
         if (isApproval) {
-          let badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">⏳ ĐANG CHỜ PHÊ DUYỆT</span>`;
-          if (m.approval_status === 'APPROVED') badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ ĐÃ CHẤP THUẬN (${escapeHtmlSafe(m.approver_name || 'Chủ trì')})</span>`;
-          else if (m.approval_status === 'REJECTED') badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30">❌ ĐÃ TỪ CHỐI (${escapeHtmlSafe(m.approver_name || 'Chủ trì')})</span>`;
+          let badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">ĐANG CHỜ PHÊ DUYỆT</span>`;
+          if (m.approval_status === 'APPROVED') badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ĐÃ CHẤP THUẬN (${escapeHtmlSafe(sanitizeCleanText(m.approver_name || 'Chủ trì'))})</span>`;
+          else if (m.approval_status === 'REJECTED') badgeHtml = `<span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30">ĐÃ TỪ CHỐI (${escapeHtmlSafe(sanitizeCleanText(m.approver_name || 'Chủ trì'))})</span>`;
 
           return `
             <div id="msg_card_${m.id}" ${ctxAttr} class="flex items-start max-w-2xl">
               ${multiCheckHtml}
               <div class="flex-1 bg-slate-900 border border-indigo-500/40 rounded-2xl p-3.5 sm:p-4 shadow-md space-y-2.5">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-[11px] font-bold text-indigo-300 uppercase">📋 PHIẾU TRÌNH PHÊ DUYỆT</span>
+                  <span class="text-[11px] font-bold text-indigo-300 uppercase">PHIẾU TRÌNH PHÊ DUYỆT</span>
                   <div class="flex items-center gap-1.5">
                     <span class="text-[10px] text-slate-500">${m.created_at ? formatDateTimeVN(m.created_at) : timeStr}</span>
                     <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
                   </div>
                 </div>
-                <div class="text-xs text-slate-400">Người trình: <b class="text-white">${escapeHtmlSafe(m.sender_name)}</b></div>
-                <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">${formatMessageTextHtml(m.content)}</div>
-                ${m.file_url ? `<div><a href="${escapeHtmlSafe(m.file_url)}" target="_blank" class="text-xs text-blue-400 underline break-all">📎 ${escapeHtmlSafe(m.file_name || 'Xem tài liệu đính kèm')}</a></div>` : ''}
+                <div class="text-xs text-slate-400">Người trình: <b class="text-white">${escapeHtmlSafe(sanitizeCleanText(m.sender_name))}</b></div>
+                <div class="text-xs text-slate-100 leading-relaxed whitespace-pre-line bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">${formatMessageTextHtml(sanitizeCleanText(m.content))}</div>
+                ${m.file_url ? `<div><a href="${escapeHtmlSafe(m.file_url)}" target="_blank" class="text-xs text-blue-400 underline break-all">${escapeHtmlSafe(sanitizeCleanText(m.file_name || 'Xem tài liệu đính kèm'))}</a></div>` : ''}
                 ${transHtml}
                 <div class="pt-1.5 flex items-center justify-between flex-wrap gap-2 border-t border-slate-800/80">
                   <div>${badgeHtml}</div>
                   <div class="flex items-center gap-1.5 flex-wrap">
                     ${(canApproveItems(currentUser) && m.approval_status === 'PENDING') ? `
-                      <button onclick="quickApproveOnWeb('${m.id}', 'APPROVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">✅ Duyệt</button>
-                      <button onclick="quickApproveOnWeb('${m.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">❌ Từ chối</button>
+                      <button onclick="quickApproveOnWeb('${m.id}', 'APPROVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">Duyệt</button>
+                      <button onclick="quickApproveOnWeb('${m.id}', 'REJECTED')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold">Từ chối</button>
                     ` : ''}
-                    ${canEditApprovalItem(m) ? `<button onclick="openEditApprovalModal('${m.id}')" class="bg-blue-600/25 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">✏️ Sửa</button>` : ''}
-                    ${canDeleteApprovalItem(m) ? `<button onclick="deleteApprovalItem('${m.id}')" class="bg-rose-600/25 text-rose-300 border border-rose-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">🗑️ Xóa</button>` : ''}
+                    ${canEditApprovalItem(m) ? `<button onclick="openEditApprovalModal('${m.id}')" class="bg-blue-600/25 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">Sửa</button>` : ''}
+                    ${canDeleteApprovalItem(m) ? `<button onclick="deleteApprovalItem('${m.id}')" class="bg-rose-600/25 text-rose-300 border border-rose-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">Xóa</button>` : ''}
                   </div>
                 </div>
               </div>
             </div>
           `;
         }
+
         // HIỂN THỊ THẺ NHẮC HẸN (REMINDER)
-     if (m.msg_type === 'REMINDER') {
-       let rem = {};
-       try { rem = JSON.parse(m.content); } catch (e) {}
-       if (rem.target === 'SELF' && String(rem.creatorId) !== String(currentUser?.id)) return '';
-       return `
-         <div id="msg_card_${m.id}" ${ctxAttr} class="flex items-start max-w-2xl">
-           ${multiCheckHtml}
-           <div class="flex-1 bg-slate-900 border border-rose-500/40 rounded-2xl p-3.5 shadow-md space-y-1.5">
-             <div class="flex items-center justify-between gap-2">
-               <span class="text-[10px] font-bold text-rose-400 uppercase">⏰ NHẮC HẸN • ${escapeHtmlSafe(m.sender_name)}</span>
-               <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
-             </div>
-             <div class="text-sm font-bold text-white">🔔 ${escapeHtmlSafe(rem.title || '')}</div>
-             <div class="text-xs text-amber-300 font-semibold">🕒 Thời gian: ${formatDateTimeVN(rem.remindAt)}</div>
-             <div class="text-[11px] text-slate-400">🔁 ${escapeHtmlSafe(rem.repeatLabel || 'Không lặp lại')} • 🔒 ${escapeHtmlSafe(rem.targetLabel || 'Cả nhóm')}</div>
-           </div>
-         </div>
-       `;
-     }
- 
-      // 3. TIN NHẮN THƯỜNG & TỆP ĐÍNH KÈM
-        const locInfo = extractLocationForMap(m.content);
-        const mapHtml = locInfo ? renderGoogleMapEmbedHtml(locInfo) : '';
+        if (m.msg_type === 'REMINDER') {
+          let rem = {};
+          try { rem = JSON.parse(m.content); } catch (e) {}
+          if (rem.target === 'SELF' && String(rem.creatorId) !== String(currentUser?.id)) return '';
+          return `
+            <div id="msg_card_${m.id}" ${ctxAttr} class="flex items-start max-w-2xl">
+              ${multiCheckHtml}
+              <div class="flex-1 bg-slate-900 border border-rose-500/40 rounded-2xl p-3.5 shadow-md space-y-1.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[10px] font-bold text-rose-400 uppercase">NHẮC HẸN • ${escapeHtmlSafe(sanitizeCleanText(m.sender_name))}</span>
+                  <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
+                </div>
+                <div class="text-sm font-bold text-white">${escapeHtmlSafe(sanitizeCleanText(rem.title || ''))}</div>
+                <div class="text-xs text-amber-300 font-semibold">Thời gian: ${formatDateTimeVN(rem.remindAt)}</div>
+                <div class="text-[11px] text-slate-400">${escapeHtmlSafe(sanitizeCleanText(rem.repeatLabel || 'Không lặp lại'))} • ${escapeHtmlSafe(sanitizeCleanText(rem.targetLabel || 'Cả nhóm'))}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // 3. TIN NHẮN THƯỜNG & TỆP ĐÍNH KÈM (CHỈ NHÚNG BẢN ĐỒ KHI CÓ ĐÍNH KÈM XÁC NHẬN)
+        const parsedMap = parseAttachedMapFromContent(m.content);
+        const mapHtml = parsedMap.mapLoc ? renderGoogleMapEmbedHtml(parsedMap.mapLoc) : '';
 
         return `
           <div id="msg_card_${m.id}" ${ctxAttr} class="flex items-start max-w-2xl">
@@ -2766,27 +2874,28 @@
             <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-sm space-y-1.5">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-xs font-bold text-blue-300 truncate">${escapeHtmlSafe(m.sender_name)}</span>
-                  ${m.sender_role ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 truncate">${escapeHtmlSafe(m.sender_role)}</span>` : ''}
+                  <span class="text-xs font-bold text-blue-300 truncate">${escapeHtmlSafe(sanitizeCleanText(m.sender_name))}</span>
+                  ${m.sender_role ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 truncate">${escapeHtmlSafe(sanitizeCleanText(m.sender_role))}</span>` : ''}
                   <span class="text-[10px] text-slate-500 shrink-0">${formatDateTimeVN(m.created_at)}</span>
                 </div>
                 <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm shrink-0">⋮</button>
               </div>
 
-              <div class="text-xs sm:text-sm text-slate-100 whitespace-pre-wrap break-words leading-relaxed">${linkifySafeText(m.content)}</div>
+              <div class="text-xs sm:text-sm text-slate-100 whitespace-pre-wrap break-words leading-relaxed">${formatMessageTextHtml(sanitizeCleanText(parsedMap.cleanText))}</div>
 
               ${mapHtml}
+              ${transHtml}
 
               ${m.file_url ? (m.msg_type === 'IMAGE' ? `
                 <div class="mt-2">
                   <a href="${escapeHtmlSafe(m.file_url)}" target="_blank">
-                    <img src="${escapeHtmlSafe(m.file_url)}" alt="${escapeHtmlSafe(m.file_name || 'Hình ảnh')}" class="max-h-64 rounded-xl border border-slate-700 object-contain" />
+                    <img src="${escapeHtmlSafe(m.file_url)}" alt="${escapeHtmlSafe(sanitizeCleanText(m.file_name || 'Hình ảnh'))}" class="max-h-64 rounded-xl border border-slate-700 object-contain" />
                   </a>
                 </div>
               ` : `
                 <div class="mt-2 pt-2 border-t border-slate-800">
-                  <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(m.file_name || 'tai_lieu')}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
-                    <span>📎</span><span class="truncate">${escapeHtmlSafe(m.file_name || 'Tệp đính kèm')}</span>
+                  <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(sanitizeCleanText(m.file_name || 'tai_lieu'))}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
+                    <span class="truncate">${escapeHtmlSafe(sanitizeCleanText(m.file_name || 'Tệp đính kèm'))}</span>
                   </a>
                 </div>
               `) : ''}
@@ -2796,6 +2905,7 @@
       }).join('');
       if (!isMultiDeleteMode) feed.scrollTop = feed.scrollHeight;
     }
+
     // =========================================================================
     // [LOCKED MODULE 11]: XỬ LÝ XÁC NHẬN GIAO VIỆC TRONG CHAT & CHECKLIST CỘT PHẢI
     // =========================================================================
@@ -2803,12 +2913,11 @@
       if (!currentUser) return;
       const actorName = getUserFullName(currentUser);
       const task = taskId ? dbTasks.find(t => String(t.id) === String(taskId)) : null;
-      const taskTitle = task ? (task.task_title || task.title || 'Công việc') : 'Công việc được giao';
+      const taskTitle = sanitizeCleanText(task ? (task.task_title || task.title || 'Công việc') : 'Công việc được giao');
       const convKey = getCurrentConversationChannelKey();
       const chanObj = dbChannels.find(c => String(c.id) === String(activeChannelId));
-      const channelName = chanObj ? chanObj.name : 'Dự án';
+      const channelName = sanitizeCleanText(chanObj ? chanObj.name : 'Dự án');
 
-      // Ẩn ngay cụm nút bấm trên hộp thoại giao việc để tránh bấm lặp
       const btnBox = document.getElementById(`task_dialog_btns_${msgId}`);
       if (btnBox) btnBox.remove();
 
@@ -2824,9 +2933,9 @@
         await sb.from('team_messages').insert([{
           channel_id: convKey,
           sender_name: actorName,
-          sender_role: currentUser.role_title || 'Thành viên',
+          sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
           msg_type: 'CHAT',
-          content: `✅ Đã xác nhận nhận việc: "${taskTitle}"`
+          content: `Đã xác nhận nhận việc: "${taskTitle}"`
         }]);
 
         await callGasWebhook({
@@ -2853,9 +2962,9 @@
         await sb.from('team_messages').insert([{
           channel_id: convKey,
           sender_name: actorName,
-          sender_role: currentUser.role_title || 'Thành viên',
+          sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
           msg_type: 'CHAT',
-          content: `🎉 Đã báo cáo HOÀN THÀNH (DONE) đầu việc: "${taskTitle}"`
+          content: `Đã báo cáo HOÀN THÀNH (DONE) đầu việc: "${taskTitle}"`
         }]);
 
         await callGasWebhook({
@@ -2870,21 +2979,22 @@
       }
 
       if (actionType === 'REPLY') {
-        const note = await showAppPrompt(`Nhập nội dung hồi đáp tiến độ / đề xuất gia hạn cho việc "${taskTitle}" (Trạng thái vẫn giữ Đang triển khai):`, '', '💬 Hồi đáp tiến độ');
-        if (!note || !note.trim()) {
+        const noteRaw = await showAppPrompt(`Nhập nội dung hồi đáp tiến độ / đề xuất gia hạn cho việc "${taskTitle}" (Trạng thái vẫn giữ Đang triển khai):`, '', 'Hồi đáp tiến độ');
+        const note = sanitizeCleanText(noteRaw);
+        if (!note) {
           renderMessages();
           return;
         }
         if (taskId) {
-          await sb.from('team_tasks').update({ progress_note: note.trim() }).eq('id', taskId);
-          if (task) task.progress_note = note.trim();
+          await sb.from('team_tasks').update({ progress_note: note }).eq('id', taskId);
+          if (task) task.progress_note = note;
         }
         await sb.from('team_messages').insert([{
           channel_id: convKey,
           sender_name: actorName,
-          sender_role: currentUser.role_title || 'Thành viên',
+          sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
           msg_type: 'CHAT',
-          content: `💬 Hồi đáp tiến độ việc "${taskTitle}":\n"${note.trim()}"`
+          content: `Hồi đáp tiến độ việc "${taskTitle}":\n"${note}"`
         }]);
 
         await callGasWebhook({
@@ -2892,7 +3002,7 @@
           channelName,
           taskTitle,
           actorName,
-          progressNote: note.trim()
+          progressNote: note
         });
 
         await syncAllFromSupabase(true);
@@ -2920,7 +3030,7 @@
 
       box.innerHTML = listToShow.map(t => {
         const isDone = t.status === 'DONE';
-        const title = t.task_title || t.title || 'Công việc';
+        const title = sanitizeCleanText(t.task_title || t.title || 'Công việc');
         const isOverdue = !isDone && t.due_date && new Date(t.due_date).getTime() < Date.now();
         const canModify = isSystemFullAdmin(currentUser) || canAssignOrManageTasks(currentUser) || t.assignee_name === myFullName;
 
@@ -2931,20 +3041,20 @@
                 <input type="checkbox" ${isDone ? 'checked' : ''} ${canModify ? '' : 'disabled'} onchange="toggleTaskDone('${t.id}', this.checked)" class="mt-0.5 w-4 h-4 rounded bg-slate-800 border-slate-600 text-emerald-500 shrink-0" />
                 <span class="font-semibold ${isDone ? 'line-through text-slate-500' : 'text-white'} break-words">${escapeHtmlSafe(title)}</span>
               </label>
-              ${(isSystemFullAdmin(currentUser) || canAssignOrManageTasks(currentUser)) ? `<button onclick="deleteTask('${t.id}')" title="Xóa việc" class="text-slate-500 hover:text-rose-400 shrink-0">🗑️</button>` : ''}
+              ${(isSystemFullAdmin(currentUser) || canAssignOrManageTasks(currentUser)) ? `<button onclick="deleteTask('${t.id}')" title="Xóa việc" class="text-slate-500 hover:text-rose-400 shrink-0">Xóa</button>` : ''}
             </div>
 
             <div class="flex flex-wrap items-center gap-1.5 text-[10px]">
-              <span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 font-semibold">👤 ${escapeHtmlSafe(t.assignee_name || 'Chưa gán')}</span>
-              ${t.due_date ? `<span class="px-2 py-0.5 rounded ${isOverdue ? 'bg-rose-500/20 text-rose-300 font-bold' : 'bg-slate-800 text-slate-400'}">⏰ ${formatDateTimeVN(t.due_date)}</span>` : ''}
+              <span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 font-semibold">${escapeHtmlSafe(sanitizeCleanText(t.assignee_name || 'Chưa gán'))}</span>
+              ${t.due_date ? `<span class="px-2 py-0.5 rounded ${isOverdue ? 'bg-rose-500/20 text-rose-300 font-bold' : 'bg-slate-800 text-slate-400'}">${formatDateTimeVN(t.due_date)}</span>` : ''}
             </div>
 
-            ${t.progress_note ? `<div class="text-[11px] text-emerald-300 bg-emerald-950/30 border border-emerald-500/20 rounded-lg px-2 py-1">💬 ${escapeHtmlSafe(t.progress_note)}</div>` : ''}
+            ${t.progress_note ? `<div class="text-[11px] text-emerald-300 bg-emerald-950/30 border border-emerald-500/20 rounded-lg px-2 py-1">${escapeHtmlSafe(sanitizeCleanText(t.progress_note))}</div>` : ''}
 
             ${(!isDone && canModify) ? `
               <div class="flex items-center gap-1.5 pt-1">
-                <button type="button" onclick="replyToTask('${t.id}')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded-lg text-[11px] font-semibold">💬 Hồi đáp</button>
-                <button type="button" onclick="toggleTaskDone('${t.id}', true)" class="flex-1 bg-emerald-600/25 hover:bg-emerald-600 text-emerald-300 hover:text-white py-1 rounded-lg text-[11px] font-bold">✅ Xong việc</button>
+                <button type="button" onclick="replyToTask('${t.id}')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded-lg text-[11px] font-semibold">Hồi đáp</button>
+                <button type="button" onclick="toggleTaskDone('${t.id}', true)" class="flex-1 bg-emerald-600/25 hover:bg-emerald-600 text-emerald-300 hover:text-white py-1 rounded-lg text-[11px] font-bold">Xong việc</button>
               </div>
             ` : ''}
           </div>
@@ -2967,8 +3077,8 @@
         const chanObj = dbChannels.find(c => String(c.id) === String(task.channel_id));
         await callGasWebhook({
           action: 'TASK_COMPLETED_WEB',
-          channelName: chanObj ? chanObj.name : 'Dự án',
-          taskTitle: task.task_title || task.title || '',
+          channelName: sanitizeCleanText(chanObj ? chanObj.name : 'Dự án'),
+          taskTitle: sanitizeCleanText(task.task_title || task.title || ''),
           actorName
         });
       }
@@ -2979,21 +3089,22 @@
     async function replyToTask(taskId) {
       const task = dbTasks.find(t => String(t.id) === String(taskId));
       if (!task) return;
-      const title = task.task_title || task.title || 'Công việc';
-      const note = await showAppPrompt(`Nhập nội dung hồi đáp tiến độ cho "${title}" (Trạng thái vẫn giữ Đang làm):`, task.progress_note || '', '💬 Hồi đáp tiến độ');
-      if (!note || !note.trim()) return;
+      const title = sanitizeCleanText(task.task_title || task.title || 'Công việc');
+      const noteRaw = await showAppPrompt(`Nhập nội dung hồi đáp tiến độ cho "${title}" (Trạng thái vẫn giữ Đang làm):`, task.progress_note || '', 'Hồi đáp tiến độ');
+      const note = sanitizeCleanText(noteRaw);
+      if (!note) return;
 
       const actorName = currentUser ? getUserFullName(currentUser) : 'Thành viên';
-      await sb.from('team_tasks').update({ progress_note: note.trim() }).eq('id', taskId);
-      task.progress_note = note.trim();
+      await sb.from('team_tasks').update({ progress_note: note }).eq('id', taskId);
+      task.progress_note = note;
 
       const chanObj = dbChannels.find(c => String(c.id) === String(task.channel_id));
       await callGasWebhook({
         action: 'TASK_PROGRESS_REPLY',
-        channelName: chanObj ? chanObj.name : 'Dự án',
+        channelName: sanitizeCleanText(chanObj ? chanObj.name : 'Dự án'),
         taskTitle: title,
         actorName,
-        progressNote: note.trim()
+        progressNote: note
       });
 
       renderTasks();
@@ -3001,7 +3112,7 @@
     }
 
     async function deleteTask(taskId) {
-      if (!(await showAppConfirm('Xóa đầu việc này khỏi danh sách?', '🗑️ Xóa công việc'))) return;
+      if (!(await showAppConfirm('Xóa đầu việc này khỏi danh sách?', 'Xóa công việc'))) return;
       await sb.from('team_tasks').delete().eq('id', taskId);
       dbTasks = dbTasks.filter(t => String(t.id) !== String(taskId));
       renderTasks();
@@ -3016,9 +3127,9 @@
         .filter(m => String(m.channel_id) === getCurrentConversationChannelKey() && m.file_url)
         .map(m => ({
           id: 'msgf_' + m.id,
-          name: m.file_name || 'Tài liệu đính kèm',
+          name: sanitizeCleanText(m.file_name || 'Tài liệu đính kèm'),
           url: m.file_url,
-          sizeText: `Gửi bởi ${m.sender_name}`
+          sizeText: `Gửi bởi ${sanitizeCleanText(m.sender_name)}`
         }));
 
       const allFiles = [...groupFiles, ...chatFiles];
@@ -3031,9 +3142,9 @@
       }
 
       box.innerHTML = allFiles.map(f => `
-        <a href="${escapeHtmlSafe(f.url)}" download="${escapeHtmlSafe(f.name)}" target="_blank" class="block bg-slate-950/90 hover:bg-slate-800 border border-slate-800 rounded-xl p-2.5 transition">
-          <div class="text-xs font-semibold text-blue-300 truncate">📄 ${escapeHtmlSafe(f.name)}</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtmlSafe(f.sizeText || '')}</div>
+        <a href="${escapeHtmlSafe(f.url)}" download="${escapeHtmlSafe(sanitizeCleanText(f.name))}" target="_blank" class="block bg-slate-950/90 hover:bg-slate-800 border border-slate-800 rounded-xl p-2.5 transition">
+          <div class="text-xs font-semibold text-blue-300 truncate">${escapeHtmlSafe(sanitizeCleanText(f.name))}</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtmlSafe(sanitizeCleanText(f.sizeText || ''))}</div>
         </a>
       `).join('');
     }
@@ -3043,11 +3154,11 @@
     // =========================================================================
     function openAssignModal() {
       if (!canAssignOrManageTasks(currentUser)) {
-        return showAppNotice('Bạn không có quyền giao việc mới.', '🔒 Giới hạn quyền');
+        return showAppNotice('Bạn không có quyền giao việc mới.', 'Giới hạn quyền');
       }
       const visibleChans = getVisibleChannelsForCurrentUser();
       const projSel = document.getElementById('taskProjectSelect');
-      projSel.innerHTML = visibleChans.map(c => `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}> ${escapeHtmlSafe(c.name)}</option>`).join('');
+      projSel.innerHTML = visibleChans.map(c => `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}>${escapeHtmlSafe(sanitizeCleanText(c.name))}</option>`).join('');
 
       document.getElementById('assignSessionUserLabel').textContent = getUserFullName(currentUser);
       document.getElementById('taskContent').value = '';
@@ -3097,11 +3208,11 @@
     async function submitNewTask() {
       const projId = document.getElementById('taskProjectSelect').value;
       const assigneeId = document.getElementById('taskAssignee').value;
-      const content = document.getElementById('taskContent').value.trim();
+      const content = sanitizeCleanText(document.getElementById('taskContent').value.trim());
       const startTime = document.getElementById('taskStartTime').value;
       const dueTime = document.getElementById('taskDueTime').value;
 
-      if (!content) return showAppNotice('Vui lòng nhập nội dung công việc!', '⚠️ Thiếu nội dung');
+      if (!content) return showAppNotice('Vui lòng nhập nội dung công việc!', 'Thiếu nội dung');
       const assigneeObj = dbUsers.find(u => String(u.id) === String(assigneeId));
       const chanObj = dbChannels.find(c => String(c.id) === String(projId));
       const assigneeName = assigneeObj ? getUserFullName(assigneeObj) : 'Thành viên';
@@ -3127,11 +3238,10 @@
         const taskId = createdTask ? String(createdTask.id) : '';
         const dueFormatted = dueTime ? formatDateTimeVN(dueTime) : 'Theo kế hoạch';
 
-        // Gửi hộp thoại xác nhận giao việc vào khung chat của dự án
         await sb.from('team_messages').insert([{
           channel_id: String(projId),
           sender_name: assignedBy,
-          sender_role: currentUser.role_title || 'Điều hành',
+          sender_role: sanitizeCleanText(currentUser.role_title || 'Điều hành'),
           msg_type: 'TASK_ASSIGN',
           approval_status: 'PENDING',
           content: JSON.stringify({
@@ -3144,11 +3254,10 @@
           })
         }]);
 
-        // Gửi thông báo kèm 3 nút xác nhận sang Telegram (có taskId chống lặp)
         await callGasWebhook({
           action: 'NOTIFY_TASK',
           taskId,
-          channelName: chanObj ? chanObj.name : 'Dự án',
+          channelName: sanitizeCleanText(chanObj ? chanObj.name : 'Dự án'),
           taskTitle: content,
           assigneeName,
           assigneeChatId: (assigneeObj && assigneeObj.telegram_chat_id) ? String(assigneeObj.telegram_chat_id) : DEFAULT_APPROVER_CHAT_ID,
@@ -3168,7 +3277,7 @@
     // [LOCKED MODULE 13]: TRÌNH PHÊ DUYỆT HỒ SƠ / TỜ TRÌNH
     // =========================================================================
     function openApprovalModal() {
-      document.getElementById('approvalModalTitle').textContent = '📋 Trình Phê Duyệt Hồ Sơ / Tờ Trình';
+      document.getElementById('approvalModalTitle').textContent = 'Trình Phê Duyệt Hồ Sơ / Tờ Trình';
       document.getElementById('editingApprovalId').value = '';
       document.getElementById('approvalApproverBox').classList.remove('hidden');
       document.getElementById('approvalContent').value = '';
@@ -3184,7 +3293,7 @@
     function openEditApprovalModal(msgId) {
       const msg = dbMessages.find(m => String(m.id) === String(msgId));
       if (!msg) return;
-      document.getElementById('approvalModalTitle').textContent = '✏️ Chỉnh Sửa Phiếu Trình Phê Duyệt';
+      document.getElementById('approvalModalTitle').textContent = 'Chỉnh Sửa Phiếu Trình Phê Duyệt';
       document.getElementById('editingApprovalId').value = String(msgId);
       document.getElementById('approvalApproverBox').classList.add('hidden');
       document.getElementById('approvalContent').value = msg.content || '';
@@ -3204,18 +3313,18 @@
 
     async function submitApprovalRequest() {
       const editId = document.getElementById('editingApprovalId').value.trim();
-      const content = document.getElementById('approvalContent').value.trim();
+      const content = sanitizeCleanText(document.getElementById('approvalContent').value.trim());
       let fileUrl = document.getElementById('approvalFileUrl').value.trim();
       let fileName = fileUrl ? 'Tài liệu đính kèm' : '';
       const fileInp = document.getElementById('approvalFileInput');
 
-      if (!content) return showAppNotice('Vui lòng nhập nội dung tờ trình!', '⚠️ Thiếu nội dung');
+      if (!content) return showAppNotice('Vui lòng nhập nội dung tờ trình!', 'Thiếu nội dung');
 
       if (fileInp.files && fileInp.files[0]) {
         const f = fileInp.files[0];
-        if (f.size > 3 * 1024 * 1024) return showAppNotice('Tệp đính kèm vượt quá 3MB!', '⚠️ Tệp quá lớn');
+        if (f.size > 3 * 1024 * 1024) return showAppNotice('Tệp đính kèm vượt quá 3MB!', 'Tệp quá lớn');
         fileUrl = await readFileAsBase64(f);
-        fileName = f.name;
+        fileName = sanitizeCleanText(f.name);
       }
 
       if (editId) {
@@ -3235,7 +3344,7 @@
       const { data: inserted } = await sb.from('team_messages').insert([{
         channel_id: getCurrentConversationChannelKey(),
         sender_name: senderName,
-        sender_role: currentUser.role_title || 'Thành viên',
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
         msg_type: 'APPROVAL',
         approval_status: 'PENDING',
         content,
@@ -3247,7 +3356,7 @@
       await callGasWebhook({
         action: 'NOTIFY_APPROVAL',
         messageId: msgId,
-        channelName: chanObj ? chanObj.name : 'Điều hành',
+        channelName: sanitizeCleanText(chanObj ? chanObj.name : 'Điều hành'),
         senderName,
         approverChatId: (approverObj && approverObj.telegram_chat_id) ? String(approverObj.telegram_chat_id) : DEFAULT_APPROVER_CHAT_ID,
         content,
@@ -3267,13 +3376,13 @@
         approver_name: approverName,
         approved_at: new Date().toISOString()
       }).eq('id', msgId);
-      await recordAuditLog(status === 'APPROVED' ? 'PHÊ DUYỆT' : 'TỪ CHỐI DUYỆT', `${approverName} đã xử lý phiếu trình #${msgId}`);
+      await recordAuditLog(status === 'APPROVED' ? 'PHÊ DUYỆT' : 'TỪ CHỐI DUYỆT', `${approverName} đã xử lý phiếu trình ${msgId}`);
       await syncAllFromSupabase(true);
     }
 
     async function deleteApprovalItem(msgId) {
       if (!isSystemFullAdmin(currentUser)) return;
-      if (!(await showAppConfirm('Xóa vĩnh viễn phiếu trình duyệt này?', '🗑️ Xóa phiếu trình'))) return;
+      if (!(await showAppConfirm('Xóa vĩnh viễn phiếu trình duyệt này?', 'Xóa phiếu trình'))) return;
       await sb.from('team_messages').delete().eq('id', msgId);
       await syncAllFromSupabase(true);
     }
@@ -3282,7 +3391,7 @@
     // [LOCKED MODULE 14]: CHỐT LỊCH HỌP & XUẤT BIÊN BẢN PDF
     // =========================================================================
     function openMeetingModal() {
-      if (!canScheduleMeetings(currentUser)) return showAppNotice('Bạn không có quyền chốt lịch họp.', '🔒 Giới hạn quyền');
+      if (!canScheduleMeetings(currentUser)) return showAppNotice('Bạn không có quyền chốt lịch họp.', 'Giới hạn quyền');
       document.getElementById('meetingTime').value = '';
       document.getElementById('meetingLocation').value = '';
       document.getElementById('meetingAgenda').value = '';
@@ -3293,21 +3402,21 @@
 
     async function submitMeetingNotice() {
       const timeVal = document.getElementById('meetingTime').value;
-      const loc = document.getElementById('meetingLocation').value.trim() || 'Phòng họp điều hành';
-      const agenda = document.getElementById('meetingAgenda').value.trim();
+      const loc = sanitizeCleanText(document.getElementById('meetingLocation').value.trim()) || 'Phòng họp điều hành';
+      const agenda = sanitizeCleanText(document.getElementById('meetingAgenda').value.trim());
       const autoTasks = document.getElementById('meetingAutoTasksCheck').checked;
       const linesRaw = document.getElementById('meetingAutoTasksLines').value.trim();
       const tasksDue = document.getElementById('meetingTasksDue').value;
 
-      if (!agenda) return showAppNotice('Vui lòng nhập nội dung / kết luận cuộc họp!', '⚠️ Thiếu nội dung');
+      if (!agenda) return showAppNotice('Vui lòng nhập nội dung / kết luận cuộc họp!', 'Thiếu nội dung');
       const author = getUserFullName(currentUser);
       const timeText = timeVal ? formatDateTimeVN(timeVal) : 'Theo thông báo';
 
-      const meetingMsg = `📅 THÔNG BÁO / KẾT LUẬN CUỘC HỌP\n• Thời gian: ${timeText}\n• Địa điểm: ${loc}\n• Nội dung:\n${agenda}`;
+      const meetingMsg = `THÔNG BÁO / KẾT LUẬN CUỘC HỌP\n• Thời gian: ${timeText}\n• Địa điểm: ${loc}\n• Nội dung:\n${agenda}`;
       await sb.from('team_messages').insert([{
         channel_id: getCurrentConversationChannelKey(),
         sender_name: author,
-        sender_role: currentUser.role_title || 'Chủ trì',
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Chủ trì'),
         msg_type: 'CHAT',
         content: meetingMsg
       }]);
@@ -3316,8 +3425,8 @@
         const lines = linesRaw.split('\n').map(l => l.trim()).filter(Boolean);
         for (const line of lines) {
           const match = line.match(/^@([^:]+):\s*(.+)$/);
-          const rawAssignee = match ? match[1].trim() : '';
-          const taskTitle = match ? match[2].trim() : line;
+          const rawAssignee = match ? sanitizeCleanText(match[1].trim()) : '';
+          const taskTitle = match ? sanitizeCleanText(match[2].trim()) : sanitizeCleanText(line);
           const matchedUser = dbUsers.find(u => removeVietnameseTones(getUserFullName(u)).includes(removeVietnameseTones(rawAssignee)));
           await sb.from('team_tasks').insert([{
             channel_id: String(activeChannelId),
@@ -3336,8 +3445,8 @@
     }
 
     function exportMeetingMinutesPDF() {
-      const agenda = document.getElementById('meetingAgenda').value.trim();
-      const loc = document.getElementById('meetingLocation').value.trim();
+      const agenda = sanitizeCleanText(document.getElementById('meetingAgenda').value.trim());
+      const loc = sanitizeCleanText(document.getElementById('meetingLocation').value.trim());
       const timeVal = document.getElementById('meetingTime').value;
       const w = window.open('', '_blank');
       w.document.write(`<html><head><title>Biên bản cuộc họp</title></head><body style="font-family:Arial,sans-serif;padding:30px;line-height:1.6;">
@@ -3388,12 +3497,12 @@
       const roleBox = document.getElementById('staffRoleListContainer');
 
       if (!isFull) {
-        pinBox.innerHTML = `<div class="bg-slate-800/70 p-4 rounded-xl text-slate-300">Chỉ Quản trị hệ thống mới có quyền cấp/đổi mã PIN và mở khóa tài khoản nhân sự khác. Bạn có thể đổi mật khẩu cá nhân tại tab <b>📲 Liên kết Telegram cá nhân</b>.</div>`;
+        pinBox.innerHTML = `<div class="bg-slate-800/70 p-4 rounded-xl text-slate-300">Chỉ Quản trị hệ thống mới có quyền cấp/đổi mã PIN và mở khóa tài khoản nhân sự khác. Bạn có thể đổi mật khẩu cá nhân tại tab <b>Liên kết Telegram cá nhân</b>.</div>`;
         roleBox.innerHTML = dbUsers.map(u => `
           <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3 flex items-center justify-between">
             <div>
               <div class="font-bold text-white">${escapeHtmlSafe(getUserFullName(u))}</div>
-              <div class="text-[11px] text-slate-400">${escapeHtmlSafe(u.role_title || 'Thành viên')}</div>
+              <div class="text-[11px] text-slate-400">${escapeHtmlSafe(sanitizeCleanText(u.role_title || 'Thành viên'))}</div>
             </div>
             <span class="text-[10px] px-2 py-0.5 rounded ${getUserPermDef(u).badgeClass}">${getUserPermDef(u).label}</span>
           </div>
@@ -3410,8 +3519,8 @@
               <div class="text-[11px] text-slate-400">PIN hiện tại: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '')}</code> • TG ID: <code class="text-emerald-300">${escapeHtmlSafe(u.telegram_chat_id || 'Chưa liên kết')}</code></div>
             </div>
             <div class="flex items-center gap-1.5">
-              ${locked ? `<button onclick="unlockStaffAccount('${u.id}')" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1.5 rounded-lg font-bold">🔓 Mở khóa</button>` : ''}
-              <button onclick="adminResetStaffPin('${u.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg font-bold">🔑 Đổi PIN</button>
+              ${locked ? `<button onclick="unlockStaffAccount('${u.id}')" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1.5 rounded-lg font-bold">Mở khóa</button>` : ''}
+              <button onclick="adminResetStaffPin('${u.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg font-bold">Đổi PIN</button>
             </div>
           </div>
         `;
@@ -3423,7 +3532,7 @@
           <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
             <div>
               <div class="font-bold text-white">${escapeHtmlSafe(getUserFullName(u))}</div>
-              <div class="text-[11px] text-slate-400">${escapeHtmlSafe(u.role_title || '')}</div>
+              <div class="text-[11px] text-slate-400">${escapeHtmlSafe(sanitizeCleanText(u.role_title || ''))}</div>
             </div>
             <div class="flex items-center gap-2">
               <select onchange="updateStaffPermission('${u.id}', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white">
@@ -3432,7 +3541,7 @@
                 <option value="CHAIR" ${permCode === 'CHAIR' ? 'selected' : ''}>Chủ trì</option>
                 <option value="FULL" ${permCode === 'FULL' ? 'selected' : ''}>Quản trị (Full)</option>
               </select>
-              ${!isPrimarySystemOwner(u) ? `<button onclick="removeStaffMember('${u.id}')" class="text-rose-400 hover:bg-rose-950/60 px-2 py-1.5 rounded-lg">🗑️</button>` : ''}
+              ${!isPrimarySystemOwner(u) ? `<button onclick="removeStaffMember('${u.id}')" class="text-rose-400 hover:bg-rose-950/60 px-2 py-1.5 rounded-lg">Xóa</button>` : ''}
             </div>
           </div>
         `;
@@ -3441,14 +3550,14 @@
 
     async function addNewStaffMember() {
       if (!isSystemFullAdmin(currentUser)) return;
-      const fullName = document.getElementById('newStaffFullName').value.trim();
+      const fullName = sanitizeCleanText(document.getElementById('newStaffFullName').value.trim());
       const username = document.getElementById('newStaffUsername').value.trim();
-      const roleTitle = document.getElementById('newStaffRole').value.trim() || 'Thành viên';
+      const roleTitle = sanitizeCleanText(document.getElementById('newStaffRole').value.trim()) || 'Thành viên';
       const pinCheck = validateAlphanumericPin(document.getElementById('newStaffPin').value);
       const perm = document.getElementById('newStaffPerm').value;
 
-      if (!fullName || !username) return showAppNotice('Vui lòng nhập Họ tên và Tên đăng nhập!', '⚠️ Thiếu thông tin');
-      if (!pinCheck.ok) return showAppNotice(pinCheck.msg, '⚠️ Mã PIN chưa hợp lệ');
+      if (!fullName || !username) return showAppNotice('Vui lòng nhập Họ tên và Tên đăng nhập!', 'Thiếu thông tin');
+      if (!pinCheck.ok) return showAppNotice(pinCheck.msg, 'Mã PIN chưa hợp lệ');
 
       const { data } = await sb.from('team_users').insert([{
         display_name: fullName,
@@ -3474,15 +3583,15 @@
     async function adminResetStaffPin(uid) {
       const u = dbUsers.find(x => String(x.id) === String(uid));
       if (!u) return;
-      const newPinRaw = await showAppPrompt(`Nhập mã PIN mới (4-12 ký tự gồm cả chữ và số) cho ${getUserFullName(u)}:`, generateRandomAlphanumericPin(6), '🔑 Cấp mã PIN mới');
+      const newPinRaw = await showAppPrompt(`Nhập mã PIN mới (4-12 ký tự gồm cả chữ và số) cho ${getUserFullName(u)}:`, generateRandomAlphanumericPin(6), 'Cấp mã PIN mới');
       if (!newPinRaw) return;
       const check = validateAlphanumericPin(newPinRaw);
-      if (!check.ok) return showAppNotice(check.msg, '⚠️ Sai định dạng PIN');
+      if (!check.ok) return showAppNotice(check.msg, 'Sai định dạng PIN');
 
       await sb.from('team_users').update({ pin_code: check.value }).eq('id', uid);
       u.pin_code = check.value;
       renderStaffManagementLists();
-      showAppNotice(`Đã cập nhật PIN mới cho ${getUserFullName(u)}: ${check.value}`, '✅ Đổi PIN thành công');
+      showAppNotice(`Đã cập nhật PIN mới cho ${getUserFullName(u)}: ${check.value}`, 'Đổi PIN thành công');
     }
 
     async function unlockStaffAccount(uid) {
@@ -3498,7 +3607,7 @@
     }
 
     async function removeStaffMember(uid) {
-      if (!(await showAppConfirm('Xóa nhân sự này khỏi hệ thống?', '🗑️ Xóa nhân sự'))) return;
+      if (!(await showAppConfirm('Xóa nhân sự này khỏi hệ thống?', 'Xóa nhân sự'))) return;
       await sb.from('team_users').delete().eq('id', uid);
       await syncAllFromSupabase(true);
       renderStaffManagementLists();
@@ -3507,7 +3616,7 @@
     function startTelegramAutoLinkListener() {
       const st = document.getElementById('tgAutoLinkStatus');
       st.classList.remove('hidden');
-      st.innerHTML = `<span class="text-amber-300">⏳ Đang chờ bạn bấm START trên Telegram...</span>`;
+      st.innerHTML = `<span class="text-amber-300">Đang chờ bạn bấm START trên Telegram...</span>`;
       if (tgPollTimer) clearInterval(tgPollTimer);
       tgPollTimer = setInterval(async () => {
         if (!currentUser) return;
@@ -3516,7 +3625,7 @@
           currentUser.telegram_chat_id = data.telegram_chat_id;
           document.getElementById('profileTelegramId').value = data.telegram_chat_id;
           updateTelegramIndicator();
-          st.innerHTML = `<span class="text-emerald-400 font-bold">✅ Đã liên kết thành công Telegram ID: ${data.telegram_chat_id}</span>`;
+          st.innerHTML = `<span class="text-emerald-400 font-bold">Đã liên kết thành công Telegram ID: ${data.telegram_chat_id}</span>`;
           clearInterval(tgPollTimer);
           tgPollTimer = null;
         }
@@ -3525,21 +3634,21 @@
 
     async function saveProfileSettings() {
       if (!currentUser) return;
-      const roleTitle = document.getElementById('profileRoleTitle').value.trim();
+      const roleTitle = sanitizeCleanText(document.getElementById('profileRoleTitle').value.trim());
       const tgId = document.getElementById('profileTelegramId').value.trim();
       const newPass = document.getElementById('profileNewPass').value.trim();
 
       const payload = { role_title: roleTitle, telegram_chat_id: tgId || null };
       if (newPass) {
         const check = validateAlphanumericPin(newPass);
-        if (!check.ok) return showAppNotice(check.msg, '⚠️ Mật khẩu chưa hợp lệ');
+        if (!check.ok) return showAppNotice(check.msg, 'Mật khẩu chưa hợp lệ');
         payload.pin_code = check.value;
       }
 
       await sb.from('team_users').update(payload).eq('id', currentUser.id);
       Object.assign(currentUser, payload);
       updateTelegramIndicator();
-      showAppNotice('Đã lưu thông tin hồ sơ cá nhân!', '✅ Cập nhật thành công');
+      showAppNotice('Đã lưu thông tin hồ sơ cá nhân!', 'Cập nhật thành công');
     }
 
     // =========================================================================
@@ -3547,7 +3656,7 @@
     // =========================================================================
     function openProgressModal(defaultScope = 'ALL') {
       document.getElementById('dashFilterScope').value = defaultScope;
-      document.getElementById('dashFilterAssignee').innerHTML = `<option value="">👥 Tất cả nhân sự</option>` +
+      document.getElementById('dashFilterAssignee').innerHTML = `<option value="">Tất cả nhân sự</option>` +
         dbUsers.map(u => `<option value="${escapeHtmlSafe(getUserFullName(u))}">${escapeHtmlSafe(getUserFullName(u))}</option>`).join('');
       renderProgressTable();
       openModal('progressModal');
@@ -3590,13 +3699,13 @@
         const isOverdue = !isDone && t.due_date && new Date(t.due_date).getTime() < Date.now();
         return `
           <tr class="hover:bg-slate-50">
-            <td class="py-2.5 px-3 font-semibold text-slate-700">${escapeHtmlSafe(chan ? chan.name : 'Dự án')}</td>
-            <td class="py-2.5 px-3 font-bold text-blue-700">${escapeHtmlSafe(t.assignee_name || '')}</td>
-            <td class="py-2.5 px-3 text-slate-900">${escapeHtmlSafe(t.task_title || t.title || '')}</td>
+            <td class="py-2.5 px-3 font-semibold text-slate-700">${escapeHtmlSafe(sanitizeCleanText(chan ? chan.name : 'Dự án'))}</td>
+            <td class="py-2.5 px-3 font-bold text-blue-700">${escapeHtmlSafe(sanitizeCleanText(t.assignee_name || ''))}</td>
+            <td class="py-2.5 px-3 text-slate-900">${escapeHtmlSafe(sanitizeCleanText(t.task_title || t.title || ''))}</td>
             <td class="py-2.5 px-3 text-slate-600">${t.due_date ? formatDateTimeVN(t.due_date) : 'Theo kế hoạch'}</td>
-            <td class="py-2.5 px-3 text-slate-600">${escapeHtmlSafe(t.assigned_by || '')}</td>
-            <td class="py-2.5 px-3">${isDone ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">✅ Đã xong</span>' : (isOverdue ? '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">🚨 Quá hạn</span>' : '<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">⏳ Đang làm</span>')}</td>
-            <td class="py-2.5 px-3 text-slate-600">${escapeHtmlSafe(t.progress_note || '')}</td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHtmlSafe(sanitizeCleanText(t.assigned_by || ''))}</td>
+            <td class="py-2.5 px-3">${isDone ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Đã xong</span>' : (isOverdue ? '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">Quá hạn</span>' : '<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">Đang làm</span>')}</td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHtmlSafe(sanitizeCleanText(t.progress_note || ''))}</td>
             <td class="py-2.5 px-3 text-right">
               ${!isDone ? `<button onclick="toggleTaskDone('${t.id}', true)" class="bg-emerald-600 text-white px-2.5 py-1 rounded font-bold">Xong</button>` : ''}
             </td>
@@ -3634,10 +3743,10 @@
           return `
             <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-2">
               <div>
-                <div class="font-bold ${isDone ? 'line-through text-slate-400' : 'text-white'}">${escapeHtmlSafe(t.task_title || t.title || '')}</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Hạn: ${t.due_date ? formatDateTimeVN(t.due_date) : 'Theo kế hoạch'} • Giao bởi: ${escapeHtmlSafe(t.assigned_by || '')}</div>
+                <div class="font-bold ${isDone ? 'line-through text-slate-400' : 'text-white'}">${escapeHtmlSafe(sanitizeCleanText(t.task_title || t.title || ''))}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Hạn: ${t.due_date ? formatDateTimeVN(t.due_date) : 'Theo kế hoạch'} • Giao bởi: ${escapeHtmlSafe(sanitizeCleanText(t.assigned_by || ''))}</div>
               </div>
-              ${!isDone ? `<button onclick="toggleTaskDone('${t.id}', true); openMyTasksModal();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold shrink-0">✅ Báo xong</button>` : '<span class="text-emerald-400 font-bold shrink-0">✓ Đã xong</span>'}
+              ${!isDone ? `<button onclick="toggleTaskDone('${t.id}', true); openMyTasksModal();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold shrink-0">Báo xong</button>` : '<span class="text-emerald-400 font-bold shrink-0">Đã xong</span>'}
             </div>
           `;
         }).join('');
@@ -3671,20 +3780,20 @@
 
     async function submitMultiFileSend() {
       const recipientIds = Array.from(document.querySelectorAll('input[name="mfRecipient"]:checked')).map(b => b.value);
-      if (recipientIds.length === 0) return showAppNotice('Vui lòng chọn ít nhất 1 người nhận!', '⚠️ Thiếu người nhận');
+      if (recipientIds.length === 0) return showAppNotice('Vui lòng chọn ít nhất 1 người nhận!', 'Thiếu người nhận');
 
       const fileInp = document.getElementById('multiFileUploadInput');
       let fileUrl = document.getElementById('multiFileLinkInput').value.trim();
       let fileName = fileUrl ? 'Tài liệu chia sẻ' : '';
-      const note = document.getElementById('multiFileNoteInput').value.trim() || 'Gửi tài liệu đính kèm';
+      const note = sanitizeCleanText(document.getElementById('multiFileNoteInput').value.trim()) || 'Gửi tài liệu đính kèm';
 
       if (fileInp.files && fileInp.files[0]) {
         const f = fileInp.files[0];
-        if (f.size > 3 * 1024 * 1024) return showAppNotice('Tệp vượt quá 3MB!', '⚠️ Tệp quá lớn');
+        if (f.size > 3 * 1024 * 1024) return showAppNotice('Tệp vượt quá 3MB!', 'Tệp quá lớn');
         fileUrl = await readFileAsBase64(f);
-        fileName = f.name;
+        fileName = sanitizeCleanText(f.name);
       }
-      if (!fileUrl) return showAppNotice('Vui lòng chọn tệp hoặc dán link tài liệu!', '⚠️ Thiếu tài liệu');
+      if (!fileUrl) return showAppNotice('Vui lòng chọn tệp hoặc dán link tài liệu!', 'Thiếu tài liệu');
 
       const senderName = getUserFullName(currentUser);
       for (const rid of recipientIds) {
@@ -3692,7 +3801,7 @@
         await sb.from('team_messages').insert([{
           channel_id: `DM_${pair[0]}_${pair[1]}`,
           sender_name: senderName,
-          sender_role: currentUser.role_title || 'Thành viên',
+          sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
           msg_type: 'FILE',
           content: note,
           file_url: fileUrl,
@@ -3701,14 +3810,14 @@
       }
 
       closeModal('multiFileModal');
-      showAppNotice(`Đã gửi tài liệu tới ${recipientIds.length} thành viên!`, '📤 Gửi thành công');
+      showAppNotice(`Đã gửi tài liệu tới ${recipientIds.length} thành viên!`, 'Gửi thành công');
     }
 
     function openBackupModal() {
       const visibleChans = getVisibleChannelsForCurrentUser();
       document.getElementById('backupScopeSelect').innerHTML =
-        `<option value="ALL">🌐 Toàn bộ hệ thống TeamWork Cloud</option>` +
-        visibleChans.map(c => `<option value="${c.id}">Chỉ dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
+        `<option value="ALL">Toàn bộ hệ thống TeamWork Cloud</option>` +
+        visibleChans.map(c => `<option value="${c.id}">Chỉ dự án: ${escapeHtmlSafe(sanitizeCleanText(c.name))}</option>`).join('');
       openModal('backupModal');
     }
 
@@ -3741,18 +3850,18 @@
         notifyTelegram: true,
         notifyChatId: (currentUser && currentUser.telegram_chat_id) ? String(currentUser.telegram_chat_id) : DEFAULT_APPROVER_CHAT_ID
       });
-      showAppNotice('Đã gửi yêu cầu sao lưu lên Google Drive & báo Telegram!', '☁️ Đang sao lưu');
+      showAppNotice('Đã gửi yêu cầu sao lưu lên Google Drive & báo Telegram!', 'Đang sao lưu');
     }
 
     async function triggerDailyDigestNow() {
       await callGasWebhook({ action: 'RUN_DAILY_DIGEST_NOW' });
-      showAppNotice('Đã gửi báo cáo tổng hợp tiến độ về Telegram!', '📊 Đã gửi báo cáo');
+      showAppNotice('Đã gửi báo cáo tổng hợp tiến độ về Telegram!', 'Đã gửi báo cáo');
     }
 
     async function restoreFromJsonFile() {
-      if (!isSystemFullAdmin(currentUser)) return showAppNotice('Chỉ Quản trị hệ thống mới được khôi phục dữ liệu.', '🔒 Giới hạn quyền');
+      if (!isSystemFullAdmin(currentUser)) return showAppNotice('Chỉ Quản trị hệ thống mới được khôi phục dữ liệu.', 'Giới hạn quyền');
       const inp = document.getElementById('restoreFileInput');
-      if (!inp.files || !inp.files[0]) return showAppNotice('Vui lòng chọn tệp .json sao lưu!', '⚠️ Chưa chọn tệp');
+      if (!inp.files || !inp.files[0]) return showAppNotice('Vui lòng chọn tệp .json sao lưu!', 'Chưa chọn tệp');
       const text = await inp.files[0].text();
       const parsed = JSON.parse(text);
       if (Array.isArray(parsed.tasks) && parsed.tasks.length > 0) {
@@ -3760,171 +3869,177 @@
       }
       await syncAllFromSupabase(true);
       closeModal('backupModal');
-      showAppNotice('Đã khôi phục dữ liệu thành công!', '♻️ Hoàn tất');
+      showAppNotice('Đã khôi phục dữ liệu thành công!', 'Hoàn tất');
     }
 
- // =========================================================================
- // [LOCKED MODULE 18 & 19]: 4 CHỨC NĂNG KIM KẸP (ẢNH, FILE, ĐỊNH VỊ GPS, NHẮC HẸN)
- // =========================================================================
- // 1. Gửi hình ảnh
- async function handleAttachImage(event) {
-   closeAllDropdowns();
-   const file = event.target.files && event.target.files[0];
-   if (!file || !currentUser) return;
-   if (file.size > 3 * 1024 * 1024) {
-     event.target.value = '';
-     return showAppNotice('Hình ảnh vượt quá dung lượng 3MB!', '⚠️ Ảnh quá lớn');
-   }
-   const dataUrl = await readFileAsBase64(file);
-   const { data } = await sb.from('team_messages').insert([{
-     channel_id: getCurrentConversationChannelKey(),
-     sender_name: getUserFullName(currentUser),
-     sender_role: currentUser.role_title || 'Thành viên',
-     msg_type: 'IMAGE',
-     content: `🖼️ Hình ảnh: ${file.name}`,
-     file_name: file.name,
-     file_url: dataUrl
-   }]).select();
+    // =========================================================================
+    // [LOCKED MODULE 18 & 19]: 4 CHỨC NĂNG KIM KẸP (ẢNH, FILE, ĐỊNH VỊ GPS, NHẮC HẸN)
+    // =========================================================================
+    async function handleAttachImage(event) {
+      closeAllDropdowns();
+      const file = event.target.files && event.target.files[0];
+      if (!file || !currentUser) return;
+      if (file.size > 3 * 1024 * 1024) {
+        event.target.value = '';
+        return showAppNotice('Hình ảnh vượt quá dung lượng 3MB!', 'Ảnh quá lớn');
+      }
+      const cleanName = sanitizeCleanText(file.name);
+      const dataUrl = await readFileAsBase64(file);
+      const { data } = await sb.from('team_messages').insert([{
+        channel_id: getCurrentConversationChannelKey(),
+        sender_name: getUserFullName(currentUser),
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
+        msg_type: 'IMAGE',
+        content: `Hình ảnh: ${cleanName}`,
+        file_name: cleanName,
+        file_url: dataUrl
+      }]).select();
 
-   event.target.value = '';
-   if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-   renderMessages();
-   renderChannelFiles();
- }
+      event.target.value = '';
+      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+      renderMessages();
+      renderChannelFiles();
+    }
 
- // 2. Gửi tài liệu / file
- async function handleQuickChatFileAttach(event) {
-   closeAllDropdowns();
-   const file = event.target.files && event.target.files[0];
-   if (!file || !currentUser) return;
-   if (file.size > 3 * 1024 * 1024) {
-     event.target.value = '';
-     return showAppNotice('Tệp đính kèm vượt quá giới hạn 3MB!', '⚠️ Tệp quá lớn');
-   }
-   const dataUrl = await readFileAsBase64(file);
-   const { data } = await sb.from('team_messages').insert([{
-     channel_id: getCurrentConversationChannelKey(),
-     sender_name: getUserFullName(currentUser),
-     sender_role: currentUser.role_title || 'Thành viên',
-     msg_type: 'FILE',
-     content: `📎 Đã gửi tệp đính kèm: ${file.name}`,
-     file_name: file.name,
-     file_url: dataUrl
-   }]).select();
+    async function handleQuickChatFileAttach(event) {
+      closeAllDropdowns();
+      const file = event.target.files && event.target.files[0];
+      if (!file || !currentUser) return;
+      if (file.size > 3 * 1024 * 1024) {
+        event.target.value = '';
+        return showAppNotice('Tệp đính kèm vượt quá giới hạn 3MB!', 'Tệp quá lớn');
+      }
+      const cleanName = sanitizeCleanText(file.name);
+      const dataUrl = await readFileAsBase64(file);
+      const { data } = await sb.from('team_messages').insert([{
+        channel_id: getCurrentConversationChannelKey(),
+        sender_name: getUserFullName(currentUser),
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
+        msg_type: 'FILE',
+        content: `Đã gửi tệp đính kèm: ${cleanName}`,
+        file_name: cleanName,
+        file_url: dataUrl
+      }]).select();
 
-   event.target.value = '';
-   if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-   renderMessages();
-   renderChannelFiles();
- }
+      event.target.value = '';
+      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+      renderMessages();
+      renderChannelFiles();
+    }
 
- // 3. Định vị vị trí GPS hiện tại & nhúng Google Maps
- function handleShareCurrentLocation() {
-   closeAllDropdowns();
-   if (!navigator.geolocation) {
-     return showAppNotice('Trình duyệt trên thiết bị này không hỗ trợ định vị GPS.', '⚠️ Không hỗ trợ GPS');
-   }
-   showAppNotice('Đang lấy tọa độ GPS chính xác của thiết bị...', '📍 Đang định vị');
-   navigator.geolocation.getCurrentPosition(
-     async pos => {
-       closeModal('appDialogModal');
-       const lat = pos.coords.latitude.toFixed(6);
-       const lng = pos.coords.longitude.toFixed(6);
-       const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
-       const content = `📍 Vị trí hiện tại của ${getUserFullName(currentUser)}: ${lat}, ${lng}\n${mapsLink}`;
+    function handleShareCurrentLocation() {
+      closeAllDropdowns();
+      if (!navigator.geolocation) {
+        return showAppNotice('Trình duyệt trên thiết bị này không hỗ trợ định vị GPS.', 'Không hỗ trợ GPS');
+      }
+      showAppNotice('Đang lấy tọa độ GPS chính xác của thiết bị...', 'Đang định vị');
+      navigator.geolocation.getCurrentPosition(
+        async pos => {
+          closeModal('appDialogModal');
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+          const mapMetaTag = `[[MAP_QUERY:${encodeURIComponent(JSON.stringify({ query: `${lat},${lng}`, label: `Tọa độ ${lat}, ${lng}`, rawUrl: mapsLink }))}]]`;
+          const content = `Vị trí hiện tại của ${getUserFullName(currentUser)}: ${lat}, ${lng}\n${mapsLink}\n${mapMetaTag}`;
 
-       const { data } = await sb.from('team_messages').insert([{
-         channel_id: getCurrentConversationChannelKey(),
-         sender_name: getUserFullName(currentUser),
-         sender_role: currentUser.role_title || 'Thành viên',
-         msg_type: 'CHAT',
-         content
-       }]).select();
+          const { data } = await sb.from('team_messages').insert([{
+            channel_id: getCurrentConversationChannelKey(),
+            sender_name: getUserFullName(currentUser),
+            sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
+            msg_type: 'CHAT',
+            content
+          }]).select();
 
-       if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-       renderMessages();
-     },
-     err => {
-       closeModal('appDialogModal');
-       showAppNotice('Không thể lấy vị trí. Anh vui lòng bật quyền Truy cập vị trí (Location) cho trình duyệt và thử lại.', '⚠️ Lỗi định vị GPS');
-     },
-     { enableHighAccuracy: true, timeout: 10000 }
-   );
- }
+          if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+          renderMessages();
+        },
+        err => {
+          closeModal('appDialogModal');
+          showAppNotice('Không thể lấy vị trí. Anh vui lòng bật quyền Truy cập vị trí (Location) cho trình duyệt và thử lại.', 'Lỗi định vị GPS');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
 
- // 4. Mở & lưu Nhắc hẹn (Tạo nhắc hẹn mới)
- function openReminderCreateModal() {
-   closeAllDropdowns();
-   document.getElementById('reminderTitleInput').value = '';
-   const nextHour = new Date(Date.now() + 60 * 60 * 1000);
-   const localIso = new Date(nextHour.getTime() - nextHour.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-   document.getElementById('reminderDateTimeInput').value = localIso;
-   document.getElementById('reminderRepeatSelect').value = 'NONE';
-   document.getElementById('reminderTargetAllLabel').textContent = activeDmPeer ? 'Cả hai' : 'Tất cả thành viên nhóm';
-   openModal('reminderCreateModal');
- }
+    function openReminderCreateModal() {
+      closeAllDropdowns();
+      document.getElementById('reminderTitleInput').value = '';
+      const nextHour = new Date(Date.now() + 60 * 60 * 1000);
+      const localIso = new Date(nextHour.getTime() - nextHour.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      document.getElementById('reminderDateTimeInput').value = localIso;
+      document.getElementById('reminderRepeatSelect').value = 'NONE';
+      document.getElementById('reminderTargetAllLabel').textContent = activeDmPeer ? 'Cả hai' : 'Tất cả thành viên nhóm';
+      openModal('reminderCreateModal');
+    }
 
- async function submitNewReminder() {
-   const title = document.getElementById('reminderTitleInput').value.trim();
-   const dtVal = document.getElementById('reminderDateTimeInput').value;
-   const repeatVal = document.getElementById('reminderRepeatSelect').value;
-   const targetVal = document.querySelector('input[name="reminderTargetRadio"]:checked')?.value || 'ALL';
+    async function submitNewReminder() {
+      const title = sanitizeCleanText(document.getElementById('reminderTitleInput').value.trim());
+      const dtVal = document.getElementById('reminderDateTimeInput').value;
+      const repeatVal = document.getElementById('reminderRepeatSelect').value;
+      const targetVal = document.querySelector('input[name="reminderTargetRadio"]:checked')?.value || 'ALL';
 
-   if (!title) return showAppNotice('Vui lòng nhập tiêu đề nhắc hẹn!', '⚠️ Thiếu tiêu đề');
-   if (!dtVal) return showAppNotice('Vui lòng chọn thời gian nhắc hẹn!', '⚠️ Thiếu thời gian');
+      if (!title) return showAppNotice('Vui lòng nhập tiêu đề nhắc hẹn!', 'Thiếu tiêu đề');
+      if (!dtVal) return showAppNotice('Vui lòng chọn thời gian nhắc hẹn!', 'Thiếu thời gian');
 
-   const repeatLabels = {
-     NONE: 'Không lặp lại',
-     DAILY: 'Hàng ngày',
-     WEEKLY: 'Hàng tuần',
-     MONTHLY: 'Hàng tháng'
-   };
-   const targetLabel = targetVal === 'SELF' ? 'Chỉ mình tôi' : (activeDmPeer ? 'Cả hai' : 'Cả nhóm');
+      const repeatLabels = {
+        NONE: 'Không lặp lại',
+        DAILY: 'Hàng ngày',
+        WEEKLY: 'Hàng tuần',
+        MONTHLY: 'Hàng tháng'
+      };
+      const targetLabel = targetVal === 'SELF' ? 'Chỉ mình tôi' : (activeDmPeer ? 'Cả hai' : 'Cả nhóm');
 
-   const reminderPayload = {
-     title,
-     remindAt: new Date(dtVal).toISOString(),
-     repeat: repeatVal,
-     repeatLabel: repeatLabels[repeatVal] || 'Không lặp lại',
-     target: targetVal,
-     targetLabel,
-     creatorId: String(currentUser.id),
-     creatorName: getUserFullName(currentUser)
-   };
+      const reminderPayload = {
+        title,
+        remindAt: new Date(dtVal).toISOString(),
+        repeat: repeatVal,
+        repeatLabel: repeatLabels[repeatVal] || 'Không lặp lại',
+        target: targetVal,
+        targetLabel,
+        creatorId: String(currentUser.id),
+        creatorName: getUserFullName(currentUser)
+      };
 
-   const { data } = await sb.from('team_messages').insert([{
-     channel_id: getCurrentConversationChannelKey(),
-     sender_name: getUserFullName(currentUser),
-     sender_role: currentUser.role_title || 'Thành viên',
-     msg_type: 'REMINDER',
-     content: JSON.stringify(reminderPayload)
-   }]).select();
+      const { data } = await sb.from('team_messages').insert([{
+        channel_id: getCurrentConversationChannelKey(),
+        sender_name: getUserFullName(currentUser),
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
+        msg_type: 'REMINDER',
+        content: JSON.stringify(reminderPayload)
+      }]).select();
 
-   if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-   closeModal('reminderCreateModal');
-   renderMessages();
+      if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+      closeModal('reminderCreateModal');
+      renderMessages();
 
-   const delayMs = new Date(dtVal).getTime() - Date.now();
-   if (delayMs > 0 && delayMs <= 24 * 60 * 60 * 1000) {
-     setTimeout(() => {
-       showAppNotice(`⏰ ĐẾN GIỜ NHẮC HẸN:\n"${title}"\n(${formatDateTimeVN(dtVal)})`, '⏰ Nhắc hẹn TeamWork Cloud');
-     }, delayMs);
-   }
- }
-    
+      const delayMs = new Date(dtVal).getTime() - Date.now();
+      if (delayMs > 0 && delayMs <= 24 * 60 * 60 * 1000) {
+        setTimeout(() => {
+          showAppNotice(`ĐẾN GIỜ NHẮC HẸN:\n"${title}"\n(${formatDateTimeVN(dtVal)})`, 'Nhắc hẹn TeamWork Cloud');
+        }, delayMs);
+      }
+    }
+
     async function sendChatMessage() {
       const inp = document.getElementById('chatInput');
-      let rawText = inp.value.trim();
+      let rawText = sanitizeCleanText(inp.value.trim());
       if (!rawText || !currentUser) return;
 
       rawText = replaceQuickEmojis(rawText);
       inp.value = '';
       document.getElementById('pollQuickSuggestBar').classList.add('hidden');
+      dismissMapSuggestBar();
+
+      const activeMapToAttach = attachedMapDraftInfo ? { ...attachedMapDraftInfo } : null;
+      clearAttachedMapDraft();
 
       if (editingMsgId) {
         const targetId = editingMsgId;
         cancelChatActionBanner();
-        const editedText = `${rawText} (đã chỉnh sửa)`;
+        let editedText = `${rawText} (đã chỉnh sửa)`;
+        if (activeMapToAttach) {
+          editedText += `\n[[MAP_QUERY:${encodeURIComponent(JSON.stringify(activeMapToAttach))}]]`;
+        }
         await sb.from('team_messages').update({ content: editedText }).eq('id', targetId);
         const msgObj = dbMessages.find(m => String(m.id) === String(targetId));
         if (msgObj) msgObj.content = editedText;
@@ -3934,15 +4049,19 @@
 
       let finalContent = rawText;
       if (replyToMsgObj) {
-        const quotePreview = String(replyToMsgObj.content || '').replace(/<[^>]*>/g, ' ').slice(0, 70);
-        finalContent = `↩️ Trả lời ${replyToMsgObj.sender_name}: "${quotePreview}"\n──────────────\n${rawText}`;
+        const quotePreview = sanitizeCleanText(String(replyToMsgObj.content || '').replace(/<[^>]*>/g, ' ')).slice(0, 70);
+        finalContent = `Trả lời ${sanitizeCleanText(replyToMsgObj.sender_name)}: "${quotePreview}"\n--------------\n${rawText}`;
         cancelChatActionBanner();
+      }
+
+      if (activeMapToAttach) {
+        finalContent += `\n[[MAP_QUERY:${encodeURIComponent(JSON.stringify(activeMapToAttach))}]]`;
       }
 
       const { data } = await sb.from('team_messages').insert([{
         channel_id: getCurrentConversationChannelKey(),
         sender_name: getUserFullName(currentUser),
-        sender_role: currentUser.role_title || 'Thành viên',
+        sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
         msg_type: 'CHAT',
         content: finalContent
       }]).select();
@@ -3955,27 +4074,26 @@
     // [LOCKED MODULE 20]: KHỞI TẠO HỆ THỐNG, CHỐNG NHẤP NHÁY MAPS & REALTIME
     // =========================================================================
     function openModal(id) {
-   const el = document.getElementById(id);
-   if (el) {
-     el.style.display = 'flex';
-     el.classList.remove('hidden');
-     el.classList.add('flex');
-   }
- }
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'flex';
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+      }
+    }
 
- function closeModal(id) {
-   const el = document.getElementById(id);
-   if (el) {
-     el.style.display = 'none';
-     el.classList.add('hidden');
-     el.classList.remove('flex');
-   }
- }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+    }
 
     window.addEventListener('DOMContentLoaded', async () => {
       await syncAllFromSupabase(false);
 
-      // Đồng bộ tự động định kỳ nhưng chỉ render lại khi có thay đổi thực sự (tránh nhấp nháy iframe Google Maps)
       let lastSnapshotHash = '';
       setInterval(async () => {
         if (!currentUser || isAnyModalCurrentlyOpen() || isMultiDeleteMode) return;
