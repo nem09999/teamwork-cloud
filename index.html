@@ -4515,7 +4515,77 @@
         btn.textContent = 'Giao Việc & Gửi Telegram';
       }
     };
+    // =========================================================================
+    // [BỔ SUNG 03]: ĐẨY THÔNG BÁO CẬP NHẬT / ĐÃ XONG VIỆC TỪ WEB APP SANG TELEGRAM
+    // =========================================================================
+    async function twNotifyTaskStatusTelegram(taskObj, statusLabel, actorLabel, extraNote) {
+      try {
+        if (!taskObj) return;
+        const assigneeObj = (dbUsers || []).find(u =>
+          String(u.id) === String(taskObj.assignee_id || '') ||
+          String(getUserFullName(u)).trim().toLowerCase() === String(taskObj.assignee_name || '').trim().toLowerCase()
+        );
+        const recipients = typeof twCollectTaskRecipientsChatIds === 'function'
+          ? twCollectTaskRecipientsChatIds(assigneeObj)
+          : [DEFAULT_APPROVER_CHAT_ID].filter(Boolean);
 
+        const primaryChatId = recipients[0] || DEFAULT_APPROVER_CHAT_ID;
+        const chanObj = (dbChannels || []).find(c => String(c.id) === String(taskObj.channel_id || ''));
+        const chanName = sanitizeCleanText(chanObj ? chanObj.name : 'Dự án');
+        const taskTitle = sanitizeCleanText(taskObj.task_title || taskObj.title || 'Công việc');
+        const whoDone = sanitizeCleanText(actorLabel || (currentUser ? getUserFullName(currentUser) : 'Thành viên'));
+
+        const summaryMsg =
+          `📌 <b>CẬP NHẬT TRẠNG THÁI CÔNG VIỆC (${statusLabel})</b>\n\n` +
+          `• Dự án: <b>${chanName}</b>\n` +
+          `• Nội dung: <b>${taskTitle}</b>\n` +
+          `• Người thực hiện: <b>${sanitizeCleanText(taskObj.assignee_name || 'Thành viên')}</b>\n` +
+          `• Người cập nhật: <b>${whoDone}</b>` +
+          (extraNote ? `\n• Ghi chú: <i>${sanitizeCleanText(extraNote)}</i>` : '');
+
+        if (typeof callGasWebhook === 'function') {
+          await callGasWebhook({
+            action: 'NOTIFY_TASK_UPDATE',
+            taskId: String(taskObj.id || ''),
+            channelId: String(taskObj.channel_id || ''),
+            channelName: chanName,
+            taskTitle,
+            status: statusLabel,
+            assigneeName: sanitizeCleanText(taskObj.assignee_name || 'Thành viên'),
+            actorName: whoDone,
+            note: extraNote || '',
+            chatId: primaryChatId,
+            targetChatIds: recipients,
+            chatIds: recipients,
+            message: summaryMsg
+          });
+        }
+      } catch (err) {
+        console.error('Lỗi gửi thông báo trạng thái việc sang Telegram:', err);
+      }
+    }
+
+    // Tự động bọc hàm đánh dấu hoàn thành việc nếu có trên trang
+    ['completeTask', 'markTaskDone', 'setTaskDone', 'finishTask'].forEach(function (fnName) {
+      if (typeof window[fnName] === 'function' && !window[fnName]._twWrapped) {
+        const origFn = window[fnName];
+        const wrappedFn = async function (taskId, ...rest) {
+          const res = await origFn.apply(this, [taskId, ...rest]);
+          const foundTask = (typeof dbTasks !== 'undefined' && Array.isArray(dbTasks))
+            ? dbTasks.find(t => String(t.id) === String(taskId))
+            : null;
+          await twNotifyTaskStatusTelegram(
+            foundTask || { id: taskId, task_title: 'Công việc #' + taskId },
+            'ĐÃ XONG',
+            currentUser ? getUserFullName(currentUser) : 'Điều hành',
+            ''
+          );
+          return res;
+        };
+        wrappedFn._twWrapped = true;
+        window[fnName] = wrappedFn;
+      }
+    });
     // =========================================================================
     // [KHỞI TẠO HỆ THỐNG & ĐỒNG BỘ REALTIME AN TOÀN]
     // =========================================================================
