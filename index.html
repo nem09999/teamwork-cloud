@@ -100,7 +100,7 @@
       <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 shrink-0">☰</button>
       <div class="min-w-0">
         <div class="flex items-center gap-1.5">
-          <h2 id="activeChannelTitle" class="text-xs sm:text-base font-bold text-white truncate"># Đang tải...</h2>
+          <h2 id="activeChannelTitle" class="text-xs sm:text-base font-bold text-white truncate"> Đang tải...</h2>
           <span id="dmBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">🔒 1-1</span>
           <span id="channelMemberBadge" class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shrink-0">👥 0</span>
           <button id="btnEditCurrentGroup" onclick="openProjectGroupModal(activeChannelId)" title="Cấu hình Nhóm / Dự án" class="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 shrink-0">⚙️</button>
@@ -873,51 +873,52 @@
       </div>
     </div>
   </div>
-<div class="p-4 space-y-4">
-    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
-      <span class="text-xl shrink-0">⏰</span>
-      <input id="reminderTitleInput" type="text" placeholder="Nhập tiêu đề nhắc hẹn..." class="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none" />
-    </div>
-
-    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
-      <span class="text-base text-slate-400 shrink-0">🕒</span>
-      <div class="flex-1">
-        <label class="block text-[10px] text-slate-400 mb-1">Thời gian nhắc hẹn</label>
-        <input id="reminderDateTimeInput" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+<!-- MODAL TẠO NHẮC HẸN MỚI -->
+  <div id="reminderCreateModal" style="display:none;" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl text-xs">
+      <div class="px-4 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+        <button type="button" onclick="closeModal('reminderCreateModal')" class="text-slate-400 hover:text-white text-sm font-semibold px-2 py-1">Hủy</button>
+        <h3 class="text-sm font-bold text-white">Tạo nhắc hẹn mới</h3>
+        <button type="button" onclick="submitNewReminder()" class="text-blue-400 hover:text-blue-300 font-bold text-sm px-2 py-1">Xong</button>
       </div>
-    </div>
 
-    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
-      <span class="text-base text-slate-400 shrink-0">🔁</span>
-      <div class="flex-1">
-        <label class="block text-[10px] text-slate-400 mb-1">Chọn kiểu lặp lại</label>
-        <select id="reminderRepeatSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white">
-          <option value="NONE">Không lặp lại (1 lần)</option>
-          <option value="DAILY">Hàng ngày</option>
-          <option value="WEEKLY">Hàng tuần</option>
-          <option value="MONTHLY">Hàng tháng</option>
-        </select>
-      </div>
-    </div>
+      <div class="p-4 space-y-4">
+        <div class="border-b border-slate-800 pb-3">
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Tiêu đề nhắc hẹn</label>
+          <input id="reminderTitleInput" type="text" placeholder="Nhập tiêu đề nhắc hẹn..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        </div>
 
-    <div class="flex items-start gap-3">
-      <span class="text-base text-slate-400 mt-0.5 shrink-0">🔒</span>
-      <div class="flex-1 space-y-2.5">
-        <div class="font-semibold text-slate-300">Nhắc cho</div>
-        <div class="grid grid-cols-2 gap-3">
-          <label class="flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2.5 cursor-pointer">
-            <input type="radio" name="reminderTargetRadio" value="SELF" class="w-4 h-4 text-blue-500" />
-            <span class="text-white font-medium">Chỉ mình tôi</span>
-          </label>
-          <label class="flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2.5 cursor-pointer">
-            <input type="radio" name="reminderTargetRadio" value="ALL" checked class="w-4 h-4 text-blue-500" />
-            <span id="reminderTargetAllLabel" class="text-white font-medium">Cả hai</span>
-          </label>
+        <div class="border-b border-slate-800 pb-3">
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Thời gian nhắc hẹn</label>
+          <input id="reminderDateTimeInput" type="datetime-local" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+        </div>
+
+        <div class="border-b border-slate-800 pb-3">
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Chọn kiểu lặp lại</label>
+          <select id="reminderRepeatSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white">
+            <option value="NONE">Không lặp lại (1 lần)</option>
+            <option value="DAILY">Hàng ngày</option>
+            <option value="WEEKLY">Hàng tuần</option>
+            <option value="MONTHLY">Hàng tháng</option>
+          </select>
+        </div>
+
+        <div class="space-y-2">
+          <div class="font-semibold text-slate-300">Nhắc cho</div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2.5 cursor-pointer">
+              <input type="radio" name="reminderTargetRadio" value="SELF" class="w-4 h-4 text-blue-500" />
+              <span class="text-white font-medium">Chỉ mình tôi</span>
+            </label>
+            <label class="flex items-center gap-2 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2.5 cursor-pointer">
+              <input type="radio" name="reminderTargetRadio" value="ALL" checked class="w-4 h-4 text-blue-500" />
+              <span id="reminderTargetAllLabel" class="text-white font-medium">Cả hai</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
   <script>
     // =========================================================================
     // [LOCKED MODULE 01]: CẤU HÌNH KẾT NỐI SUPABASE & GOOGLE APPS SCRIPT
@@ -1138,52 +1139,80 @@
       return res.split('').sort(() => 0.5 - Math.random()).join('');
     }
 
-    function showAppNotice(message, title = '📢 Thông báo') {
+    function stripDecorSymbols(str) {
+      return String(str || '')
+        .replace(/[#★☆●◆◇■□▲△▼▽►◄※•·▪▫]/g, '')
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function showAppNotice(message, title = 'Thông báo hệ thống') {
       return new Promise(resolve => {
-        document.getElementById('appDialogTitle').textContent = title;
-        document.getElementById('appDialogMessage').textContent = message;
-        document.getElementById('appDialogPromptInput').classList.add('hidden');
-        document.getElementById('appDialogCancelBtn').classList.add('hidden');
-        const okBtn = document.getElementById('appDialogOkBtn');
-        okBtn.textContent = 'Đã hiểu';
-        okBtn.onclick = () => { closeModal('appDialogModal'); resolve(true); };
+        const modal = document.getElementById('appDialogModal');
+        if (!modal) { alert(stripDecorSymbols(message)); return resolve(true); }
+        document.getElementById('appDialogTitle').textContent = stripDecorSymbols(title) || 'Thông báo hệ thống';
+        document.getElementById('appDialogMessage').textContent = stripDecorSymbols(message);
+        const inpWrap = document.getElementById('appDialogInputWrap');
+        if (inpWrap) inpWrap.classList.add('hidden');
+        const btnCancel = document.getElementById('appDialogCancelBtn');
+        if (btnCancel) btnCancel.classList.add('hidden');
+        const btnOk = document.getElementById('appDialogOkBtn');
+        btnOk.textContent = 'Đóng';
+        btnOk.onclick = () => { closeModal('appDialogModal'); resolve(true); };
         openModal('appDialogModal');
       });
     }
 
-    function showAppConfirm(message, title = '❓ Xác nhận thao tác') {
+    function showAppConfirm(message, title = 'Xác nhận thao tác') {
       return new Promise(resolve => {
-        document.getElementById('appDialogTitle').textContent = title;
-        document.getElementById('appDialogMessage').textContent = message;
-        document.getElementById('appDialogPromptInput').classList.add('hidden');
-        const cancelBtn = document.getElementById('appDialogCancelBtn');
-        const okBtn = document.getElementById('appDialogOkBtn');
-        cancelBtn.classList.remove('hidden');
-        okBtn.textContent = 'Xác nhận';
-        cancelBtn.onclick = () => { closeModal('appDialogModal'); resolve(false); };
-        okBtn.onclick = () => { closeModal('appDialogModal'); resolve(true); };
+        const modal = document.getElementById('appDialogModal');
+        if (!modal) return resolve(confirm(stripDecorSymbols(message)));
+        document.getElementById('appDialogTitle').textContent = stripDecorSymbols(title) || 'Xác nhận thao tác';
+        document.getElementById('appDialogMessage').textContent = stripDecorSymbols(message);
+        const inpWrap = document.getElementById('appDialogInputWrap');
+        if (inpWrap) inpWrap.classList.add('hidden');
+        const btnCancel = document.getElementById('appDialogCancelBtn');
+        if (btnCancel) {
+          btnCancel.classList.remove('hidden');
+          btnCancel.textContent = 'Hủy';
+          btnCancel.onclick = () => { closeModal('appDialogModal'); resolve(false); };
+        }
+        const btnOk = document.getElementById('appDialogOkBtn');
+        btnOk.textContent = 'Xác nhận';
+        btnOk.onclick = () => { closeModal('appDialogModal'); resolve(true); };
         openModal('appDialogModal');
       });
     }
 
-    function showAppPrompt(message, defaultVal = '', title = '✏️ Nhập thông tin') {
+    function showAppPrompt(message, defaultValue = '', title = 'Nhập thông tin') {
       return new Promise(resolve => {
-        document.getElementById('appDialogTitle').textContent = title;
-        document.getElementById('appDialogMessage').textContent = message;
-        const inp = document.getElementById('appDialogPromptInput');
-        inp.value = defaultVal;
-        inp.classList.remove('hidden');
-        const cancelBtn = document.getElementById('appDialogCancelBtn');
-        const okBtn = document.getElementById('appDialogOkBtn');
-        cancelBtn.classList.remove('hidden');
-        okBtn.textContent = 'Lưu';
-        cancelBtn.onclick = () => { closeModal('appDialogModal'); resolve(null); };
-        okBtn.onclick = () => { const v = inp.value; closeModal('appDialogModal'); resolve(v); };
+        const modal = document.getElementById('appDialogModal');
+        if (!modal) return resolve(prompt(stripDecorSymbols(message), defaultValue));
+        document.getElementById('appDialogTitle').textContent = stripDecorSymbols(title) || 'Nhập thông tin';
+        document.getElementById('appDialogMessage').textContent = stripDecorSymbols(message);
+        const inpWrap = document.getElementById('appDialogInputWrap');
+        const inp = document.getElementById('appDialogInput');
+        if (inpWrap && inp) {
+          inpWrap.classList.remove('hidden');
+          inp.value = defaultValue || '';
+        }
+        const btnCancel = document.getElementById('appDialogCancelBtn');
+        if (btnCancel) {
+          btnCancel.classList.remove('hidden');
+          btnCancel.textContent = 'Hủy';
+          btnCancel.onclick = () => { closeModal('appDialogModal'); resolve(null); };
+        }
+        const btnOk = document.getElementById('appDialogOkBtn');
+        btnOk.textContent = 'Lưu';
+        btnOk.onclick = () => {
+          const val = inp ? inp.value : '';
+          closeModal('appDialogModal');
+          resolve(val);
+        };
         openModal('appDialogModal');
-        setTimeout(() => inp.focus(), 100);
       });
     }
-
     // =========================================================================
     // [LOCKED MODULE 05]: AUDIT LOG, REFRESH & ĐIỀU HƯỚNG UI
     // =========================================================================
@@ -1356,9 +1385,9 @@
  document.addEventListener('click', closeAllDropdowns);
 
  // =========================================================================
- // [LOCKED MODULE 06]: NHẬN DIỆN GOOGLE MAPS 3 LỚP (TỌA ĐỘ / XÃ-PHƯỜNG / ĐỊA DANH + TỈNH-TP)
+ // [LOCKED MODULE 06]: NHẬN DIỆN GOOGLE MAPS 4 LỚP (TỌA ĐỘ / XÃ-PHƯỜNG / ĐỊA DANH / TỈNH-TP)
  // =========================================================================
- const VN_PROVINCES_REGEX = '(?:tp\\.?\\s*hcm|tp\\.?\\s*hồ chí minh|thành phố hồ chí minh|hồ chí minh|sài gòn|hà nội|tp\\.?\\s*hà nội|thành phố hà nội|đà nẵng|hải phòng|cần thơ|bình dương|đồng nai|bà rịa\\s*-?\\s*vũng tàu|vũng tàu|long an|tiền giang|bến tre|vĩnh long|trà vinh|đồng tháp|an giang|kiên giang|hậu giang|sóc trăng|bạc liêu|cà mau|tây ninh|bình phước|lâm đồng|đà lạt|đắk lắk|đắk nông|gia lai|kon tum|khánh hòa|nha trang|ninh thuận|bình thuận|phan thiết|phú yên|bình định|quy nhơn|quảng ngãi|quảng nam|hội an|thừa thiên huế|huế|quảng trị|quảng bình|hà tĩnh|nghệ an|vinh|thanh hóa|ninh bình|nam định|thái bình|hà nam|hưng yên|hải dương|bắc ninh|bắc giang|vĩnh phúc|phú thọ|thái nguyên|quảng ninh|hạ long|lạng sơn|cao bằng|bắc kạn|tuyên quang|hà giang|yên bái|lào cai|sa pa|sapa|lai châu|điện biên|sơn la|hòa bình)';
+ const VN_PROVINCES_REGEX = '(?:tp\\.?\\s*hcm|tp\\.?\\s*hồ chí minh|thành phố hồ chí minh|hồ chí minh|sài gòn|hà nội|tp\\.?\\s*hà nội|thành phố hà nội|đà nẵng|tp\\.?\\s*đà nẵng|thành phố đà nẵng|hải phòng|cần thơ|bình dương|đồng nai|bà rịa\\s*-?\\s*vũng tàu|vũng tàu|long an|tiền giang|bến tre|vĩnh long|trà vinh|đồng tháp|an giang|kiên giang|hậu giang|sóc trăng|bạc liêu|cà mau|tây ninh|bình phước|lâm đồng|đà lạt|bảo lộc|đắk lắk|buôn ma thuột|đắk nông|gia lai|pleiku|kon tum|khánh hòa|nha trang|cam ranh|ninh thuận|phan rang|bình thuận|phan thiết|phú yên|tuy hòa|bình định|quy nhơn|quảng ngãi|quảng nam|hội an|tam kỳ|thừa thiên huế|huế|quảng trị|quảng bình|đồng hới|hà tĩnh|nghệ an|vinh|thanh hóa|ninh bình|nam định|thái bình|hà nam|hưng yên|hải dương|bắc ninh|bắc giang|vĩnh phúc|phú thọ|việt trì|thái nguyên|quảng ninh|hạ long|móng cái|lạng sơn|cao bằng|bắc kạn|tuyên quang|hà giang|yên bái|lào cai|sa pa|sapa|lai châu|điện biên|sơn la|hòa bình)';
 
  function extractLocationForMap(text) {
    const raw = String(text || '').trim();
@@ -1373,7 +1402,7 @@
      };
    }
 
-   // 2. Link Google Maps
+   // 2. Đường dẫn Google Maps
    const gmapMatch = raw.match(/https?:\/\/(?:www\.)?(?:google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)[^\s]*/i);
    if (gmapMatch) {
      const url = gmapMatch[0];
@@ -1388,19 +1417,27 @@
    }
 
    // 3. Địa chỉ đến Xã / Phường / Thị trấn + Tỉnh / Thành phố
-   const wardProvRegex = new RegExp(`((?:xã|phường|thị trấn|p\\.|x\\.)\\s*[^,\\n]{2,40}(?:,\\s*[^,\\n]{2,40}){0,2},\\s*${VN_PROVINCES_REGEX})`, 'i');
+   const wardProvRegex = new RegExp(`((?:xã|phường|thị trấn|p\\.|x\\.)\\s*[^,\\n]{2,45}(?:,\\s*[^,\\n]{2,45}){0,2},\\s*(?:tỉnh|thành phố|tp\\.?)?\\s*${VN_PROVINCES_REGEX})`, 'i');
    const wardMatch = raw.match(wardProvRegex);
    if (wardMatch) {
      const addr = wardMatch[1].trim();
      return { query: addr, label: addr };
    }
 
-   // 4. Địa danh / Khu vực + Tỉnh / Thành phố
-   const landmarkProvRegex = new RegExp(`((?:kcn|khu công nghiệp|khu đô thị|kđt|cảng|sân bay|cao tốc|nút giao|trạm dừng nghỉ|dự án|tòa nhà|chung cư|cầu|bến xe|chợ|ubnd|bệnh viện|trường|khu vực|đường)\\s*[^,\\n]{2,55},\\s*${VN_PROVINCES_REGEX})`, 'i');
+   // 4. Địa danh / Khu vực / Huyện / Thành phố thuộc tỉnh + Tỉnh / Thành phố
+   const landmarkProvRegex = new RegExp(`((?:kcn|khu công nghiệp|khu đô thị|kđt|cảng|sân bay|cao tốc|nút giao|trạm dừng nghỉ|dự án|tòa nhà|chung cư|cầu|bến xe|chợ|ubnd|bệnh viện|trường|khu vực|đường|huyện|quận|thành phố|tp\\.|thị xã)\\s*[^,\\n]{2,55},\\s*(?:tỉnh|thành phố|tp\\.?)?\\s*${VN_PROVINCES_REGEX})`, 'i');
    const landmarkMatch = raw.match(landmarkProvRegex);
    if (landmarkMatch) {
      const place = landmarkMatch[1].trim();
      return { query: place, label: place };
+   }
+
+   // 5. Gõ trực tiếp Tỉnh / Thành phố (VD: "tỉnh lâm đồng", "TP.HCM", "Đà Lạt, Lâm Đồng")
+   const directProvRegex = new RegExp(`^(?:(?:vị trí|địa chỉ|khu vực|tại|ở)\\s*:?\\s*)?(?:([^,\\n]{2,35},\\s*)?(?:tỉnh|thành phố|tp\\.?)?\\s*(${VN_PROVINCES_REGEX}))$`, 'i');
+   const directMatch = raw.match(directProvRegex);
+   if (directMatch) {
+     const cleanPlace = raw.replace(/^(?:vị trí|địa chỉ|khu vực|tại|ở)\s*:?\s*/i, '').trim();
+     return { query: cleanPlace, label: cleanPlace };
    }
 
    return null;
@@ -1408,13 +1445,13 @@
 
  function renderGoogleMapEmbedHtml(locInfo) {
    const q = encodeURIComponent(locInfo.query);
-   const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+   const embedUrl = `https://maps.google.com/maps?q=${q}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
    const externalUrl = locInfo.rawUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
    return `
      <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
        <div class="px-3 py-1.5 bg-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
-         <span class="text-emerald-400 font-semibold truncate">📍 Vị trí: ${escapeHtmlSafe(locInfo.label)}</span>
-         <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">Mở Maps ↗</a>
+         <span class="text-emerald-400 font-semibold truncate">Vị trí bản đồ: ${escapeHtmlSafe(locInfo.label)}</span>
+         <a href="${externalUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline shrink-0 font-medium">Mở Google Maps</a>
        </div>
        <iframe src="${embedUrl}" class="w-full h-44 sm:h-48 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
      </div>
@@ -1999,7 +2036,7 @@
         return `
           <div class="group relative flex items-center rounded-xl transition ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800/80'}">
             <button onclick="selectChannel('${c.id}')" class="flex-1 text-left px-3 py-2.5 min-w-0 pr-9">
-              <div class="text-xs font-semibold truncate"># ${escapeHtmlSafe(c.name)}</div>
+              <div class="text-xs font-semibold truncate"> ${escapeHtmlSafe(c.name)}</div>
               <div class="text-[10px] ${active ? 'text-blue-100' : 'text-slate-500'} truncate">👥 ${memCount} thành viên</div>
             </button>
             <button onclick="event.stopPropagation(); openProjectGroupModal('${c.id}')" class="absolute right-1.5 w-7 h-7 rounded-lg flex items-center justify-center text-xs ${active ? 'text-blue-100 hover:bg-blue-500' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}">⚙️</button>
@@ -2036,7 +2073,7 @@
           const memCount = (meta && Array.isArray(meta.members)) ? meta.members.length : dbUsers.length;
           memBadge.textContent = `👥 ${memCount} thành viên`;
           memBadge.classList.remove('hidden');
-          document.getElementById('activeChannelTitle').textContent = `# ${activeChan.name}`;
+          document.getElementById('activeChannelTitle').textContent = ` ${activeChan.name}`;
           document.getElementById('activeChannelDesc').textContent = activeChan.description || '';
         }
       }
@@ -2718,36 +2755,41 @@
          </div>
        `;
      }
+ 
+      // 3. TIN NHẮN THƯỜNG & TỆP ĐÍNH KÈM
+        const locInfo = extractLocationForMap(m.content);
+        const mapHtml = locInfo ? renderGoogleMapEmbedHtml(locInfo) : '';
 
-        // 3. TIN NHẮN THƯỜNG & TỆP ĐÍNH KÈM
-        const isRecalled = String(m.content || '').includes('Tin nhắn đã được thu hồi');
         return `
           <div id="msg_card_${m.id}" ${ctxAttr} class="flex items-start max-w-2xl">
             ${multiCheckHtml}
-            <div class="flex-1 group bg-slate-900/90 hover:border-slate-700 border ${isCheckedDel ? 'border-rose-500' : 'border-slate-800'} rounded-xl p-3 transition relative">
-              <div class="flex items-center justify-between mb-1 gap-2">
-                <span class="text-xs font-bold text-blue-400 truncate">${escapeHtmlSafe(m.sender_name)}</span>
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm">⋮</button>
-                  <span class="text-[10px] text-slate-500">${timeStr}</span>
+            <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-sm space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-xs font-bold text-blue-300 truncate">${escapeHtmlSafe(m.sender_name)}</span>
+                  ${m.sender_role ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 truncate">${escapeHtmlSafe(m.sender_role)}</span>` : ''}
+                  <span class="text-[10px] text-slate-500 shrink-0">${formatDateTimeVN(m.created_at)}</span>
                 </div>
+                <button onclick="openMsgContextMenu(event, '${m.id}')" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm shrink-0">⋮</button>
               </div>
-              <div class="text-xs ${isRecalled ? 'italic text-slate-500' : 'text-slate-200'} leading-relaxed whitespace-pre-line break-words">${formatMessageTextHtml(m.content)}</div>
-             ${m.file_url ? (m.msg_type === 'IMAGE' ? `
-             <div class="mt-2">
-               <a href="${escapeHtmlSafe(m.file_url)}" target="_blank">
-                 <img src="${escapeHtmlSafe(m.file_url)}" alt="${escapeHtmlSafe(m.file_name || 'Hình ảnh')}" class="max-h-64 rounded-xl border border-slate-700 object-contain" />
-               </a>
-             </div>
-           ` : `
-             <div class="mt-2 pt-2 border-t border-slate-800">
-               <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(m.file_name || 'tai_lieu')}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
-                 <span>📎</span><span class="truncate">${escapeHtmlSafe(m.file_name || 'Tệp đính kèm')}</span>
-               </a>
-             </div>
-           `) : ''}
-              ${transHtml}
+
+              <div class="text-xs sm:text-sm text-slate-100 whitespace-pre-wrap break-words leading-relaxed">${linkifySafeText(m.content)}</div>
+
               ${mapHtml}
+
+              ${m.file_url ? (m.msg_type === 'IMAGE' ? `
+                <div class="mt-2">
+                  <a href="${escapeHtmlSafe(m.file_url)}" target="_blank">
+                    <img src="${escapeHtmlSafe(m.file_url)}" alt="${escapeHtmlSafe(m.file_name || 'Hình ảnh')}" class="max-h-64 rounded-xl border border-slate-700 object-contain" />
+                  </a>
+                </div>
+              ` : `
+                <div class="mt-2 pt-2 border-t border-slate-800">
+                  <a href="${escapeHtmlSafe(m.file_url)}" download="${escapeHtmlSafe(m.file_name || 'tai_lieu')}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs max-w-full">
+                    <span>📎</span><span class="truncate">${escapeHtmlSafe(m.file_name || 'Tệp đính kèm')}</span>
+                  </a>
+                </div>
+              `) : ''}
             </div>
           </div>
         `;
@@ -3005,7 +3047,7 @@
       }
       const visibleChans = getVisibleChannelsForCurrentUser();
       const projSel = document.getElementById('taskProjectSelect');
-      projSel.innerHTML = visibleChans.map(c => `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}># ${escapeHtmlSafe(c.name)}</option>`).join('');
+      projSel.innerHTML = visibleChans.map(c => `<option value="${c.id}" ${String(c.id) === String(activeChannelId) ? 'selected' : ''}> ${escapeHtmlSafe(c.name)}</option>`).join('');
 
       document.getElementById('assignSessionUserLabel').textContent = getUserFullName(currentUser);
       document.getElementById('taskContent').value = '';
@@ -3666,7 +3708,7 @@
       const visibleChans = getVisibleChannelsForCurrentUser();
       document.getElementById('backupScopeSelect').innerHTML =
         `<option value="ALL">🌐 Toàn bộ hệ thống TeamWork Cloud</option>` +
-        visibleChans.map(c => `<option value="${c.id}"># Chỉ dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
+        visibleChans.map(c => `<option value="${c.id}">Chỉ dự án: ${escapeHtmlSafe(c.name)}</option>`).join('');
       openModal('backupModal');
     }
 
@@ -3913,14 +3955,22 @@
     // [LOCKED MODULE 20]: KHỞI TẠO HỆ THỐNG, CHỐNG NHẤP NHÁY MAPS & REALTIME
     // =========================================================================
     function openModal(id) {
-      const el = document.getElementById(id);
-      if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
-    }
+   const el = document.getElementById(id);
+   if (el) {
+     el.style.display = 'flex';
+     el.classList.remove('hidden');
+     el.classList.add('flex');
+   }
+ }
 
-    function closeModal(id) {
-      const el = document.getElementById(id);
-      if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
-    }
+ function closeModal(id) {
+   const el = document.getElementById(id);
+   if (el) {
+     el.style.display = 'none';
+     el.classList.add('hidden');
+     el.classList.remove('flex');
+   }
+ }
 
     window.addEventListener('DOMContentLoaded', async () => {
       await syncAllFromSupabase(false);
