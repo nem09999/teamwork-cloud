@@ -3905,38 +3905,53 @@
       renderChannelFiles();
     }
 
-    async function handleQuickChatFileAttach(event) {
-  const input = event && event.target;
-  const files = input && input.files ? Array.from(input.files) : [];
-  if (!files.length) return;
-  closeAllDropdowns();
-  if (!currentUser) return;
+   async function handleQuickChatFileAttach(event) {
+      const input = event && event.target;
+      const files = input && input.files ? Array.from(input.files) : [];
+      if (!files.length) return;
+      closeAllDropdowns();
+      if (!currentUser) return;
 
-  for (const file of files) {
-    if (!file) continue;
-    if (file.size > 3 * 1024 * 1024) {
-      showAppNotice(`Tệp "${file.name}" vượt quá giới hạn 3MB!`, 'Tệp quá lớn');
-      continue;
+      let sentCount = 0;
+      for (const file of files) {
+        if (!file) continue;
+        if (file.size > 3 * 1024 * 1024) {
+          showAppNotice(`Tệp "${file.name}" vượt quá giới hạn 3MB!`, 'Tệp quá lớn');
+          continue;
+        }
+        try {
+          const cleanName = sanitizeCleanText(file.name);
+          const dataUrl = await readFileAsBase64(file);
+          const { data, error } = await sb.from('team_messages').insert([{
+            channel_id: getCurrentConversationChannelKey(),
+            sender_name: getUserFullName(currentUser),
+            sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
+            msg_type: 'FILE',
+            content: `Đã gửi tệp đính kèm: ${cleanName}`,
+            file_name: cleanName,
+            file_url: dataUrl
+          }]).select();
+
+          if (error) {
+            console.error('Lỗi gửi tệp:', file.name, error);
+            showAppNotice(`Không thể gửi tệp "${file.name}".`, 'Lỗi gửi tệp');
+            continue;
+          }
+          if (data && data[0]) {
+            dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
+            sentCount++;
+          }
+        } catch (err) {
+          console.error('Lỗi đọc/gửi tệp:', file.name, err);
+        }
+      }
+
+      if (input) input.value = '';
+      if (sentCount > 0) {
+        renderMessages();
+        renderChannelFiles();
+      }
     }
-    const cleanName = sanitizeCleanText(file.name);
-    const dataUrl = await readFileAsBase64(file);
-    const { data } = await sb.from('team_messages').insert([{
-      channel_id: getCurrentConversationChannelKey(),
-      sender_name: getUserFullName(currentUser),
-      sender_role: sanitizeCleanText(currentUser.role_title || 'Thành viên'),
-      msg_type: 'FILE',
-      content: `Đã gửi tệp đính kèm: ${cleanName}`,
-      file_name: cleanName,
-      file_url: dataUrl
-    }]).select();
-
-    if (data && data[0]) dbMessages = deduplicateMessagesList([...dbMessages, data[0]]);
-  }
-
-  event.target.value = '';
-  renderMessages();
-  renderChannelFiles();
-}
 
     function handleShareCurrentLocation() {
       closeAllDropdowns();
@@ -4266,10 +4281,140 @@
         `;
       }).join('');
     };
+    // =========================================================================
+    // [BỔ SUNG AN TOÀN]: KIỂM SOÁT QUYỀN NHÓM/DỰ ÁN & GOM CHAT ID GIAO VIỆC
+    // =========================================================================
+    function twIsFullAdmin_(user) {
+      return Boolean(user && typeof isSystemFullAdmin === 'function' && isSystemFullAdmin(user));
+    }
 
+    function twMatchUserIdentity_(candidate, user) {
+      if (!candidate || !user) return false;
+      const uid = String(user.id || '').trim();
+      const uname = String(user.username || '').trim().toLowerCase();
+      const dname = String(user.display_name || '').trim().toLowerCase();
+
+      if (typeof candidate === 'object') {
+        const cId = String(candidate.id || candidate.user_id || '').trim();
+        const cUname = String(candidate.username || '').trim().toLowerCase();
+        return Boolean((uid && cId && uid === cId) || (uname && cUname && uname === cUname));
+      }
+
+      const raw = String(candidate).trim();
+      const rawLower = raw.toLowerCase();
+      return Boolean(
+        (uid && raw === uid) ||
+        (uname && rawLower === uname) ||
+        (dname && rawLower === dname)
+      );
+    }
+
+    function twCanAccessProjectContent_(currentUser, projectOrTask, extraMembers) {
+      if (!currentUser) return false;
+      if (twIsFullAdmin_(currentUser)) return true;
+
+      const ctx = projectOrTask || {};
+      const directCreators = [
+        ctx.created_by, ctx.creator_id, ctx.assigned_by, ctx.assigner_id,
+        ctx.owner_id, ctx.leader_id, ctx.createdBy, ctx.assignedBy
+      ];
+      if (directCreators.some((v) => twMatchUserIdentity_(v, currentUser))) {
+        return true;
+      }
+
+      const listCandidates = [
+        ctx.assignee_ids, ctx.assignees, ctx.assigneeIds,
+        ctx.member_ids, ctx.members, ctx.memberIds,
+        ctx.participant_ids, ctx.participants,
+        extraMembers
+      ];
+
+      for (let i = 0; i < listCandidates.length; i++) {
+        const arr = listCandidates[i];
+        if (Array.isArray(arr) && arr.some((item) => twMatchUserIdentity_(item, currentUser))) {
+          return true;
+        }
+      }
+
+      const strFields = [ctx.member_list, ctx.assignee_list, ctx.members_text];
+      for (let j = 0; j < strFields.length; j++) {
+        if (typeof strFields[j] === 'string' && strFields[j].trim()) {
+          const tokens = strFields[j].split(',').map((s) => s.trim()).filter(Boolean);
+          if (tokens.some((tok) => twMatchUserIdentity_(tok, currentUser))) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    function twBuildTaskTargetChatIds_(allUsers, opts) {
+      const options = opts || {};
+      const chatSet = new Set();
+      const usersList = Array.isArray(allUsers) ? allUsers : [];
+
+      const targetKeys = new Set(
+        []
+          .concat(options.assigneeIds || [])
+          .concat(options.assigneeUsernames || [])
+          .concat(options.creatorId ? [options.creatorId] : [])
+          .concat(options.creatorUsername ? [options.creatorUsername] : [])
+          .map((x) => String(x || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
+
+      usersList.forEach((u) => {
+        if (!u) return;
+        const isAdmin = twIsFullAdmin_(u);
+        const uId = String(u.id || '').trim().toLowerCase();
+        const uName = String(u.username || '').trim().toLowerCase();
+        const isInFlow = Boolean((uId && targetKeys.has(uId)) || (uName && targetKeys.has(uName)));
+
+        if ((isAdmin || isInFlow) && u.telegram_chat_id) {
+          chatSet.add(String(u.telegram_chat_id).trim());
+        }
+      });
+
+      []
+        .concat(options.directChatIds || [])
+        .map((c) => String(c || '').trim())
+        .filter(Boolean)
+        .forEach((c) => chatSet.add(c));
+
+      return Array.from(chatSet);
+    }
     // =========================================================================
-    // [BỔ SUNG 02]: HỘP THOẠI XÁC NHẬN GIAO VIỆC TRÊN TELEGRAM (3 NÚT + TỰ ẨN)
+    // [BỔ SUNG 02]: HỘP THOẠI XÁC NHẬN GIAO VIỆC TRÊN TELEGRAM (ĐỦ 3 NHÓM NHẬN)
     // =========================================================================
+    function twCollectTaskRecipientsChatIds(assigneeObj) {
+      const chatSet = new Set();
+
+      // 1. Người được giao việc
+      if (assigneeObj && assigneeObj.telegram_chat_id) {
+        chatSet.add(String(assigneeObj.telegram_chat_id).trim());
+      }
+
+      // 2. Người giao việc hiện tại
+      if (currentUser && currentUser.telegram_chat_id) {
+        chatSet.add(String(currentUser.telegram_chat_id).trim());
+      }
+
+      // 3. Toàn bộ Quản trị hệ thống (FULL)
+      (dbUsers || []).forEach(u => {
+        if (isSystemFullAdmin(u) && u.telegram_chat_id) {
+          chatSet.add(String(u.telegram_chat_id).trim());
+        }
+      });
+
+      // Đảm bảo luôn có Chat ID quản trị mặc định nếu danh sách rỗng
+      if (DEFAULT_APPROVER_CHAT_ID) {
+        chatSet.add(String(DEFAULT_APPROVER_CHAT_ID).trim());
+      }
+
+      return Array.from(chatSet).filter(Boolean);
+    }
+
     submitNewTask = async function () {
       const projId = document.getElementById('taskProjectSelect').value;
       const assigneeId = document.getElementById('taskAssignee').value;
@@ -4288,7 +4433,7 @@
       btn.textContent = 'Đang giao việc...';
 
       try {
-        const { data: insertedTasks } = await sb.from('team_tasks').insert([{
+        const { data: insertedTasks, error: taskErr } = await sb.from('team_tasks').insert([{
           channel_id: String(projId),
           task_title: content,
           assignee_id: assigneeId || null,
@@ -4298,6 +4443,11 @@
           due_date: dueTime ? new Date(dueTime).toISOString() : null,
           status: 'PENDING'
         }]).select();
+
+        if (taskErr) {
+          console.error('Lỗi lưu công việc:', taskErr);
+          return showAppNotice('Không thể lưu công việc lên hệ thống. Vui lòng thử lại!', 'Lỗi giao việc');
+        }
 
         const createdTask = insertedTasks && insertedTasks[0] ? insertedTasks[0] : null;
         const taskId = createdTask ? String(createdTask.id) : '';
@@ -4321,9 +4471,10 @@
 
         const msgId = insertedMsgs && insertedMsgs[0] ? String(insertedMsgs[0].id) : '';
         const cleanChannelName = sanitizeCleanText(chanObj ? chanObj.name : 'Dự án');
-        const targetChatId = (assigneeObj && assigneeObj.telegram_chat_id)
-          ? String(assigneeObj.telegram_chat_id)
-          : DEFAULT_APPROVER_CHAT_ID;
+        const recipientChatIds = twCollectTaskRecipientsChatIds(assigneeObj);
+        const primaryChatId = (assigneeObj && assigneeObj.telegram_chat_id)
+          ? String(assigneeObj.telegram_chat_id).trim()
+          : (recipientChatIds[0] || DEFAULT_APPROVER_CHAT_ID);
 
         const telegramDialogButtons = [
           [
@@ -4342,9 +4493,14 @@
           channelId: String(projId),
           channelName: cleanChannelName,
           taskTitle: content,
+          assigneeId: assigneeId || '',
           assigneeName,
-          assigneeChatId: targetChatId,
-          chatId: targetChatId,
+          assigneeChatId: primaryChatId,
+          chatId: primaryChatId,
+          targetChatIds: recipientChatIds,
+          chatIds: recipientChatIds,
+          creatorId: currentUser ? String(currentUser.id) : '',
+          creatorChatId: (currentUser && currentUser.telegram_chat_id) ? String(currentUser.telegram_chat_id).trim() : '',
           assignedBy,
           dueDate: dueFormatted,
           hideButtonsAfterClick: true,
@@ -4358,114 +4514,19 @@
         btn.disabled = false;
         btn.textContent = 'Giao Việc & Gửi Telegram';
       }
-    }; 
-    // ============================================================================
-// [BỔ SUNG AN TOÀN]: KIỂM SOÁT QUYỀN NHÓM/DỰ ÁN & GOM CHAT ID GIAO VIỆC
-// ============================================================================
-function twIsFullAdmin_(user) {
-  return String((user && user.role) || '').trim().toUpperCase() === 'FULL';
-}
+    };
 
-function twMatchUserIdentity_(candidate, user) {
-  if (!candidate || !user) return false;
-  const uid = String(user.id || '').trim();
-  const uname = String(user.username || '').trim().toLowerCase();
-  const dname = String(user.display_name || '').trim().toLowerCase();
-
-  if (typeof candidate === 'object') {
-    const cId = String(candidate.id || candidate.user_id || '').trim();
-    const cUname = String(candidate.username || '').trim().toLowerCase();
-    return Boolean((uid && cId && uid === cId) || (uname && cUname && uname === cUname));
-  }
-
-  const raw = String(candidate).trim();
-  const rawLower = raw.toLowerCase();
-  return Boolean(
-    (uid && raw === uid) ||
-    (uname && rawLower === uname) ||
-    (dname && rawLower === dname)
-  );
-}
-
-// Trả về TRUE nếu được vào xem/xử lý nội dung bên trong Nhóm/Dự án/Đầu việc.
-// Trả về FALSE nếu chỉ được thấy tên Nhóm/Dự án và bị chặn xem/xử lý bên trong.
-function twCanAccessProjectContent_(currentUser, projectOrTask, extraMembers) {
-  if (!currentUser) return false;
-  if (twIsFullAdmin_(currentUser)) return true;
-
-  const ctx = projectOrTask || {};
-  const directCreators = [
-    ctx.created_by, ctx.creator_id, ctx.assigned_by, ctx.assigner_id,
-    ctx.owner_id, ctx.leader_id, ctx.createdBy, ctx.assignedBy
-  ];
-  if (directCreators.some((v) => twMatchUserIdentity_(v, currentUser))) {
-    return true;
-  }
-
-  const listCandidates = [
-    ctx.assignee_ids, ctx.assignees, ctx.assigneeIds,
-    ctx.member_ids, ctx.members, ctx.memberIds,
-    ctx.participant_ids, ctx.participants,
-    extraMembers
-  ];
-
-  for (let i = 0; i < listCandidates.length; i++) {
-    const arr = listCandidates[i];
-    if (Array.isArray(arr) && arr.some((item) => twMatchUserIdentity_(item, currentUser))) {
-      return true;
-    }
-  }
-
-  // Hỗ trợ trường hợp lưu danh sách ID/username dạng chuỗi ngăn cách bởi dấu phẩy
-  const strFields = [ctx.member_list, ctx.assignee_list, ctx.members_text];
-  for (let j = 0; j < strFields.length; j++) {
-    if (typeof strFields[j] === 'string' && strFields[j].trim()) {
-      const tokens = strFields[j].split(',').map((s) => s.trim()).filter(Boolean);
-      if (tokens.some((tok) => twMatchUserIdentity_(tok, currentUser))) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-// Gom đúng Chat ID của: Người giao + (1 hoặc nhiều) Người được giao + Quản trị FULL
-function twBuildTaskTargetChatIds_(allUsers, opts) {
-  const options = opts || {};
-  const chatSet = new Set();
-  const usersList = Array.isArray(allUsers) ? allUsers : [];
-
-  const targetKeys = new Set(
-    []
-      .concat(options.assigneeIds || [])
-      .concat(options.assigneeUsernames || [])
-      .concat(options.creatorId ? [options.creatorId] : [])
-      .concat(options.creatorUsername ? [options.creatorUsername] : [])
-      .map((x) => String(x || '').trim().toLowerCase())
-      .filter(Boolean)
-  );
-
-  usersList.forEach((u) => {
-    if (!u) return;
-    const isAdmin = twIsFullAdmin_(u);
-    const uId = String(u.id || '').trim().toLowerCase();
-    const uName = String(u.username || '').trim().toLowerCase();
-    const isInFlow = Boolean((uId && targetKeys.has(uId)) || (uName && targetKeys.has(uName)));
-
-    if ((isAdmin || isInFlow) && u.telegram_chat_id) {
-      chatSet.add(String(u.telegram_chat_id).trim());
-    }
-  });
-
-  []
-    .concat(options.directChatIds || [])
-    .map((c) => String(c || '').trim())
-    .filter(Boolean)
-    .forEach((c) => chatSet.add(c));
-
-  return Array.from(chatSet);
-}
+    // =========================================================================
+    // [KHỞI TẠO HỆ THỐNG & ĐỒNG BỘ REALTIME AN TOÀN]
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', async () => {
+      await syncAllFromSupabase(false);
+      setInterval(() => {
+        if (currentUser && !isAnyModalCurrentlyOpen() && !isMultiDeleteMode) {
+          syncAllFromSupabase(true);
+        }
+      }, 15000);
+    });
   </script>
   </body>
 </html>
