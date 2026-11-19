@@ -4348,6 +4348,113 @@
         btn.textContent = 'Giao Việc & Gửi Telegram';
       }
     }; 
+    // ============================================================================
+// [BỔ SUNG AN TOÀN]: KIỂM SOÁT QUYỀN NHÓM/DỰ ÁN & GOM CHAT ID GIAO VIỆC
+// ============================================================================
+function twIsFullAdmin_(user) {
+  return String((user && user.role) || '').trim().toUpperCase() === 'FULL';
+}
+
+function twMatchUserIdentity_(candidate, user) {
+  if (!candidate || !user) return false;
+  const uid = String(user.id || '').trim();
+  const uname = String(user.username || '').trim().toLowerCase();
+  const dname = String(user.display_name || '').trim().toLowerCase();
+
+  if (typeof candidate === 'object') {
+    const cId = String(candidate.id || candidate.user_id || '').trim();
+    const cUname = String(candidate.username || '').trim().toLowerCase();
+    return Boolean((uid && cId && uid === cId) || (uname && cUname && uname === cUname));
+  }
+
+  const raw = String(candidate).trim();
+  const rawLower = raw.toLowerCase();
+  return Boolean(
+    (uid && raw === uid) ||
+    (uname && rawLower === uname) ||
+    (dname && rawLower === dname)
+  );
+}
+
+// Trả về TRUE nếu được vào xem/xử lý nội dung bên trong Nhóm/Dự án/Đầu việc.
+// Trả về FALSE nếu chỉ được thấy tên Nhóm/Dự án và bị chặn xem/xử lý bên trong.
+function twCanAccessProjectContent_(currentUser, projectOrTask, extraMembers) {
+  if (!currentUser) return false;
+  if (twIsFullAdmin_(currentUser)) return true;
+
+  const ctx = projectOrTask || {};
+  const directCreators = [
+    ctx.created_by, ctx.creator_id, ctx.assigned_by, ctx.assigner_id,
+    ctx.owner_id, ctx.leader_id, ctx.createdBy, ctx.assignedBy
+  ];
+  if (directCreators.some((v) => twMatchUserIdentity_(v, currentUser))) {
+    return true;
+  }
+
+  const listCandidates = [
+    ctx.assignee_ids, ctx.assignees, ctx.assigneeIds,
+    ctx.member_ids, ctx.members, ctx.memberIds,
+    ctx.participant_ids, ctx.participants,
+    extraMembers
+  ];
+
+  for (let i = 0; i < listCandidates.length; i++) {
+    const arr = listCandidates[i];
+    if (Array.isArray(arr) && arr.some((item) => twMatchUserIdentity_(item, currentUser))) {
+      return true;
+    }
+  }
+
+  // Hỗ trợ trường hợp lưu danh sách ID/username dạng chuỗi ngăn cách bởi dấu phẩy
+  const strFields = [ctx.member_list, ctx.assignee_list, ctx.members_text];
+  for (let j = 0; j < strFields.length; j++) {
+    if (typeof strFields[j] === 'string' && strFields[j].trim()) {
+      const tokens = strFields[j].split(',').map((s) => s.trim()).filter(Boolean);
+      if (tokens.some((tok) => twMatchUserIdentity_(tok, currentUser))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// Gom đúng Chat ID của: Người giao + (1 hoặc nhiều) Người được giao + Quản trị FULL
+function twBuildTaskTargetChatIds_(allUsers, opts) {
+  const options = opts || {};
+  const chatSet = new Set();
+  const usersList = Array.isArray(allUsers) ? allUsers : [];
+
+  const targetKeys = new Set(
+    []
+      .concat(options.assigneeIds || [])
+      .concat(options.assigneeUsernames || [])
+      .concat(options.creatorId ? [options.creatorId] : [])
+      .concat(options.creatorUsername ? [options.creatorUsername] : [])
+      .map((x) => String(x || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  usersList.forEach((u) => {
+    if (!u) return;
+    const isAdmin = twIsFullAdmin_(u);
+    const uId = String(u.id || '').trim().toLowerCase();
+    const uName = String(u.username || '').trim().toLowerCase();
+    const isInFlow = Boolean((uId && targetKeys.has(uId)) || (uName && targetKeys.has(uName)));
+
+    if ((isAdmin || isInFlow) && u.telegram_chat_id) {
+      chatSet.add(String(u.telegram_chat_id).trim());
+    }
+  });
+
+  []
+    .concat(options.directChatIds || [])
+    .map((c) => String(c || '').trim())
+    .filter(Boolean)
+    .forEach((c) => chatSet.add(c));
+
+  return Array.from(chatSet);
+}
   </script>
 </body>
 </html>
