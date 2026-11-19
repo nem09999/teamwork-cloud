@@ -4436,7 +4436,6 @@
           task_title: content,
           assignee_name: assigneeName,
           assigned_by: assignedBy,
-          start_date: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
           due_date: dueTime ? new Date(dueTime).toISOString() : null,
           status: 'PENDING'
         }]).select();
