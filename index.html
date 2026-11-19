@@ -4091,21 +4091,263 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      await syncAllFromSupabase(false);
+   // =========================================================================
+    // [BỔ SUNG 01]: SỬA NHÂN SỰ (HỌ TÊN, USER ĐĂNG NHẬP, QUYỀN) - CHỈ QUẢN TRỊ FULL
+    // =========================================================================
+    function openEditStaffModal(uid) {
+      if (!isSystemFullAdmin(currentUser)) {
+        return showAppNotice('Chỉ tài khoản có quyền Quản trị (Full) mới được sửa thông tin nhân sự!', 'Giới hạn quyền');
+      }
+      const u = dbUsers.find(x => String(x.id) === String(uid));
+      if (!u) return;
 
-      let lastSnapshotHash = '';
-      setInterval(async () => {
-        if (!currentUser || isAnyModalCurrentlyOpen() || isMultiDeleteMode) return;
-        const prevHash = `${dbMessages.length}_${dbTasks.length}_${JSON.stringify(dbMessages.slice(-2).map(m => m.approval_status + m.content))}`;
+      const currentFullName = getUserFullName(u);
+      const currentLoginUser = getUserLoginAccount(u);
+      const currentPerm = getUserPermDef(u).code;
+
+      const modalId = 'editStaffInlineModal';
+      let modalEl = document.getElementById(modalId);
+      if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = modalId;
+        modalEl.className = 'hidden fixed inset-0 z-[95] bg-black/75 backdrop-blur-sm items-center justify-center p-4';
+        document.body.appendChild(modalEl);
+      }
+
+      modalEl.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-5 space-y-4 text-xs shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h4 class="text-sm font-bold text-white">Sửa thông tin nhân sự</h4>
+            <button type="button" onclick="closeModal('${modalId}')" class="text-slate-400 hover:text-white text-base">✕</button>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-slate-400 mb-1">Họ và tên</label>
+              <input id="editStaffFullNameInp" type="text" value="${escapeHtmlSafe(currentFullName)}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">User đăng nhập</label>
+              <input id="editStaffUsernameInp" type="text" value="${escapeHtmlSafe(currentLoginUser)}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-blue-300 font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Phân quyền</label>
+              <select id="editStaffPermSel" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white">
+                <option value="MEMBER" ${currentPerm === 'MEMBER' ? 'selected' : ''}>Thành viên</option>
+                <option value="ASSISTANT" ${currentPerm === 'ASSISTANT' ? 'selected' : ''}>Trợ lý</option>
+                <option value="CHAIR" ${currentPerm === 'CHAIR' ? 'selected' : ''}>Chủ trì</option>
+                <option value="FULL" ${currentPerm === 'FULL' ? 'selected' : ''}>Quản trị (Full)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+            <button type="button" onclick="closeModal('${modalId}')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">Hủy</button>
+            <button type="button" onclick="saveEditedStaffMember('${u.id}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold">Lưu thay đổi</button>
+          </div>
+        </div>
+      `;
+
+      openModal(modalId);
+    }
+
+    async function saveEditedStaffMember(uid) {
+      if (!isSystemFullAdmin(currentUser)) {
+        return showAppNotice('Chỉ tài khoản có quyền Quản trị (Full) mới được thực thi thao tác này!', 'Giới hạn quyền');
+      }
+      const u = dbUsers.find(x => String(x.id) === String(uid));
+      if (!u) return;
+
+      const newFullName = sanitizeCleanText(document.getElementById('editStaffFullNameInp').value.trim());
+      const newLoginUser = document.getElementById('editStaffUsernameInp').value.trim();
+      const newPerm = document.getElementById('editStaffPermSel').value;
+
+      if (!newFullName || !newLoginUser) {
+        return showAppNotice('Vui lòng nhập đầy đủ Họ và tên và User đăng nhập!', 'Thiếu thông tin');
+      }
+
+      await sb.from('team_users').update({
+        display_name: newFullName,
+        username: newLoginUser,
+        is_admin: newPerm === 'FULL'
+      }).eq('id', uid);
+
+      u.display_name = newFullName;
+      u.username = newLoginUser;
+      u.is_admin = newPerm === 'FULL';
+
+      dbUserAliasesMap[String(uid)] = {
+        ...(dbUserAliasesMap[String(uid)] || {}),
+        fullName: newFullName,
+        loginUser: newLoginUser
+      };
+      dbUserPermsMap[String(uid)] = newPerm;
+
+      await Promise.all([
+        persistSystemConfigRow('__USER_ALIASES__', dbUserAliasesMap),
+        persistSystemConfigRow('__USER_PERMS__', dbUserPermsMap)
+      ]);
+
+      await recordAuditLog('SỬA NHÂN SỰ', `Cập nhật nhân sự ${newFullName} (user: ${newLoginUser}, quyền: ${newPerm})`);
+      closeModal('editStaffInlineModal');
+      renderStaffManagementLists();
+      renderChannelsAndDm();
+      renderMessages();
+      renderTasks();
+      showAppNotice('Đã lưu cập nhật thông tin nhân sự!', 'Thành công');
+    }
+
+    renderStaffManagementLists = function () {
+      const isFull = isSystemFullAdmin(currentUser);
+      const addBox = document.getElementById('addStaffFormBox');
+      if (addBox) addBox.style.display = isFull ? 'block' : 'none';
+
+      const pinBox = document.getElementById('staffSection_PASS_PIN_ID');
+      const roleBox = document.getElementById('staffRoleListContainer');
+
+      if (!isFull) {
+        pinBox.innerHTML = `<div class="bg-slate-800/70 p-4 rounded-xl text-slate-300">Chỉ Quản trị (Full) mới có quyền cấp/đổi mã PIN và mở khóa tài khoản nhân sự. Bạn có thể đổi mật khẩu cá nhân tại tab <b>Liên kết Telegram cá nhân</b>.</div>`;
+        roleBox.innerHTML = dbUsers.map(u => `
+          <div class="bg-slate-800/70 border border-slate-700 rounded-xl p-3 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-white">${escapeHtmlSafe(getUserFullName(u))}</div>
+              <div class="text-[11px] text-slate-400">User: <span class="font-mono text-slate-300">${escapeHtmlSafe(getUserLoginAccount(u))}</span> • ${escapeHtmlSafe(sanitizeCleanText(u.role_title || 'Thành viên'))}</div>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded ${getUserPermDef(u).badgeClass}">${getUserPermDef(u).label}</span>
+          </div>
+        `).join('');
+        return;
+      }
+
+      pinBox.innerHTML = dbUsers.map(u => {
+        const locked = isAccountLocked(u.id);
+        return `
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-white">${escapeHtmlSafe(getUserFullName(u))} <span class="text-slate-400 font-mono text-[11px]">(${escapeHtmlSafe(getUserLoginAccount(u))})</span></div>
+              <div class="text-[11px] text-slate-400">PIN hiện tại: <code class="text-amber-300">${escapeHtmlSafe(u.pin_code || '')}</code> • TG ID: <code class="text-emerald-300">${escapeHtmlSafe(u.telegram_chat_id || 'Chưa liên kết')}</code></div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${locked ? `<button onclick="unlockStaffAccount('${u.id}')" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1.5 rounded-lg font-bold">Mở khóa</button>` : ''}
+              <button onclick="adminResetStaffPin('${u.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg font-bold">Đổi PIN</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      roleBox.innerHTML = dbUsers.map(u => {
+        const permCode = getUserPermDef(u).code;
+        return `
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-white">${escapeHtmlSafe(getUserFullName(u))}</div>
+              <div class="text-[11px] text-slate-400">User: <span class="font-mono text-blue-300">${escapeHtmlSafe(getUserLoginAccount(u))}</span> • Quyền: <b class="text-amber-300">${getUserPermDef(u).label}</b></div>
+            </div>
+            <div class="flex items-center gap-2">
+              <select onchange="updateStaffPermission('${u.id}', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white">
+                <option value="MEMBER" ${permCode === 'MEMBER' ? 'selected' : ''}>Thành viên</option>
+                <option value="ASSISTANT" ${permCode === 'ASSISTANT' ? 'selected' : ''}>Trợ lý</option>
+                <option value="CHAIR" ${permCode === 'CHAIR' ? 'selected' : ''}>Chủ trì</option>
+                <option value="FULL" ${permCode === 'FULL' ? 'selected' : ''}>Quản trị (Full)</option>
+              </select>
+              <button type="button" onclick="openEditStaffModal('${u.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg font-bold">Sửa</button>
+              ${!isPrimarySystemOwner(u) ? `<button type="button" onclick="removeStaffMember('${u.id}')" class="text-rose-400 hover:bg-rose-950/60 px-2.5 py-1.5 rounded-lg font-semibold">Xóa</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    // =========================================================================
+    // [BỔ SUNG 02]: HỘP THOẠI XÁC NHẬN GIAO VIỆC TRÊN TELEGRAM (3 NÚT + TỰ ẨN)
+    // =========================================================================
+    submitNewTask = async function () {
+      const projId = document.getElementById('taskProjectSelect').value;
+      const assigneeId = document.getElementById('taskAssignee').value;
+      const content = sanitizeCleanText(document.getElementById('taskContent').value.trim());
+      const startTime = document.getElementById('taskStartTime').value;
+      const dueTime = document.getElementById('taskDueTime').value;
+
+      if (!content) return showAppNotice('Vui lòng nhập nội dung công việc!', 'Thiếu nội dung');
+      const assigneeObj = dbUsers.find(u => String(u.id) === String(assigneeId));
+      const chanObj = dbChannels.find(c => String(c.id) === String(projId));
+      const assigneeName = assigneeObj ? getUserFullName(assigneeObj) : 'Thành viên';
+      const assignedBy = getUserFullName(currentUser);
+      const btn = document.getElementById('btnSubmitNewTask');
+
+      btn.disabled = true;
+      btn.textContent = 'Đang giao việc...';
+
+      try {
+        const { data: insertedTasks } = await sb.from('team_tasks').insert([{
+          channel_id: String(projId),
+          task_title: content,
+          assignee_id: assigneeId || null,
+          assignee_name: assigneeName,
+          assigned_by: assignedBy,
+          start_date: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
+          due_date: dueTime ? new Date(dueTime).toISOString() : null,
+          status: 'PENDING'
+        }]).select();
+
+        const createdTask = insertedTasks && insertedTasks[0] ? insertedTasks[0] : null;
+        const taskId = createdTask ? String(createdTask.id) : '';
+        const dueFormatted = dueTime ? formatDateTimeVN(dueTime) : 'Theo kế hoạch';
+
+        const { data: insertedMsgs } = await sb.from('team_messages').insert([{
+          channel_id: String(projId),
+          sender_name: assignedBy,
+          sender_role: sanitizeCleanText(currentUser.role_title || 'Điều hành'),
+          msg_type: 'TASK_ASSIGN',
+          approval_status: 'PENDING',
+          content: JSON.stringify({
+            taskId,
+            taskTitle: content,
+            assigneeId,
+            assigneeName,
+            assignedBy,
+            dueDate: dueFormatted
+          })
+        }]).select();
+
+        const msgId = insertedMsgs && insertedMsgs[0] ? String(insertedMsgs[0].id) : '';
+        const cleanChannelName = sanitizeCleanText(chanObj ? chanObj.name : 'Dự án');
+        const targetChatId = (assigneeObj && assigneeObj.telegram_chat_id)
+          ? String(assigneeObj.telegram_chat_id)
+          : DEFAULT_APPROVER_CHAT_ID;
+
+        const telegramDialogButtons = [
+          [
+            { text: 'Xác nhận nhận việc', callback_data: `TASK_ACK|${taskId}|${msgId}` },
+            { text: 'Báo cáo ĐÃ XONG', callback_data: `TASK_DONE|${taskId}|${msgId}` }
+          ],
+          [
+            { text: 'Hồi đáp tiến độ', callback_data: `TASK_REPLY|${taskId}|${msgId}` }
+          ]
+        ];
+
+        await callGasWebhook({
+          action: 'NOTIFY_TASK',
+          taskId,
+          messageId: msgId,
+          channelId: String(projId),
+          channelName: cleanChannelName,
+          taskTitle: content,
+          assigneeName,
+          assigneeChatId: targetChatId,
+          chatId: targetChatId,
+          assignedBy,
+          dueDate: dueFormatted,
+          hideButtonsAfterClick: true,
+          replyMarkup: { inline_keyboard: telegramDialogButtons },
+          inlineKeyboard: telegramDialogButtons
+        });
+
+        closeModal('assignModal');
         await syncAllFromSupabase(true);
-        const nextHash = `${dbMessages.length}_${dbTasks.length}_${JSON.stringify(dbMessages.slice(-2).map(m => m.approval_status + m.content))}`;
-        if (prevHash !== nextHash && nextHash !== lastSnapshotHash) {
-          lastSnapshotHash = nextHash;
-          renderAll();
-        }
-      }, 6000);
-    });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Giao Việc & Gửi Telegram';
+      }
+    }; 
   </script>
 </body>
 </html>
