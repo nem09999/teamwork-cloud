@@ -60,8 +60,10 @@
 
       <div id="loginFormView" class="space-y-4">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1.5">Chọn nhân sự / tài khoản</label>
-          <select id="loginUserSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select>
+          <label class="block text-xs font-medium text-slate-300 mb-1.5">Tên đăng nhập (Username)</label>
+          <input id="loginUserInput" type="text" autocomplete="username" placeholder="Nhập tên đăng nhập của bạn..."
+            onkeydown="if(event.key==='Enter') handleLogin()"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
@@ -1162,20 +1164,36 @@
       }
     }
 
-    async function handleLogin() {
-      const selId = document.getElementById('loginUserSelect').value;
+   async function handleLogin() {
+      const rawUser = String(
+        (document.getElementById('loginUserInput') && document.getElementById('loginUserInput').value) ||
+        (document.getElementById('loginUserSelect') && document.getElementById('loginUserSelect').value) ||
+        ''
+      ).trim();
       const pinInput = String(document.getElementById('loginPinInput').value || '').trim();
       const remember = document.getElementById('loginRememberCheck').checked;
       const errBox = document.getElementById('loginErrorMsg');
       errBox.classList.add('hidden');
 
+      if (!rawUser) {
+        errBox.textContent = 'Vui lòng nhập tên đăng nhập.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
       if (!staffList || staffList.length === 0) {
         await syncAllFromSupabase(true);
       }
 
-      const user = (staffList || []).find(u => String(u.id) === String(selId));
+      const uKey = normalizeTextKey(rawUser);
+      const user = (staffList || []).find(u =>
+        normalizeTextKey(u.username) === uKey ||
+        normalizeTextKey(u.display_name) === uKey ||
+        normalizeTextKey(u.full_name) === uKey ||
+        String(u.id) === rawUser
+      );
       if (!user) {
-        errBox.textContent = 'Vui lòng chọn tài khoản đăng nhập.';
+        errBox.textContent = 'Không tìm thấy tài khoản trên hệ thống. Vui lòng kiểm tra lại.';
         errBox.classList.remove('hidden');
         return;
       }
@@ -1203,7 +1221,6 @@
       startAutoSync();
       await syncAllFromSupabase(false);
     }
-
     async function handleLogout() {
       closeAllDropdowns();
       const ok = await showConfirm('Bạn có chắc chắn muốn đăng xuất khỏi phiên làm việc hiện tại?');
