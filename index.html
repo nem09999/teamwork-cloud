@@ -1873,7 +1873,7 @@
 
       box.scrollTop = box.scrollHeight;
     }
-  </script>
+  
   async function submitNewPoll() {
       const question = (document.getElementById('pollQuestionInput').value || '').trim();
       const validOpts = pollDraftOptions.map(x => String(x || '').trim()).filter(Boolean);
